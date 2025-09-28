@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface HeaderProps {
   onScrollToFeatures?: () => void;
@@ -261,7 +262,7 @@ const Header: React.FC<HeaderProps> = ({ onScrollToFeatures }) => {
 
       <header className="header">
        <div className="real-logo">
-         <img src="/logo.png" alt="Logo" />
+         <Image src="/logo.png" alt="Logo" width={40} height={40} priority />
        </div>
         
         <nav className="nav">

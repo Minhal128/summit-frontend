@@ -113,7 +113,7 @@ const EmptyCartMessage = () => {
             Your cart is empty
           </h3>
           <p className="text-slate-400 text-base sm:text-lg leading-relaxed mx-auto max-w-sm" style={{ color: '#94A3B8', fontSize: '1rem', lineHeight: '1.6', textAlign: 'center', maxWidth: '24rem', margin: '0 auto' }}>
-            Your cart is currently empty. Browse products and add them when you're ready to purchase
+            Your cart is currently empty. Browse products and add them when you&apos;re ready to purchase
           </p>
         </div>
       </div>
