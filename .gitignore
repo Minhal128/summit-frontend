@@ -17,6 +17,11 @@
 /.next/
 /out/
 
+# dashboard build files
+/src/app/dashboard/.next/
+/src/app/dashboard/out/
+/src/app/dashboard/node_modules/
+
 # production
 /build
 

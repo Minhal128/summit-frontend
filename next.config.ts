@@ -2,8 +2,13 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
-  turbopack: {
-    root: process.cwd(),
+  webpack: (config, { isServer }) => {
+    // Exclude dashboard directory
+    config.watchOptions = {
+      ...config.watchOptions,
+      ignored: ['**/src/app/dashboard/**'],
+    };
+    return config;
   },
 };
 

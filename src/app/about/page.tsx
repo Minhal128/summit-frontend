@@ -87,7 +87,8 @@ export default function AboutPage() {
       color: '#EBE2FF',
       lineHeight: '1.6',
       margin: 0,
-      padding: 0
+      padding: 0,
+      paddingTop: '70px'
     }}>
       <style jsx>{`
         * {
@@ -216,110 +217,40 @@ export default function AboutPage() {
           font-weight: bold;
         }
 
-        /* Header Styles */
-        .header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 20px 40px;
-          background: rgba(10, 26, 47, 0.95);
-          backdrop-filter: blur(10px);
-          border-bottom: 1px solid rgba(235, 226, 255, 0.1);
-          position: relative;
-          overflow: visible;
-          z-index: 1000;
-        }
-
-        .header::before {
-          content: '';
-          position: absolute;
-          top: -30px;
-          left: -50px;
-          width: 400px;
-          height: 150px;
-          background: radial-gradient(ellipse 400px 150px at 0% 50%, rgba(231, 231, 231, 0.2) 0%, rgba(128, 128, 128, 0.1) 40%, rgba(128, 128, 128, 0.05) 60%, transparent 80%);
-          filter: blur(20px);
-          pointer-events: none;
-          z-index: 0;
-        }
-
-        .header > * {
-          position: relative;
-          z-index: 1;
-        }
-
-        .logo {
-          font-size: 24px;
-          font-weight: 700;
-          color: #EBE2FF;
-        }
-
-        .nav {
-          display: flex;
-          gap: 40px;
-        }
-
-        .nav-item {
-          color: #EBE2FF;
-          opacity: 0.8;
-          cursor: pointer;
-          transition: opacity 0.3s;
-          text-decoration: none;
-        }
-
-        .nav-item:hover {
-          opacity: 1;
-        }
-
-        .nav-dropdown::after {
-          display: none !important;
-        }
-
-        .nav-dropdown::before {
-          display: none !important;
-        }
-
-        .header-right {
-          display: flex;
-          align-items: center;
-          gap: 20px;
-        }
-
-        .language {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          color: #EBE2FF;
-          opacity: 0.8;
-        }
-
-        .flag {
-          width: 20px;
-          height: 15px;
-          background: linear-gradient(to bottom, #ff0000 33%, #ffffff 33%, #ffffff 66%, #0000ff 66%);
-          border-radius: 2px;
-        }
-
-        .cart {
-          width: 24px;
-          height: 24px;
-          background: rgba(235, 226, 255, 0.1);
-          border-radius: 4px;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #EBE2FF;
-          font-size: 14px;
-        }
-
-        /* Hero Section Styles */
+        /* Main section styles */
         .main {
+          padding: 80px 40px 80px;
           text-align: center;
-          padding: 80px 40px 60px;
-          max-width: 1200px;
-          margin: 0 auto;
           position: relative;
+          min-height: calc(100vh - 70px);
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+          .main-title {
+            font-size: 32px;
+          }
+          
+          .steps-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+          }
+          
+          .step-item {
+            padding: 30px 20px;
+          }
+          
+          .container {
+            padding: 0 15px;
+          }
+          
+          .main {
+            padding: 80px 20px 40px;
+          }
         }
 
         .main::before {
@@ -334,7 +265,6 @@ export default function AboutPage() {
           pointer-events: none;
           z-index: 0;
         }
-
         .tagline {
           font-family: 'Manrope', sans-serif;
           font-size: 16.8px;
@@ -489,10 +419,6 @@ export default function AboutPage() {
 
           .hero-title {
             font-size: 36px;
-          }
-
-          .main {
-            padding: 60px 20px 40px;
           }
 
           .cta-buttons {

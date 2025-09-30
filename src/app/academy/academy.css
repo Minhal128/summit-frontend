@@ -1,0 +1,211 @@
+/* Academy Page Styles */
+
+/* Main layout and typography */
+.academy-page {
+  min-height: 100vh;
+  width: 100%;
+  background-color: #0F172A;
+  color: #E5E7EB;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Header section spacing */
+.academy-header {
+  width: 100%;
+  padding-top: 10rem; /* 160px */
+  padding-bottom: 5rem; /* 80px */
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+.academy-header-content {
+  max-width: 64rem;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.academy-title {
+  font-size: 3rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 1.5rem;
+  line-height: 1.2;
+}
+
+.academy-subtitle {
+  font-size: 1.125rem;
+  color: #9CA3AF;
+  max-width: 32rem;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+.academy-badge {
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  color: #9CA3AF;
+  margin-bottom: 1.5rem;
+  text-transform: uppercase;
+}
+
+/* Video section */
+.academy-video-section {
+  width: 100%;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  margin-bottom: 5rem;
+}
+
+.academy-video-container {
+  max-width: 64rem;
+  margin: 0 auto;
+}
+
+/* Guides section */
+.academy-guides-section {
+  width: 100%;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  padding-bottom: 5rem;
+  margin-top: 6rem; /* 100px */
+}
+
+.academy-guides-container {
+  max-width: 72rem;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.academy-section-header {
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.academy-section-title {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 1.5rem;
+}
+
+.academy-section-description {
+  color: #9CA3AF;
+  max-width: 32rem;
+  margin: 0 auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+/* Tabs styling */
+.academy-tabs-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 3rem;
+  width: 100%;
+}
+
+.academy-tabs {
+  display: flex;
+  background-color: rgba(26, 32, 44, 0.5);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  border: 1px solid #334155;
+  gap: 0.5rem;
+}
+
+.academy-tab {
+  padding: 0.75rem 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 0.375rem;
+  transition: all 0.2s;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+.academy-tab.active {
+  background-color: #2563EB;
+  color: white;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.academy-tab.inactive {
+  color: #9CA3AF;
+}
+
+.academy-tab.inactive:hover {
+  color: white;
+  background-color: rgba(51, 65, 85, 0.5);
+}
+
+/* Content sections */
+.academy-content-section {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.academy-support-container {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 3rem 2rem;
+}
+
+.academy-guides-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  max-width: 64rem;
+  margin: 0 auto;
+}
+
+.academy-learn-container {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 3rem 2rem;
+  text-align: center;
+}
+
+/* Mobile responsiveness */
+@media (min-width: 768px) {
+  .academy-title {
+    font-size: 4rem;
+  }
+  
+  .academy-section-title {
+    font-size: 3rem;
+  }
+  
+  .academy-guides-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .academy-title {
+    font-size: 5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .academy-header {
+    padding-top: 8rem;
+  }
+  
+  .academy-title {
+    font-size: 2rem !important;
+  }
+  
+  .academy-section-title {
+    font-size: 1.5rem !important;
+  }
+  
+  .academy-guides-section {
+    padding: 1rem !important;
+    margin-top: 4rem;
+  }
+}

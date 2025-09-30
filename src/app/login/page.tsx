@@ -141,7 +141,7 @@ export default function SignupPage() {
             
             // Redirect to dashboard after a short delay
             setTimeout(() => {
-                router.push('/dashboard');
+                window.location.href = 'https://dashboardsummit.vercel.app';
             }, 1500);
             
         } catch (error) {

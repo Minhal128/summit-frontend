@@ -85,6 +85,7 @@ export default function LandingPage() {
           body {
             width: 100vw !important;
             max-width: 100vw !important;
+            padding-top: 0 !important;
           }
         }
       `}</style>
@@ -96,6 +97,7 @@ export default function LandingPage() {
         lineHeight: '1.6',
         margin: 0,
         padding: 0,
+        paddingTop: '60px',
         overflowX: 'hidden',
         width: '100%',
         minHeight: '100vh'

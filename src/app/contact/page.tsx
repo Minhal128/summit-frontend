@@ -103,12 +103,35 @@ export default function ContactPage() {
         .background-gradient {
           background-image: radial-gradient(circle at top right, rgba(30, 64, 175, 0.2), transparent 40%);
         }
+        
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+          .min-h-screen {
+            padding: 1rem !important;
+          }
+          
+          h1 {
+            font-size: 2rem !important;
+          }
+          
+          .max-w-2xl {
+            max-width: 100% !important;
+          }
+          
+          .grid-cols-1 {
+            grid-template-columns: 1fr !important;
+          }
+          
+          .p-5 {
+            padding: 1rem !important;
+          }
+        }
       `}</style>
       
       {/* Header Component */}
       <Header />
       
-      <div className="min-h-screen flex flex-col items-center p-5 text-gray-200 background-gradient" style={{ paddingTop: '50px' }}>
+      <div className="min-h-screen flex flex-col items-center p-5 text-gray-200 background-gradient" style={{ paddingTop: '120px' }}>
         <div className="w-full max-w-2xl mx-auto">
             
           <header className="text-center mb-12">

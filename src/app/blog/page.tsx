@@ -92,7 +92,7 @@ const BlogCard: React.FC<{ post: BlogPost }> = ({ post }) => {
 // Blog Hero Section Component
 const BlogHeroSection: React.FC = () => {
   return (
-    <div className="min-h-screen bg-[#0A1A2F] text-white font-sans">
+    <div className="min-h-screen bg-[#0A1A2F] text-white font-sans" style={{paddingTop: '70px'}}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
         .font-sans {
@@ -118,15 +118,46 @@ const BlogHeroSection: React.FC = () => {
           overflow: hidden;
         }
         .blog-header {
-          margin-top: 20px !important;
+          margin-top: 50px !important;
           margin-bottom: 50px !important;
         }
         .blog-badge {
-          margin-top: -50px !important;
+          margin-top: 20px !important;
           margin-bottom: 2rem !important;
         }
         .blog-paragraph {
           margin-bottom: 5rem !important;
+        }
+        
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+          .container {
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+          }
+          
+          .blog-header {
+            margin-top: 10px !important;
+            margin-bottom: 30px !important;
+          }
+          
+          .blog-badge {
+            margin-top: -30px !important;
+            margin-bottom: 1rem !important;
+          }
+          
+          .blog-paragraph {
+            margin-bottom: 3rem !important;
+          }
+          
+          h1 {
+            font-size: 2rem !important;
+            line-height: 1.2 !important;
+          }
+          
+          .text-lg {
+            font-size: 1rem !important;
+          }
         }
       `}</style>
       <div className="container mx-auto px-6 sm:px-8 lg:px-12 xl:px-16 py-24">

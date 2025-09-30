@@ -46,7 +46,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onSecureWallet, onDownloadApp
         .tagline {
           font-size: 16.8px;
           font-weight: 500;
-          color: #1E5FFF;
+          color: #EBE2FF;
           margin: 0 auto 20px;
           text-transform: uppercase;
           letter-spacing: 1px;
