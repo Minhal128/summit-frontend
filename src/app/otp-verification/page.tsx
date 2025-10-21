@@ -132,6 +132,7 @@ const Header = () => (
 
 const OtpVerificationCard = () => {
     const [otp, setOtp] = useState('');
+  const [isResending, setIsResending] = useState(false);
     const router = useRouter();
     const searchParams = useSearchParams();
     const verificationType = searchParams.get('type');
@@ -143,39 +144,41 @@ const OtpVerificationCard = () => {
 
     const handleConfirmCode = () => {
         if (otp.length === 6) {
-            // Check if this is for forgot password flow
-            if (verificationType === 'forgot-password') {
-                toast.success('OTP verified successfully! Redirecting to recovery...', {
-                    position: "top-right",
-                    autoClose: 2000,
-                    hideProgressBar: false,
-                    closeOnClick: true,
-                    pauseOnHover: true,
-                    draggable: true,
-                    theme: "dark",
-                });
-                
-                // Redirect to 24-word recovery screen
-                setTimeout(() => {
-                    router.push('/24wordrecovery');
-                }, 2000);
-            } else {
-                // Default signup flow
-                toast.success('OTP verified successfully! Redirecting to login...', {
-                    position: "top-right",
-                    autoClose: 2000,
-                    hideProgressBar: false,
-                    closeOnClick: true,
-                    pauseOnHover: true,
-                    draggable: true,
-                    theme: "dark",
-                });
-                
-                // Redirect to login page after showing success message
-                setTimeout(() => {
-                    router.push('/login');
-                }, 2000);
+      (async () => {
+        try {
+          const { apiFetch } = await import('../../lib/api');
+          if (verificationType === 'forgot-password') {
+            const data: any = await apiFetch('/api/auth/forgot-password/verify-identity', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ identifier: searchParams.get('email') || '', verificationMethod: 'otp', otp })
+            });
+
+            toast.success('OTP verified successfully! Redirecting to recovery...', { autoClose: 2000 });
+            if (data.resetToken) {
+              try { localStorage.setItem('reset_token', data.resetToken); } catch (e) {}
             }
+            // Pass token and email in query to make sure the next page can recover it if localStorage is cleared
+            const tokenParam = data.resetToken ? `?token=${encodeURIComponent(data.resetToken)}&email=${encodeURIComponent(searchParams.get('email')||'')}` : '';
+            router.push(`/24wordrecovery${tokenParam}`);
+          } else {
+            const data: any = await apiFetch('/api/auth/verify-otp', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: searchParams.get('email') || '', otp })
+            });
+
+            if (data.token) {
+              try { localStorage.setItem('auth_token', data.token); } catch (e) {}
+            }
+            toast.success('OTP verified successfully! Redirecting to login...', { autoClose: 1500 });
+            router.push('/login');
+          }
+        } catch (err: any) {
+          console.error('OTP verify api error', err);
+          toast.error(err?.message || err?.text || 'OTP verification failed. Please try again.');
+        }
+      })();
         } else {
             toast.info('Please enter a complete 6-digit OTP code', {
                 position: "top-right",
@@ -190,15 +193,29 @@ const OtpVerificationCard = () => {
     };
 
     const handleResend = () => {
-        toast.info('OTP sent to email', {
-            position: "top-right",
-            autoClose: 3000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            theme: "dark",
-        });
+      (async () => {
+        const email = searchParams.get('email') || '';
+        if (!email) {
+          toast.error('No email present to resend OTP to');
+          return;
+        }
+        setIsResending(true);
+        try {
+          const { apiFetch } = await import('../../lib/api');
+          await apiFetch('/api/auth/forgot-password/initiate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ identifier: email })
+          });
+
+          toast.info('OTP sent to email', { autoClose: 3000 });
+        } catch (err: any) {
+          console.error('Resend OTP error', err);
+          toast.error(err?.message || err?.text || `Failed to resend OTP (${err?.status})`);
+        } finally {
+          setIsResending(false);
+        }
+      })();
     };
 
     return (
@@ -235,8 +252,9 @@ const OtpVerificationCard = () => {
                             <button 
                                 className="text-blue-400 hover:text-blue-300 hover:underline focus:outline-none font-medium transition-colors"
                                 onClick={handleResend}
+                                disabled={isResending}
                             >
-                              Resend
+                              {isResending ? 'Sending...' : 'Resend'}
                             </button>
                         </p>
                     </div>

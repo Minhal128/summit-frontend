@@ -130,21 +130,30 @@ export default function SignupPage() {
         }
 
         setIsLoading(true);
-        
         try {
-            // Simulate API call for login
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
-            // Show success message
-            const loginIdentifier = loginMethod === 'email' ? formData.email : formData.phone;
-            toast.success(`Login successful! Welcome back.`);
-            
-            // Redirect to dashboard after a short delay
-            setTimeout(() => {
-                window.location.href = 'https://dashboardsummit.vercel.app';
-            }, 1500);
-            
+            try {
+                const { apiFetch } = await import('../../lib/api');
+                const identifier = loginMethod === 'email' ? formData.email : `${formData.countryCode}${formData.phone.replace(/\s/g, '')}`;
+                const data: any = await apiFetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ identifier, password: formData.password })
+                });
+
+                if (data.token) {
+                    try { localStorage.setItem('auth_token', data.token); } catch (e) {}
+                }
+
+                toast.success(data.message || 'Login successful! Redirecting...');
+                // Prefer explicit env var; fallback to deployed dashboard URL
+                const dashboardUrl = (process.env.NEXT_PUBLIC_DASHBOARD_URL && process.env.NEXT_PUBLIC_DASHBOARD_URL.trim()) || 'https://dashboardsummit.vercel.app';
+                setTimeout(() => { window.location.href = dashboardUrl; }, 800);
+            } catch (err: any) {
+                console.error('Login api error:', err);
+                toast.error(err?.message || err?.text || 'Login failed. Please check your credentials and try again.');
+            }
         } catch (error) {
+            console.error('Login error:', error);
             toast.error('Login failed. Please check your credentials and try again.');
         } finally {
             setIsLoading(false);
@@ -372,6 +381,7 @@ export default function SignupPage() {
                                     className="mobile-responsive-inputs"
                                     style={{ marginLeft: '20px', marginBottom: '20px', paddingLeft: '20px' }}
                                     disabled={isLoading}
+                                    autoComplete="username"
                                 />
                             )}
 
@@ -401,6 +411,7 @@ export default function SignupPage() {
                                         placeholder="000 000 0000" 
                                         className="flex-1"
                                         disabled={isLoading}
+                                        autoComplete="tel"
                                     />
                                 </div>
                             )}
@@ -415,6 +426,7 @@ export default function SignupPage() {
                                     className="pr-12"
                                     disabled={isLoading}
                                     style={{ marginBottom: '20px', paddingLeft: '20px' }}
+                                    autoComplete="current-password"
                                 />
                                 <button 
                                     type="button" 

@@ -128,20 +128,28 @@ export default function SignupPage() {
         }
 
         setIsLoading(true);
-        
         try {
-            // Simulate API call for signup
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
-            // Show success message
-            toast.success('Account created successfully! Please verify your email.');
-            
-            // Redirect to OTP verification after a short delay
-            setTimeout(() => {
+            try {
+                const { apiFetch } = await import('../../lib/api');
+                const data: any = await apiFetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: formData.email,
+                        password: formData.password,
+                        phoneNumber: `${formData.countryCode}${formData.phone.replace(/\s/g, '')}`,
+                        name: ''
+                    })
+                });
+
+                toast.success(data.message || 'Account created successfully! Please verify your email.');
                 router.push(`/otp-verification?email=${encodeURIComponent(formData.email)}`);
-            }, 1500);
-            
-        } catch (error) {
+            } catch (err: any) {
+                console.error('Signup api error:', err);
+                toast.error(err?.message || err?.text || 'Signup failed. Please try again.');
+            }
+        } catch (error: any) {
+            console.error('Signup error:', error);
             toast.error('Signup failed. Please try again.');
         } finally {
             setIsLoading(false);

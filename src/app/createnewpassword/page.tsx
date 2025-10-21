@@ -109,21 +109,20 @@ const CreatePasswordCard = () => {
         }
 
         setIsLoading(true);
-        
         try {
-            // Simulate API call to create new password
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
-            // Success message
-            toast.success('Password created successfully! Redirecting to login...');
-            
-            // Redirect to login page
-            setTimeout(() => {
-                router.push('/login');
-            }, 1500);
-            
-        } catch (error) {
-            toast.error('Failed to create password. Please try again.');
+            const { apiFetch } = await import('../../lib/api');
+            const finalResetToken = localStorage.getItem('final_reset_token') || '';
+            const data: any = await apiFetch('/api/auth/final-reset', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ finalResetToken, newPassword })
+            });
+
+            toast.success(data.message || 'Password created successfully! Redirecting to login...');
+            router.push('/login');
+        } catch (err: any) {
+            console.error('Final reset api error:', err);
+            toast.error(err?.message || err?.text || 'Failed to create password. Please try again.');
         } finally {
             setIsLoading(false);
         }
@@ -148,6 +147,7 @@ const CreatePasswordCard = () => {
                         className="h-16 text-xl px-9 text-center"
                         style={{ fontSize: '15px', textAlign: 'center', width: '500px', marginBottom: '20px', paddingRight: '50px' }}
                         disabled={isLoading}
+                        autoComplete="new-password"
                     />
                     <button 
                         type="button" 
@@ -166,6 +166,7 @@ const CreatePasswordCard = () => {
                         className="h-16 text-xl px-9 text-center"
                         style={{ fontSize: '15px', textAlign: 'center', width: '500px', marginBottom: '20px', paddingRight: '50px' }}
                         disabled={isLoading}
+                        autoComplete="new-password"
                     />
                      <button 
                         type="button" 

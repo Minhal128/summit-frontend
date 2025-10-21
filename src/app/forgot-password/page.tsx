@@ -66,21 +66,19 @@ const ForgotPasswordCard = () => {
         }
 
         setIsLoading(true);
-        
         try {
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
-            // Success message
-            toast.success('OTP code sent to your email address successfully!');
-            
-            // Redirect to OTP verification after short delay
-            setTimeout(() => {
-                router.push(`/otp-verification?email=${encodeURIComponent(email)}&type=forgot-password`);
-            }, 1500);
-            
-        } catch (error) {
-            toast.error('Failed to send OTP. Please try again.');
+            const { apiFetch } = await import('../../lib/api');
+            const data: any = await apiFetch('/api/auth/forgot-password/initiate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ identifier: email })
+            });
+
+            toast.success(data.message || 'OTP code sent to your email address successfully!');
+            router.push(`/otp-verification?email=${encodeURIComponent(email)}&type=forgot-password`);
+        } catch (err: any) {
+            console.error('Forgot password api error:', err);
+            toast.error(err?.message || err?.text || 'Failed to send OTP. Please try again.');
         } finally {
             setIsLoading(false);
         }

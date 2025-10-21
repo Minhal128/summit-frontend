@@ -27,7 +27,58 @@ Input.displayName = 'Input';
 const RecoveryPhraseCard = () => {
     const [recoveryWords, setRecoveryWords] = useState<string[]>(Array(24).fill(''));
     const [isLoading, setIsLoading] = useState(false);
+    const [checkingWallet, setCheckingWallet] = useState(true);
+    const [tokenValid, setTokenValid] = useState<boolean | null>(null);
+    const [tokenError, setTokenError] = useState<string | null>(null);
     const router = useRouter();
+
+    React.useEffect(() => {
+        (async () => {
+            // If reset_token not in localStorage, try to get from URL query param
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const tokenFromUrl = urlParams.get('token');
+                if (!localStorage.getItem('reset_token') && tokenFromUrl) {
+                    try { localStorage.setItem('reset_token', tokenFromUrl); } catch(e) {}
+                }
+            } catch (e) {
+                // ignore (no window during SSR)
+            }
+            try {
+                const resetToken = localStorage.getItem('reset_token') || '';
+                if (!resetToken) {
+                    setCheckingWallet(false);
+                    return;
+                }
+                const { apiFetch } = await import('../../lib/api');
+                const resp: any = await apiFetch('/api/auth/forgot-password/check-wallet', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ resetToken })
+                });
+
+                if (!resp.hasWallet) {
+                    toast.error("No wallet found for this account. If you didn't create a wallet previously, use another recovery method.");
+                    setTokenValid(false);
+                    setTokenError("No wallet associated with this account");
+                    // don't auto-redirect; allow user to restart manually
+                } else {
+                    setTokenValid(true);
+                }
+            } catch (err: any) {
+                // Ignore validation errors here but surface token expiry
+                const serverMessage = err?.data?.message || err?.message || '';
+                if (serverMessage.toLowerCase().includes('invalid') || serverMessage.toLowerCase().includes('expired')) {
+                    toast.error('Reset token invalid or expired. Please restart password recovery.');
+                    setTokenValid(false);
+                    setTokenError('Reset token invalid or expired');
+                    // do not auto-redirect — show button so user can restart flow intentionally
+                }
+            } finally {
+                setCheckingWallet(false);
+            }
+        })();
+    }, [router]);
 
     const handleWordChange = (index: number, value: string) => {
         const newWords = [...recoveryWords];
@@ -60,22 +111,46 @@ const RecoveryPhraseCard = () => {
             return;
         }
 
-        setIsLoading(true);
-        
+            setIsLoading(true);
         try {
-            // Simulate API call to validate recovery phrase
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
-            // Success message
-            toast.success('Recovery phrase verified successfully! Redirecting to create new password...');
-            
-            // Redirect to create new password page
-            setTimeout(() => {
-                router.push('/createnewpassword');
-            }, 1500);
-            
-        } catch (error) {
-            toast.error('Invalid recovery phrase. Please check your words and try again.');
+            const { apiFetch } = await import('../../lib/api');
+            const resetToken = localStorage.getItem('reset_token') || '';
+            if (!resetToken) {
+                toast.error('No reset token found. Please complete the identity verification (OTP) step first.');
+                setIsLoading(false);
+                return;
+            }
+
+            const mnemonic = recoveryWords.join(' ').trim();
+
+            const data: any = await apiFetch('/api/auth/forgot-password/additional-verification', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ resetToken, verificationType: 'seed_phrase', mnemonic })
+            });
+
+            if (data.finalResetToken) {
+                try { localStorage.setItem('final_reset_token', data.finalResetToken); } catch (e) {}
+            }
+
+            toast.success(data.message || 'Recovery phrase verified successfully! Redirecting to create new password...');
+            router.push('/createnewpassword');
+        } catch (err: any) {
+            console.error('Recovery verify api error:', err);
+
+            const serverMessage = err?.data?.message || err?.message || err?.text || '';
+
+            if (serverMessage.toLowerCase().includes('no wallet')) {
+                // Common case when a user never created a wallet on their account
+                toast.error("No wallet found for this account. If you didn't create a wallet previously, choose a different recovery method or contact support.");
+            } else if (serverMessage.toLowerCase().includes('invalid reset token') || serverMessage.toLowerCase().includes('expired')) {
+                toast.error('Reset token is invalid or expired. Please restart the password recovery process.');
+                // Redirect user back to start of forgot-password flow
+                try { router.push('/forgot-password'); } catch (e) {}
+            } else {
+                toast.error(serverMessage || 'Invalid recovery phrase. Please check your words and try again.');
+            }
+
         } finally {
             setIsLoading(false);
         }
@@ -91,6 +166,23 @@ const RecoveryPhraseCard = () => {
             </div>
             
             <form onSubmit={handleSubmit}>
+                {checkingWallet && (
+                    <div className="text-center text-sm text-gray-400 mb-4">Checking recovery token and wallet...</div>
+                )}
+                {tokenValid === false && (
+                    <div className="mb-6 text-center">
+                        <p className="text-yellow-300 mb-2">{tokenError || 'There was an issue with your recovery token.'}</p>
+                        <div className="flex justify-center gap-4">
+                            <button
+                                type="button"
+                                onClick={() => { try { localStorage.removeItem('reset_token'); } catch(e){}; router.push('/forgot-password'); }}
+                                className="px-4 py-2 rounded bg-blue-600 text-white"
+                            >
+                                Restart recovery
+                            </button>
+                        </div>
+                    </div>
+                )}
                 <div className="grid grid-cols-4 gap-4">
                     {Array.from({ length: 24 }, (_, i) => i + 1).map((number, index) => (
                         <Input 
@@ -99,14 +191,14 @@ const RecoveryPhraseCard = () => {
                             value={recoveryWords[index]}
                             onChange={(e) => handleWordChange(index, e.target.value)}
                             placeholder={`No ${number}`}
-                            disabled={isLoading}
+                            disabled={isLoading || checkingWallet || tokenValid === false}
                         />
                     ))}
                 </div>
 
                 <button
                     type="submit"
-                    disabled={isLoading}
+                    disabled={isLoading || checkingWallet || tokenValid === false}
                     className="w-full mt-10 bg-blue-600 text-white font-semibold h-12 rounded-lg text-base hover:bg-blue-700 disabled:bg-slate-600 disabled:cursor-not-allowed transition-colors shadow-lg shadow-blue-600/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-blue-500"
                     style={{ marginTop: '50px' }}
                 >
