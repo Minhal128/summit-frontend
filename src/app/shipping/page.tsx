@@ -1,269 +1,601 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, CheckCircle2, TriangleAlert } from 'lucide-react';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import Link from 'next/link';
 import Header from '@/components/Header';
-import { useCart, Product } from '@/contexts/CartContext';
+import Footer from '@/components/Footer';
+import { ArrowLeft, Truck, MapPin, ShieldCheck, CheckCircle, CreditCard, ShoppingCart } from 'lucide-react';
+import { toast } from 'react-toastify';
 
-// Define the structure for a shipping option
-interface ShippingOption {
-  id: string;
-  name: string;
-  duration: string;
-  price: number | 'Free';
+interface ShippingFormData {
+  fullName: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
 }
 
-// Sample data for shipping options
-const shippingOptions: ShippingOption[] = [
-  {
-    id: 'standard',
-    name: 'Standard Courier',
-    duration: '35-55 business days',
-    price: 'Free',
-  },
-  {
-    id: 'express',
-    name: 'Express Courier (Air)',
-    duration: '4-6 business days',
-    price: 45,
-  },
-];
-
-// Left Side - Shipping Method Component
-const ShippingMethod = () => {
+const ShippingPage = () => {
   const router = useRouter();
-  const [selectedMethod, setSelectedMethod] = useState<string>('standard');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [checkoutData, setCheckoutData] = useState<any>(null);
+  const [formData, setFormData] = useState<ShippingFormData>({
+    fullName: '',
+    email: '',
+    phone: '',
+    address: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    country: 'United States'
+  });
+  const [errors, setErrors] = useState<Partial<ShippingFormData>>({});
+  const [loading, setLoading] = useState(false);
 
-  const handleContinueToPayment = async () => {
-    setIsSubmitting(true);
+  useEffect(() => {
+    // Load checkout data from sessionStorage
+    const data = sessionStorage.getItem('checkoutData');
+    if (!data) {
+      router.push('/cart');
+      return;
+    }
+    setCheckoutData(JSON.parse(data));
+  }, [router]);
+
+  const validateForm = (): boolean => {
+    const newErrors: Partial<ShippingFormData> = {};
+
+    if (!formData.fullName.trim()) newErrors.fullName = 'Full name is required';
+    if (!formData.email.trim()) newErrors.email = 'Email is required';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = 'Invalid email format';
+    if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
+    if (!formData.address.trim()) newErrors.address = 'Address is required';
+    if (!formData.city.trim()) newErrors.city = 'City is required';
+    if (!formData.state.trim()) newErrors.state = 'State is required';
+    if (!formData.zipCode.trim()) newErrors.zipCode = 'ZIP code is required';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleInputChange = (field: keyof ShippingFormData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      toast.error('Please fill in all required fields correctly');
+      return;
+    }
+
+    setLoading(true);
 
     try {
-      // Simulate API call to save shipping method
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Store shipping info in sessionStorage
+      sessionStorage.setItem('shippingInfo', JSON.stringify(formData));
       
-      // Show success message
-      toast.success('Shipping method saved! Redirecting to payment...', {
-        position: "top-right",
-        autoClose: 2000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
-
-      // Redirect to payment page after a short delay
+      toast.success('Shipping information saved!');
+      
+      // Redirect to payment page
       setTimeout(() => {
         router.push('/payment');
-      }, 2000);
+      }, 1000);
 
     } catch (error) {
       toast.error('Something went wrong. Please try again.');
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
+  if (!checkoutData) {
+    return null;
+  }
+
   return (
-    <div className="bg-[#10233D]/80 backdrop-blur-lg border border-white/10 p-8 rounded-lg max-w-2xl w-full text-white font-sans shadow-2xl" style={{padding:'1rem',marginTop:'2rem'}}>
-      {/* Back Button */}
-      <button className="flex items-center gap-2 text-sm text-gray-300 hover:text-white transition-colors mb-6" style={{padding:'1rem'}}>
-        <ArrowLeft className="w-4 h-4" />
-        Back
-      </button>
+    <div style={{
+      fontFamily: 'Inter, sans-serif',
+      backgroundColor: '#0A1A2F',
+      color: '#EBE2FF',
+      minHeight: '100vh',
+      paddingTop: '70px'
+    }}>
+      <Header />
+      
+      {/* Hero Section */}
+      <section style={{
+        padding: '60px 20px 40px',
+        background: 'linear-gradient(135deg, rgba(76, 175, 80, 0.05) 0%, rgba(0, 59, 252, 0.05) 100%)',
+        borderBottom: '1px solid rgba(235, 226, 255, 0.1)'
+      }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+          {/* Back Button */}
+          <Link href="/checkout">
+            <button style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              color: 'rgba(235, 226, 255, 0.7)',
+              background: 'transparent',
+              border: 'none',
+              fontSize: '14px',
+              cursor: 'pointer',
+              marginBottom: '24px',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = '#4CAF50';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = 'rgba(235, 226, 255, 0.7)';
+            }}>
+              <ArrowLeft size={20} />
+              <span>Back to Checkout</span>
+            </button>
+          </Link>
 
-      {/* Information Summary */}
-      <div className="border border-slate-700 rounded-lg mb-8">
-        <div className="flex justify-between items-center p-4" style={{ marginLeft: '15px', paddingLeft: '15px', marginTop: '10px', width: 'calc(100% - 15px)',padding:'10px' ,marginBottom:'15px'}}>
-          <span className="text-gray-400">Contact</span>
-          <span className="font-medium">myaccount@gmail.com</span>
-          <a href="#" className="text-blue-400 hover:underline text-sm">Change</a>
-        </div>
-        <div className="border-t border-slate-700"></div>
-        <div className="flex justify-between items-start p-4" style={{ marginLeft: '15px', paddingLeft: '15px', marginTop: '10px', width: 'calc(100% - 15px)',padding:'10px' ,marginBottom:'15px'}}>
-          <span className="text-gray-400 mt-1">Ship to</span>
-          <p className="text-right font-medium">
-            House 40, Reageant Avenue,<br />
-            Illinois, United States
+          <h1 style={{
+            fontSize: '42px',
+            fontWeight: '700',
+            marginBottom: '16px',
+            background: 'linear-gradient(135deg, #4CAF50, #00D4FF)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text'
+          }}>
+            Shipping Information
+          </h1>
+          <p style={{
+            fontSize: '18px',
+            color: 'rgba(235, 226, 255, 0.7)',
+            marginBottom: '0'
+          }}>
+            Enter your delivery details to complete your order
           </p>
-          <a href="#" className="text-blue-400 hover:underline text-sm mt-1">Change</a>
-        </div>
-      </div>
-
-      {/* Shipping Method Section */}
-      <section style={{ marginTop: '30px', marginBottom: '30px' }}>
-        <h2 className="text-xl font-semibold mb-6" style={{marginBottom:'25px',marginTop:'25px'}}>Shipping method</h2>
-        <div className="space-y-6" style={{ marginLeft: '15px', paddingLeft: '15px', marginTop: '20px', width: 'calc(100% - 15px)', marginBottom:'25px'}}>
-          {shippingOptions.map((option) => (
-            <div
-              key={option.id}
-              onClick={() => setSelectedMethod(option.id)}
-              className={`flex items-center justify-between p-6 rounded-lg cursor-pointer border-2 transition-all  ${
-                selectedMethod === option.id
-                  ? 'bg-blue-500/10 border-blue-500'
-                  : 'bg-[#1E293B] border-slate-700 hover:border-slate-500'
-
-              }`}
-              style={{ marginBottom: '20px', padding:'15px' }}
-            >
-              <div className="flex items-center gap-6">
-                <div className="w-6 h-6 rounded-full flex items-center justify-center border-2 border-slate-500" >
-                  {selectedMethod === option.id && (
-                     <CheckCircle2 className="w-6 h-6 text-green-400 bg-[#10233D] rounded-full" />
-                  )}
-                </div>
-                <div>
-                  <p className="font-semibold text-lg">{option.name}</p>
-                  <p className="text-sm text-gray-400 mt-1">{option.duration}</p>
-                </div>
-              </div>
-              <p className="font-semibold">
-                {typeof option.price === 'string' ? option.price : `$${option.price.toFixed(2)}` }
-              </p>
-            </div>
-          ))}
         </div>
       </section>
 
-      {/* Actions */}
-      <div className="mt-12 flex flex-col items-center gap-6" style={{ marginTop: '40px' }}>
-        <button 
-          type="button" 
-          onClick={handleContinueToPayment}
-          disabled={isSubmitting}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white font-bold py-4 px-8 rounded-md transition-colors" 
-          style={{ marginLeft: '15px', paddingLeft: '15px', marginTop: '20px', width: 'calc(100% - 15px)',padding:'15px' ,marginBottom:'20px'}}
-        >
-          {isSubmitting ? 'Processing...' : 'Continue to payment'}
-        </button>
-        <a href="#" className="text-gray-400 hover:text-white transition-colors text-sm" style={{ marginTop: '10px' }}>
-          Refund policy
-        </a>
-      </div>
-    </div>
-  );
-};
+      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '60px 20px' }}>
 
-// Right Side - Order Summary Component
-const OrderSummary = () => {
-  const { products, getTotalPrice, getTotalItems } = useCart();
-  const subtotal = getTotalPrice();
-  const shippingFee = 0;
-  const total = subtotal + shippingFee;
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+          gap: '32px'
+        }}>
+          {/* Left Column - Form */}
+          <div style={{ gridColumn: 'span 2 / auto' }}>
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(235, 226, 255, 0.1)',
+              borderRadius: '16px',
+              padding: '40px'
+            }}>
+              <h2 style={{
+                fontSize: '28px',
+                fontWeight: '700',
+                marginBottom: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px'
+              }}>
+                <MapPin size={28} style={{ color: '#4CAF50' }} />
+                Delivery Address
+              </h2>
+              
+              <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                {/* Full Name */}
+                <div>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    marginBottom: '8px',
+                    color: 'rgba(235, 226, 255, 0.9)'
+                  }}>Full Name *</label>
+                  <input
+                    type="text"
+                    value={formData.fullName}
+                    onChange={(e) => handleInputChange('fullName', e.target.value)}
+                    style={{
+                      width: '100%',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: errors.fullName ? '1px solid #ff4444' : '1px solid rgba(235, 226, 255, 0.2)',
+                      borderRadius: '8px',
+                      padding: '14px 16px',
+                      fontSize: '16px',
+                      color: '#EBE2FF',
+                      outline: 'none',
+                      transition: 'all 0.3s ease'
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.border = '1px solid #4CAF50';
+                      e.currentTarget.style.boxShadow = '0 0 0 3px rgba(76, 175, 80, 0.1)';
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.border = errors.fullName ? '1px solid #ff4444' : '1px solid rgba(235, 226, 255, 0.2)';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}
+                    placeholder="John Doe"
+                  />
+                  {errors.fullName && <p style={{ color: '#ff4444', fontSize: '13px', marginTop: '6px' }}>{errors.fullName}</p>}
+                </div>
 
-  return (
-    <div className="bg-[#10233D]/80 backdrop-blur-lg border border-white/10 p-8 rounded-lg max-w-lg w-full text-white font-sans shadow-2xl" style={{padding:'1rem',marginTop:'2rem'}}>
-      <div className="space-y-5" style={{padding:'1rem'}}>
-        {products.map((product, index) => (
-          <div key={index} className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-[#1E293B]/70 backdrop-blur-sm rounded-md flex-shrink-0 border border-white/10">
-                 {/* Placeholder for an image */}
-                <img src={product.imageUrl} alt={product.name} className="w-full h-full object-contain p-2"/>
-              </div>
-              <div>
-                <p className="font-semibold">{product.name}</p>
-                <p className="text-sm text-gray-400">{product.variant}</p>
-              </div>
+                {/* Email */}
+                <div>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    marginBottom: '8px',
+                    color: 'rgba(235, 226, 255, 0.9)'
+                  }}>Email Address *</label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    style={{
+                      width: '100%',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: errors.email ? '1px solid #ff4444' : '1px solid rgba(235, 226, 255, 0.2)',
+                      borderRadius: '8px',
+                      padding: '14px 16px',
+                      fontSize: '16px',
+                      color: '#EBE2FF',
+                      outline: 'none',
+                      transition: 'all 0.3s ease'
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.border = '1px solid #4CAF50';
+                      e.currentTarget.style.boxShadow = '0 0 0 3px rgba(76, 175, 80, 0.1)';
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.border = errors.email ? '1px solid #ff4444' : '1px solid rgba(235, 226, 255, 0.2)';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}
+                    placeholder="john@example.com"
+                  />
+                  {errors.email && <p style={{ color: '#ff4444', fontSize: '13px', marginTop: '6px' }}>{errors.email}</p>}
+                </div>
+
+                {/* Phone */}
+                <div>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    marginBottom: '8px',
+                    color: 'rgba(235, 226, 255, 0.9)'
+                  }}>Phone Number *</label>
+                  <input
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                    style={{
+                      width: '100%',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: errors.phone ? '1px solid #ff4444' : '1px solid rgba(235, 226, 255, 0.2)',
+                      borderRadius: '8px',
+                      padding: '14px 16px',
+                      fontSize: '16px',
+                      color: '#EBE2FF',
+                      outline: 'none',
+                      transition: 'all 0.3s ease'
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.border = '1px solid #4CAF50';
+                      e.currentTarget.style.boxShadow = '0 0 0 3px rgba(76, 175, 80, 0.1)';
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.border = errors.phone ? '1px solid #ff4444' : '1px solid rgba(235, 226, 255, 0.2)';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}
+                    placeholder="+1 (555) 123-4567"
+                  />
+                  {errors.phone && <p style={{ color: '#ff4444', fontSize: '13px', marginTop: '6px' }}>{errors.phone}</p>}
+                </div>
+
+                {/* Address */}
+                <div>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    marginBottom: '8px',
+                    color: 'rgba(235, 226, 255, 0.9)'
+                  }}>Street Address *</label>
+                  <input
+                    type="text"
+                    value={formData.address}
+                    onChange={(e) => handleInputChange('address', e.target.value)}
+                    style={{
+                      width: '100%',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: errors.address ? '1px solid #ff4444' : '1px solid rgba(235, 226, 255, 0.2)',
+                      borderRadius: '8px',
+                      padding: '14px 16px',
+                      fontSize: '16px',
+                      color: '#EBE2FF',
+                      outline: 'none',
+                      transition: 'all 0.3s ease'
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.border = '1px solid #4CAF50';
+                      e.currentTarget.style.boxShadow = '0 0 0 3px rgba(76, 175, 80, 0.1)';
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.border = errors.address ? '1px solid #ff4444' : '1px solid rgba(235, 226, 255, 0.2)';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}
+                    placeholder="123 Main Street, Apt 4B"
+                  />
+                  {errors.address && <p style={{ color: '#ff4444', fontSize: '13px', marginTop: '6px' }}>{errors.address}</p>}
+                </div>
+
+                {/* City, State, ZIP */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '16px' }}>
+                  <div>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      marginBottom: '8px',
+                      color: 'rgba(235, 226, 255, 0.9)'
+                    }}>City *</label>
+                    <input
+                      type="text"
+                      value={formData.city}
+                      onChange={(e) => handleInputChange('city', e.target.value)}
+                      style={{
+                        width: '100%',
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        border: errors.city ? '1px solid #ff4444' : '1px solid rgba(235, 226, 255, 0.2)',
+                        borderRadius: '8px',
+                        padding: '14px 16px',
+                        fontSize: '16px',
+                        color: '#EBE2FF',
+                        outline: 'none'
+                      }}
+                      onFocus={(e) => e.currentTarget.style.border = '1px solid #4CAF50'}
+                      onBlur={(e) => e.currentTarget.style.border = errors.city ? '1px solid #ff4444' : '1px solid rgba(235, 226, 255, 0.2)'}
+                      placeholder="New York"
+                    />
+                    {errors.city && <p style={{ color: '#ff4444', fontSize: '13px', marginTop: '6px' }}>{errors.city}</p>}
+                  </div>
+
+                  <div>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      marginBottom: '8px',
+                      color: 'rgba(235, 226, 255, 0.9)'
+                    }}>State *</label>
+                    <input
+                      type="text"
+                      value={formData.state}
+                      onChange={(e) => handleInputChange('state', e.target.value)}
+                      style={{
+                        width: '100%',
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        border: errors.state ? '1px solid #ff4444' : '1px solid rgba(235, 226, 255, 0.2)',
+                        borderRadius: '8px',
+                        padding: '14px 16px',
+                        fontSize: '16px',
+                        color: '#EBE2FF',
+                        outline: 'none'
+                      }}
+                      onFocus={(e) => e.currentTarget.style.border = '1px solid #4CAF50'}
+                      onBlur={(e) => e.currentTarget.style.border = errors.state ? '1px solid #ff4444' : '1px solid rgba(235, 226, 255, 0.2)'}
+                      placeholder="NY"
+                    />
+                    {errors.state && <p style={{ color: '#ff4444', fontSize: '13px', marginTop: '6px' }}>{errors.state}</p>}
+                  </div>
+
+                  <div>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      marginBottom: '8px',
+                      color: 'rgba(235, 226, 255, 0.9)'
+                    }}>ZIP Code *</label>
+                    <input
+                      type="text"
+                      value={formData.zipCode}
+                      onChange={(e) => handleInputChange('zipCode', e.target.value)}
+                      style={{
+                        width: '100%',
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        border: errors.zipCode ? '1px solid #ff4444' : '1px solid rgba(235, 226, 255, 0.2)',
+                        borderRadius: '8px',
+                        padding: '14px 16px',
+                        fontSize: '16px',
+                        color: '#EBE2FF',
+                        outline: 'none'
+                      }}
+                      onFocus={(e) => e.currentTarget.style.border = '1px solid #4CAF50'}
+                      onBlur={(e) => e.currentTarget.style.border = errors.zipCode ? '1px solid #ff4444' : '1px solid rgba(235, 226, 255, 0.2)'}
+                      placeholder="10001"
+                    />
+                    {errors.zipCode && <p style={{ color: '#ff4444', fontSize: '13px', marginTop: '6px' }}>{errors.zipCode}</p>}
+                  </div>
+                </div>
+
+                {/* Country */}
+                <div>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    marginBottom: '8px',
+                    color: 'rgba(235, 226, 255, 0.9)'
+                  }}>Country *</label>
+                  <select
+                    value={formData.country}
+                    onChange={(e) => handleInputChange('country', e.target.value)}
+                    style={{
+                      width: '100%',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(235, 226, 255, 0.2)',
+                      borderRadius: '8px',
+                      padding: '14px 16px',
+                      fontSize: '16px',
+                      color: '#EBE2FF',
+                      outline: 'none',
+                      cursor: 'pointer'
+                    }}
+                    onFocus={(e) => e.currentTarget.style.border = '1px solid #4CAF50'}
+                    onBlur={(e) => e.currentTarget.style.border = '1px solid rgba(235, 226, 255, 0.2)'}
+                  >
+                    <option value="United States">United States</option>
+                    <option value="Canada">Canada</option>
+                    <option value="United Kingdom">United Kingdom</option>
+                    <option value="Australia">Australia</option>
+                  </select>
+                </div>
+
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  style={{
+                    width: '100%',
+                    marginTop: '16px',
+                    padding: '18px 32px',
+                    background: loading ? 'rgba(150, 150, 150, 0.3)' : 'linear-gradient(45deg, #4CAF50, #003BFC)',
+                    border: 'none',
+                    borderRadius: '12px',
+                    color: 'white',
+                    fontSize: '18px',
+                    fontWeight: '600',
+                    cursor: loading ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '12px',
+                    transition: 'all 0.3s ease',
+                    boxShadow: loading ? 'none' : '0 4px 20px rgba(76, 175, 80, 0.4)',
+                    opacity: loading ? 0.6 : 1
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!loading) {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 6px 30px rgba(76, 175, 80, 0.6)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!loading) {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 4px 20px rgba(76, 175, 80, 0.4)';
+                    }
+                  }}
+                >
+                  {loading ? (
+                    'Saving...'
+                  ) : (
+                    <>
+                      <CreditCard size={22} />
+                      Continue to Payment
+                      <svg style={{ width: '20px', height: '20px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </>
+                  )}
+                </button>
+              </form>
             </div>
-            <p className="font-semibold text-lg">${product.price.toFixed(2)}</p>
           </div>
-        ))}
-      </div>
 
-      <div className="border-t border-slate-700/50 my-6"></div>
+          {/* Right Column - Order Summary */}
+          <div>
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(235, 226, 255, 0.1)',
+              borderRadius: '16px',
+              padding: '32px',
+              position: 'sticky',
+              top: '100px'
+            }}>
+              <h2 style={{
+                fontSize: '24px',
+                fontWeight: '700',
+                marginBottom: '24px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px'
+              }}>
+                <ShoppingCart size={24} style={{ color: '#4CAF50' }} />
+                Order Summary
+              </h2>
+              
+              <div style={{ marginBottom: '24px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', fontSize: '14px', color: 'rgba(235, 226, 255, 0.7)' }}>
+                  <span>Subtotal</span>
+                  <span style={{ fontWeight: '600' }}>${checkoutData.subtotal.toFixed(2)}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', fontSize: '14px', color: 'rgba(235, 226, 255, 0.7)' }}>
+                  <span>Shipping</span>
+                  <span style={{ fontWeight: '600' }}>${checkoutData.shippingCost.toFixed(2)}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', fontSize: '14px', color: 'rgba(235, 226, 255, 0.7)' }}>
+                  <span>Tax</span>
+                  <span style={{ fontWeight: '600' }}>${checkoutData.tax.toFixed(2)}</span>
+                </div>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  padding: '16px',
+                  background: 'rgba(76, 175, 80, 0.1)',
+                  border: '1px solid rgba(76, 175, 80, 0.3)',
+                  borderRadius: '12px'
+                }}>
+                  <span style={{ fontSize: '18px', fontWeight: '700' }}>Total</span>
+                  <span style={{ fontSize: '22px', fontWeight: '700', color: '#4CAF50' }}>${checkoutData.total.toFixed(2)}</span>
+                </div>
+              </div>
 
-      {/* Discount Code */}
-      <div className="flex gap-4">
-        <input 
-          type="text" 
-          placeholder="Discount code" 
-          className="w-full bg-[#1E293B]/70 backdrop-blur-sm border border-slate-600/50 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400 transition-all" 
-          style={{ marginLeft: '15px', paddingLeft: '15px', marginTop: '10px', width: 'calc(100% - 15px)',padding:'10px' ,marginBottom:'10px'}}
-        />
-        <button 
-          type="button" 
-          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-md transition-colors whitespace-nowrap"
-          style={{ marginLeft: '15px', paddingLeft: '15px', marginTop: '10px', width: 'calc(100% - 15px)',padding:'10px' ,marginBottom:'10px'}}
-        >
-          Apply
-        </button>
-      </div>
-
-      <div className="border-t border-slate-700/50 my-6"></div>
-
-      {/* Totals */}
-      <div className="space-y-3 text-sm">
-        <div className="flex justify-between text-gray-300" style={{marginBottom:'10px',marginTop:'10px'}}>
-          <p>Subtotal ({getTotalItems()} items)</p>
-          <p>${subtotal.toFixed(2)}</p>
-        </div>
-        <div className="flex justify-between text-gray-300" style={{marginBottom:'10px',marginTop:'10px'}}>
-          <p>Shipping fee</p>
-          <p>${shippingFee.toFixed(2)}</p>
-        </div>
-        <div className="flex justify-between font-bold text-lg mt-2 pt-2 border-t border-slate-800/50">
-          <p>Total</p>
-          <p>${total.toFixed(2)}</p>
-        </div>
-      </div>
-
-      {/* Tax Notice */}
-      <div className="mt-6 pt-6 border-t border-slate-700/50 flex items-center text-sm text-yellow-400/80" style={{marginTop:'30px'}}>
-        <TriangleAlert className="w-5 h-5 mr-3 flex-shrink-0"/>
-        <span>Local taxes, duties or customs clearance fees may apply</span>
-      </div>
-    </div>
-  );
-};
-
-// Main Shipping Page Component
-const ShippingPage = () => {
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0F172A] via-[#10233D] to-[#1E293B]">
-      <Header />
-      
-      {/* Main Content with Glassmorphism */}
-      <main className="flex items-center justify-center p-4 sm:p-8 pt-24">
-        <div className="w-full max-w-7xl mx-auto">
-          {/* Two Column Layout with Gap-4 */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8">
-            
-            {/* Left Side: Shipping Method */}
-            <div className="flex justify-center lg:justify-end">
-              <ShippingMethod />
+              <div style={{
+                padding: '20px',
+                background: 'rgba(255, 255, 255, 0.03)',
+                border: '1px solid rgba(235, 226, 255, 0.1)',
+                borderRadius: '12px'
+              }}>
+                <p style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  fontSize: '13px',
+                  color: 'rgba(235, 226, 255, 0.7)',
+                  marginBottom: '12px'
+                }}>
+                  <CheckCircle size={16} style={{ color: '#4CAF50' }} />
+                  Secure payment processing
+                </p>
+                <p style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  fontSize: '13px',
+                  color: 'rgba(235, 226, 255, 0.7)'
+                }}>
+                  <Truck size={16} style={{ color: '#4CAF50' }} />
+                  Fast & reliable shipping
+                </p>
+              </div>
             </div>
-            
-            {/* Right Side: Order Summary */}
-            <div className="flex justify-center lg:justify-start">
-              <OrderSummary />
-            </div>
-            
           </div>
         </div>
-      </main>
+      </div>
 
-      {/* Toast Container */}
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="dark"
-        toastStyle={{
-          backgroundColor: '#1E293B',
-          color: '#FFFFFF',
-          border: '1px solid rgba(255, 255, 255, 0.1)'
-        }}
-      />
+      <Footer />
     </div>
   );
 };

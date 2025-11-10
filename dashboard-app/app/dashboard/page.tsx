@@ -17,6 +17,7 @@ import {
   Download,
   RefreshCw,
   Banknote,
+  Shield,
 } from "lucide-react"
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts"
 import { useState, useEffect } from "react"
@@ -35,6 +36,7 @@ import SettingsPage from "@/components/SettingsPage"
 import LiveMarketPage from "@/components/LiveMarketPage"
 import HardwareWalletModal from "@/components/modals/HardwareWalletModal"
 import ReceiveModal from "@/components/modals/ReceiveModal"
+import NfcManagement from "@/components/NfcManagement"
 import type { Token, TooltipProps, Network } from "@/types"
 
 // Data for the chart
@@ -202,6 +204,8 @@ const DashboardPage: NextPage = () => {
         return <SettingsPage className="w-full" />
       case "Live Market":
         return <LiveMarketPage className="w-full" />
+      case "NFC":
+        return <NfcManagement />
       default: // Dashboard
         return (
           <>
@@ -594,6 +598,16 @@ const DashboardPage: NextPage = () => {
                     >
                       Live Market
                     </button>
+                    <button
+                      onClick={() => {
+                        setActivePage("NFC")
+                        setIsMobileMenuOpen(false)
+                      }}
+                      className={`px-4 py-3 rounded-xl transition-all duration-200 w-full text-left font-medium flex items-center gap-2 ${activePage === "NFC" ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25" : "hover:bg-slate-700/50 text-gray-300 hover:text-white"}`}
+                    >
+                      <Shield className="w-4 h-4" />
+                      NFC Security
+                    </button>
                   </nav>
                 </div>
 
@@ -709,7 +723,6 @@ const DashboardPage: NextPage = () => {
         isOpen={isHardwareWalletModalOpen}
         onClose={handleHardwareWalletCancel}
         onCancel={handleHardwareWalletCancel}
-        onConfirm={handleHardwareWalletConfirm}
       />
 
       <ReceiveModal

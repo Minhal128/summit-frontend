@@ -1,24 +1,22 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { NfcProduct } from '@/lib/cartApi';
 
-export interface Product {
-  id: string;
-  name: string;
-  variant: string;
-  price: number;
-  imageUrl: string;
+export interface CartItem {
+  productId: string;
+  product: NfcProduct;
   quantity: number;
 }
 
 interface CartContextType {
-  products: Product[];
-  addProduct: (product: Omit<Product, 'quantity'>) => void;
-  removeProduct: (productId: string) => void;
+  cartItems: CartItem[];
+  addToCart: (product: NfcProduct, quantity?: number) => void;
+  removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
-  getTotalPrice: () => number;
-  getTotalItems: () => number;
+  getCartTotal: () => number;
+  getCartCount: () => number;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -36,76 +34,84 @@ interface CartProviderProps {
 }
 
 export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
-  const [products, setProducts] = useState<Product[]>([
-    // Sample products for demonstration
-    {
-      id: '1',
-      name: 'Summit Flex',
-      variant: 'Matte Black',
-      price: 400.50,
-      imageUrl: 'https://placehold.co/100x100/1E293B/FFFFFF?text=SF',
-      quantity: 1
-    },
-    {
-      id: '2',
-      name: 'Summit Flex',
-      variant: 'Matte Black',
-      price: 400.50,
-      imageUrl: 'https://placehold.co/100x100/1E293B/FFFFFF?text=SF',
-      quantity: 1
-    }
-  ]);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
-  const addProduct = (product: Omit<Product, 'quantity'>) => {
-    setProducts(prev => {
-      const existingProduct = prev.find(p => p.id === product.id);
-      if (existingProduct) {
-        return prev.map(p =>
-          p.id === product.id
-            ? { ...p, quantity: p.quantity + 1 }
-            : p
-        );
+  // Load cart from localStorage on mount
+  useEffect(() => {
+    const savedCart = localStorage.getItem('cart');
+    if (savedCart) {
+      try {
+        setCartItems(JSON.parse(savedCart));
+      } catch (error) {
+        console.error('Error loading cart from localStorage:', error);
       }
-      return [...prev, { ...product, quantity: 1 }];
+    }
+  }, []);
+
+  // Save cart to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('cart', JSON.stringify(cartItems));
+  }, [cartItems]);
+
+  const addToCart = (product: NfcProduct, quantity: number = 1) => {
+    setCartItems(prev => {
+      const existingItem = prev.find(item => item.productId === product._id);
+      
+      if (existingItem) {
+        // Update quantity if item exists
+        return prev.map(item =>
+          item.productId === product._id
+            ? { ...item, quantity: item.quantity + quantity }
+            : item
+        );
+      } else {
+        // Add new item
+        return [...prev, { productId: product._id, quantity, product }];
+      }
     });
   };
 
-  const removeProduct = (productId: string) => {
-    setProducts(prev => prev.filter(p => p.id !== productId));
+  const removeFromCart = (productId: string) => {
+    setCartItems(prev => prev.filter(item => item.productId !== productId));
   };
 
   const updateQuantity = (productId: string, quantity: number) => {
     if (quantity <= 0) {
-      removeProduct(productId);
+      removeFromCart(productId);
       return;
     }
-    setProducts(prev =>
-      prev.map(p =>
-        p.id === productId ? { ...p, quantity } : p
+    
+    setCartItems(prev =>
+      prev.map(item =>
+        item.productId === productId ? { ...item, quantity } : item
       )
     );
   };
 
   const clearCart = () => {
-    setProducts([]);
+    setCartItems([]);
+    localStorage.removeItem('cart');
   };
 
-  const getTotalPrice = () => {
-    return products.reduce((total, product) => total + (product.price * product.quantity), 0);
+  const getCartTotal = () => {
+    return cartItems.reduce((total, item) => {
+      const price = item.product?.price || 0;
+      return total + (price * item.quantity);
+    }, 0);
   };
 
-  const getTotalItems = () => {
-    return products.reduce((total, product) => total + product.quantity, 0);
+  const getCartCount = () => {
+    return cartItems.reduce((count, item) => count + item.quantity, 0);
   };
 
   const value: CartContextType = {
-    products,
-    addProduct,
-    removeProduct,
+    cartItems,
+    addToCart,
+    removeFromCart,
     updateQuantity,
     clearCart,
-    getTotalPrice,
-    getTotalItems,
+    getCartTotal,
+    getCartCount,
   };
 
   return (

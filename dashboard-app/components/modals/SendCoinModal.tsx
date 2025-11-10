@@ -3,8 +3,10 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ArrowLeft, X } from "lucide-react"
+import { ArrowLeft, X, Shield } from "lucide-react"
 import { useState } from "react"
+import NfcTransactionAuth from "./NfcTransactionAuth"
+import { getStoredCardId } from "@/lib/nfcApi"
 
 interface SendCoinModalProps {
   isOpen: boolean
@@ -18,6 +20,9 @@ export default function SendCoinModal({ isOpen, onClose, onBack, selectedToken, 
   const [amount, setAmount] = useState("")
   const [recipientAddress, setRecipientAddress] = useState("XXXXXXXXXXXXXXXXXXXX")
   const [description, setDescription] = useState("Thank You")
+  const [showNfcAuth, setShowNfcAuth] = useState(false)
+  const [requireNfcAuth, setRequireNfcAuth] = useState(true)
+  const cardId = getStoredCardId()
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -89,8 +94,18 @@ export default function SendCoinModal({ isOpen, onClose, onBack, selectedToken, 
             />
           </div>
 
-          <Button onClick={onProceed} className="w-full bg-blue-600 hover:bg-blue-700 py-3 text-lg font-semibold">
-            Proceed
+          <Button 
+            onClick={() => {
+              if (requireNfcAuth && cardId) {
+                setShowNfcAuth(true)
+              } else {
+                onProceed()
+              }
+            }} 
+            className="w-full bg-blue-600 hover:bg-blue-700 py-3 text-lg font-semibold"
+          >
+            {requireNfcAuth && cardId && <Shield className="mr-2 h-4 w-4" />}
+            Proceed {requireNfcAuth && cardId && "(NFC Required)"}
           </Button>
 
           <div>
@@ -108,6 +123,29 @@ export default function SendCoinModal({ isOpen, onClose, onBack, selectedToken, 
           </div>
         </div>
       </DialogContent>
+
+      {/* NFC Authorization Modal */}
+      {cardId && (
+        <NfcTransactionAuth
+          isOpen={showNfcAuth}
+          onClose={() => setShowNfcAuth(false)}
+          cardId={cardId}
+          actionType="send"
+          actionData={{
+            amount,
+            toAddress: recipientAddress,
+            fromToken: selectedToken || 'ETH'
+          }}
+          onAuthorized={(actionPayload) => {
+            console.log('Transaction authorized:', actionPayload)
+            setShowNfcAuth(false)
+            onProceed()
+          }}
+          onError={(error) => {
+            console.error('NFC authorization error:', error)
+          }}
+        />
+      )}
     </Dialog>
   )
 }

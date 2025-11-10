@@ -800,6 +800,34 @@ const Header: React.FC<HeaderProps> = ({ onScrollToFeatures }) => {
               </div>
             )}
           </div>
+          <Link href="/nfc-access">
+            <button style={{
+              padding: '10px 20px',
+              background: 'linear-gradient(45deg, #4CAF50, #003BFC)',
+              border: 'none',
+              borderRadius: '8px',
+              color: '#fff',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 2px 10px rgba(76, 175, 80, 0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 4px 15px rgba(76, 175, 80, 0.5)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 2px 10px rgba(76, 175, 80, 0.3)';
+            }}
+            >
+              🔐 Get NFC Card
+            </button>
+          </Link>
           <Link href="/cart">
             <div className="cart">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -909,6 +937,26 @@ const Header: React.FC<HeaderProps> = ({ onScrollToFeatures }) => {
             }}
           >
             Contact
+          </Link>
+          <Link 
+            href="/nfc-access"
+            className="mobile-nav-item mobile-nav-uniform"
+            style={{
+              display: 'block',
+              padding: '18px 24px',
+              margin: '0',
+              color: '#4CAF50',
+              textDecoration: 'none',
+              borderBottom: '1px solid rgba(235, 226, 255, 0.1)',
+              fontSize: '16px',
+              fontWeight: '700',
+              cursor: 'pointer',
+              width: '100%',
+              textAlign: 'left',
+              background: 'linear-gradient(90deg, rgba(76, 175, 80, 0.15), rgba(0, 59, 252, 0.15))'
+            }}
+          >
+            🔐 Get NFC Card
           </Link>
           <Link 
             href="/academy" 
