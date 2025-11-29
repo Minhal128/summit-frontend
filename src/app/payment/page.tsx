@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
@@ -312,8 +312,8 @@ const PaymentSuccess = ({ orderId }: { orderId?: string }) => {
   );
 };
 
-// Main Payment Page Component
-const PaymentPage = () => {
+// Main Payment Page Component (needs Suspense wrapper)
+const PaymentPageContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [checkoutData, setCheckoutData] = useState<any>(null);
@@ -618,6 +618,37 @@ const PaymentPage = () => {
 
       <Footer />
     </div>
+  );
+};
+
+// Wrapper with Suspense boundary
+const PaymentPage = () => {
+  return (
+    <Suspense fallback={
+      <div style={{ 
+        minHeight: '100vh', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        background: '#0A1A2F',
+        color: '#EBE2FF'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ 
+            width: '40px', 
+            height: '40px', 
+            border: '4px solid rgba(76, 175, 80, 0.3)',
+            borderTop: '4px solid #4CAF50',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 16px'
+          }} />
+          <p>Loading payment page...</p>
+        </div>
+      </div>
+    }>
+      <PaymentPageContent />
+    </Suspense>
   );
 };
 

@@ -18,6 +18,10 @@ import {
   RefreshCw,
   Banknote,
   Shield,
+  ShoppingCart,
+  Users,
+  ArrowLeftRight,
+  ShieldCheck,
 } from "lucide-react"
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts"
 import { useState, useEffect } from "react"
@@ -37,6 +41,10 @@ import LiveMarketPage from "@/components/LiveMarketPage"
 import HardwareWalletModal from "@/components/modals/HardwareWalletModal"
 import ReceiveModal from "@/components/modals/ReceiveModal"
 import NfcManagement from "@/components/NfcManagement"
+import AdminDashboard from "@/components/AdminDashboard"
+import BuySellPage from "@/components/BuySellPage"
+import P2PTradingPage from "@/components/P2PTradingPage"
+import DexSwapPage from "@/components/DexSwapPage"
 import type { Token, TooltipProps, Network } from "@/types"
 
 // Data for the chart
@@ -206,6 +214,14 @@ const DashboardPage: NextPage = () => {
         return <LiveMarketPage className="w-full" />
       case "NFC":
         return <NfcManagement />
+      case "Admin":
+        return <AdminDashboard className="w-full" />
+      case "Buy & Sell":
+        return <BuySellPage className="w-full" />
+      case "P2P":
+        return <P2PTradingPage className="w-full" />
+      case "DEX":
+        return <DexSwapPage className="w-full" />
       default: // Dashboard
         return (
           <>
@@ -481,16 +497,40 @@ const DashboardPage: NextPage = () => {
                 <Clock className="w-5 h-5" /> Activity
               </button>
               <button
-                onClick={() => setActivePage("Settings")}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors w-full text-left ${activePage === "Settings" ? "bg-blue-500 text-white" : "hover:bg-slate-700/50 text-gray-300"}`}
+                onClick={() => setActivePage("Buy & Sell")}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors w-full text-left ${activePage === "Buy & Sell" ? "bg-blue-500 text-white" : "hover:bg-slate-700/50 text-gray-300"}`}
               >
-                <Settings className="w-5 h-5" /> Settings
+                <ShoppingCart className="w-5 h-5" /> Buy & Sell
+              </button>
+              <button
+                onClick={() => setActivePage("DEX")}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors w-full text-left ${activePage === "DEX" ? "bg-blue-500 text-white" : "hover:bg-slate-700/50 text-gray-300"}`}
+              >
+                <ArrowLeftRight className="w-5 h-5" /> DEX Swap
+              </button>
+              <button
+                onClick={() => setActivePage("P2P")}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors w-full text-left ${activePage === "P2P" ? "bg-blue-500 text-white" : "hover:bg-slate-700/50 text-gray-300"}`}
+              >
+                <Users className="w-5 h-5" /> P2P Trading
               </button>
               <button
                 onClick={() => setActivePage("Live Market")}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors w-full text-left ${activePage === "Live Market" ? "bg-blue-500 text-white" : "hover:bg-slate-700/50 text-gray-300"}`}
               >
                 <BarChart className="w-5 h-5" /> Live Market
+              </button>
+              <button
+                onClick={() => setActivePage("Settings")}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors w-full text-left ${activePage === "Settings" ? "bg-blue-500 text-white" : "hover:bg-slate-700/50 text-gray-300"}`}
+              >
+                <Settings className="w-5 h-5" /> Settings
+              </button>
+              <button
+                onClick={() => setActivePage("Admin")}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors w-full text-left ${activePage === "Admin" ? "bg-blue-500 text-white" : "hover:bg-slate-700/50 text-gray-300"}`}
+              >
+                <ShieldCheck className="w-5 h-5" /> Admin
               </button>
             </nav>
             <div className="relative mt-6">
@@ -582,12 +622,33 @@ const DashboardPage: NextPage = () => {
                     </button>
                     <button
                       onClick={() => {
-                        setActivePage("Settings")
+                        setActivePage("Buy & Sell")
                         setIsMobileMenuOpen(false)
                       }}
-                      className={`px-4 py-3 rounded-xl transition-all duration-200 w-full text-left font-medium ${activePage === "Settings" ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25" : "hover:bg-slate-700/50 text-gray-300 hover:text-white"}`}
+                      className={`px-4 py-3 rounded-xl transition-all duration-200 w-full text-left font-medium flex items-center gap-2 ${activePage === "Buy & Sell" ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25" : "hover:bg-slate-700/50 text-gray-300 hover:text-white"}`}
                     >
-                      Settings
+                      <ShoppingCart className="w-4 h-4" />
+                      Buy & Sell
+                    </button>
+                    <button
+                      onClick={() => {
+                        setActivePage("DEX")
+                        setIsMobileMenuOpen(false)
+                      }}
+                      className={`px-4 py-3 rounded-xl transition-all duration-200 w-full text-left font-medium flex items-center gap-2 ${activePage === "DEX" ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25" : "hover:bg-slate-700/50 text-gray-300 hover:text-white"}`}
+                    >
+                      <ArrowLeftRight className="w-4 h-4" />
+                      DEX Swap
+                    </button>
+                    <button
+                      onClick={() => {
+                        setActivePage("P2P")
+                        setIsMobileMenuOpen(false)
+                      }}
+                      className={`px-4 py-3 rounded-xl transition-all duration-200 w-full text-left font-medium flex items-center gap-2 ${activePage === "P2P" ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25" : "hover:bg-slate-700/50 text-gray-300 hover:text-white"}`}
+                    >
+                      <Users className="w-4 h-4" />
+                      P2P Trading
                     </button>
                     <button
                       onClick={() => {
@@ -600,6 +661,15 @@ const DashboardPage: NextPage = () => {
                     </button>
                     <button
                       onClick={() => {
+                        setActivePage("Settings")
+                        setIsMobileMenuOpen(false)
+                      }}
+                      className={`px-4 py-3 rounded-xl transition-all duration-200 w-full text-left font-medium ${activePage === "Settings" ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25" : "hover:bg-slate-700/50 text-gray-300 hover:text-white"}`}
+                    >
+                      Settings
+                    </button>
+                    <button
+                      onClick={() => {
                         setActivePage("NFC")
                         setIsMobileMenuOpen(false)
                       }}
@@ -607,6 +677,16 @@ const DashboardPage: NextPage = () => {
                     >
                       <Shield className="w-4 h-4" />
                       NFC Security
+                    </button>
+                    <button
+                      onClick={() => {
+                        setActivePage("Admin")
+                        setIsMobileMenuOpen(false)
+                      }}
+                      className={`px-4 py-3 rounded-xl transition-all duration-200 w-full text-left font-medium flex items-center gap-2 ${activePage === "Admin" ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25" : "hover:bg-slate-700/50 text-gray-300 hover:text-white"}`}
+                    >
+                      <ShieldCheck className="w-4 h-4" />
+                      Admin
                     </button>
                   </nav>
                 </div>
