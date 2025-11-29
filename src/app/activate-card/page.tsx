@@ -171,7 +171,7 @@ const ActivateCardPage = () => {
       if (data.status === 'success') {
         // Wait a moment for final progress update
         setTimeout(() => {
-          window.location.href = 'http://localhost:8081'; // Redirect to dashboard
+          window.location.href = 'https://dashboardsummit.vercel.app'; // Redirect to dashboard
         }, 2000);
       } else {
         toast.error(data.message || 'Failed to activate card');

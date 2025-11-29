@@ -92,7 +92,7 @@ export default function DexSwapPage({ className }: { className?: string }) {
         parseFloat(fromAmount)
       )
       setQuote(response.quote)
-      setToAmount(response.quote.amountOut?.toString() || "")
+      setToAmount(response.quote.toAmount?.toString() || "")
     } catch (error) {
       console.error("Failed to get quote:", error)
     } finally {
@@ -322,7 +322,7 @@ export default function DexSwapPage({ className }: { className?: string }) {
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-400">Rate</span>
                 <span className="text-white">
-                  1 {fromToken.symbol} = {(quote.amountOut / parseFloat(fromAmount)).toFixed(6)} {toToken.symbol}
+                  1 {fromToken.symbol} = {quote.exchangeRate?.toFixed(6)} {toToken.symbol}
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm">
@@ -332,8 +332,8 @@ export default function DexSwapPage({ className }: { className?: string }) {
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-400">Network Fee</span>
-                <span className="text-white">${quote.gasCostUSD?.toFixed(2)}</span>
+                <span className="text-gray-400">Est. Gas</span>
+                <span className="text-white">{quote.estimatedGas} units</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-400">Route</span>
