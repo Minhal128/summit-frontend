@@ -69,7 +69,7 @@ export default function SignupPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [formData, setFormData] = useState({
         email: '',
-        countryCode: '+01',
+        countryCode: '+65',
         phone: '',
         password: '',
         agreeToPolicy: false,
@@ -268,7 +268,10 @@ export default function SignupPage() {
                 `
             }} />
             {/* <Header /> */}
-            <h1 className="text-3xl font-bold text-white mb-2 text-center main-title" style={{ marginTop: '50px' ,marginBottom: '50px', fontFamily: 'Inter, sans-serif' }}>SUMMIT EXCHANGE</h1>
+            <div className="flex flex-col items-center justify-center" style={{ marginTop: '50px', marginBottom: '50px' }}>
+                <img src="/logo.png" alt="Summit Exchange Logo" className="h-16 w-auto mb-4" />
+                <h1 className="text-3xl font-bold text-white text-center main-title" style={{ fontFamily: 'Inter, sans-serif' }}>SUMMIT EXCHANGE</h1>
+            </div>
             <main className="relative z-10 flex-grow flex items-center justify-center p-2 sm:p-6 py-8 sm:py-24">
                 <div className="w-full max-w-3xl bg-[#10233D] backdrop-blur-md border border-slate-800 rounded-2xl shadow-2xl grid grid-cols-1 md:grid-cols-2 gap-0 md:gap-10 overflow-hidden mb-16 mobile-container">
                 
@@ -304,9 +307,65 @@ export default function SignupPage() {
                                         className="appearance-none h-12 w-full rounded-lg border border-slate-700 bg-slate-800 pl-6 pr-10 text-sm text-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 text-center"
                                         disabled={isLoading}
                                     >
-                                        <option value="+01">🇺🇸 +01</option>
-                                        <option value="+44">🇬🇧 +44</option>
-                                        <option value="+91">🇮🇳 +91</option>
+                                        <option value="+65">SG +65</option>
+                                        <option value="+86">CN +86</option>
+                                        <option value="+91">IN +91</option>
+                                        <option value="+81">JP +81</option>
+                                        <option value="+82">KR +82</option>
+                                        <option value="+852">HK +852</option>
+                                        <option value="+886">TW +886</option>
+                                        <option value="+60">MY +60</option>
+                                        <option value="+66">TH +66</option>
+                                        <option value="+62">ID +62</option>
+                                        <option value="+63">PH +63</option>
+                                        <option value="+84">VN +84</option>
+                                        <option value="+61">AU +61</option>
+                                        <option value="+64">NZ +64</option>
+                                        <option value="+92">PK +92</option>
+                                        <option value="+880">BD +880</option>
+                                        <option value="+94">LK +94</option>
+                                        <option value="+977">NP +977</option>
+                                        <option value="+971">AE +971</option>
+                                        <option value="+966">SA +966</option>
+                                        <option value="+974">QA +974</option>
+                                        <option value="+973">BH +973</option>
+                                        <option value="+968">OM +968</option>
+                                        <option value="+965">KW +965</option>
+                                        <option value="+972">IL +972</option>
+                                        <option value="+90">TR +90</option>
+                                        <option value="+44">GB +44</option>
+                                        <option value="+49">DE +49</option>
+                                        <option value="+33">FR +33</option>
+                                        <option value="+39">IT +39</option>
+                                        <option value="+34">ES +34</option>
+                                        <option value="+31">NL +31</option>
+                                        <option value="+32">BE +32</option>
+                                        <option value="+41">CH +41</option>
+                                        <option value="+43">AT +43</option>
+                                        <option value="+46">SE +46</option>
+                                        <option value="+47">NO +47</option>
+                                        <option value="+45">DK +45</option>
+                                        <option value="+358">FI +358</option>
+                                        <option value="+48">PL +48</option>
+                                        <option value="+351">PT +351</option>
+                                        <option value="+353">IE +353</option>
+                                        <option value="+30">GR +30</option>
+                                        <option value="+7">RU +7</option>
+                                        <option value="+380">UA +380</option>
+                                        <option value="+1">US +1</option>
+                                        <option value="+1">CA +1</option>
+                                        <option value="+52">MX +52</option>
+                                        <option value="+55">BR +55</option>
+                                        <option value="+54">AR +54</option>
+                                        <option value="+57">CO +57</option>
+                                        <option value="+56">CL +56</option>
+                                        <option value="+51">PE +51</option>
+                                        <option value="+27">ZA +27</option>
+                                        <option value="+234">NG +234</option>
+                                        <option value="+254">KE +254</option>
+                                        <option value="+20">EG +20</option>
+                                        <option value="+212">MA +212</option>
+                                        <option value="+233">GH +233</option>
                                     </select>
                                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>

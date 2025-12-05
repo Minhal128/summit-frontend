@@ -18,9 +18,8 @@ import {
   executeDexSwap,
   getDexTokens,
   type DexToken,
-  type SwapQuote,
+  type DexQuoteResponse,
 } from "@/lib/exchangeApi"
-type DexQuote = SwapQuote
 
 const DEFAULT_TOKENS: DexToken[] = [
   { symbol: "ETH", name: "Ethereum", address: "0x0000000000000000000000000000000000000000", decimals: 18 },
@@ -48,13 +47,14 @@ export default function DexSwapPage({ className }: { className?: string }) {
   const [toToken, setToToken] = useState<DexToken>(DEFAULT_TOKENS[1])
   const [fromAmount, setFromAmount] = useState("")
   const [toAmount, setToAmount] = useState("")
-  const [quote, setQuote] = useState<DexQuote | null>(null)
+  const [quote, setQuote] = useState<DexQuoteResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [swapping, setSwapping] = useState(false)
   const [slippage, setSlippage] = useState(0.5)
   const [showFromTokens, setShowFromTokens] = useState(false)
   const [showToTokens, setShowToTokens] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     loadTokens()
@@ -85,16 +85,20 @@ export default function DexSwapPage({ className }: { className?: string }) {
 
   const fetchQuote = async () => {
     setLoading(true)
+    setError(null)
     try {
       const response = await getDexQuote(
-        fromToken.address,
-        toToken.address,
+        fromToken.symbol,
+        toToken.symbol,
         parseFloat(fromAmount)
       )
-      setQuote(response.quote)
-      setToAmount(response.quote.toAmount?.toString() || "")
-    } catch (error) {
-      console.error("Failed to get quote:", error)
+      setQuote(response)
+      setToAmount(response.amountOut || "")
+    } catch (err: any) {
+      console.error("Failed to get quote:", err)
+      setError(err.message || "Failed to get quote")
+      setQuote(null)
+      setToAmount("")
     } finally {
       setLoading(false)
     }
@@ -104,24 +108,37 @@ export default function DexSwapPage({ className }: { className?: string }) {
     if (!quote || !fromAmount) return
 
     setSwapping(true)
+    setError(null)
     try {
+      const token = localStorage.getItem('auth_token') || localStorage.getItem('nfc_token')
+      
+      if (!token) {
+        setError("Please login with your NFC card to execute swaps")
+        return
+      }
+
       await executeDexSwap(
         {
-          fromToken: fromToken.address,
-          toToken: toToken.address,
+          fromToken: fromToken.symbol,
+          toToken: toToken.symbol,
           amount: parseFloat(fromAmount),
           slippageTolerance: slippage,
-          walletAddress: "", // TODO: Add user's wallet address
-          privateKey: "", // TODO: Add user's private key securely
+          walletAddress: "", // Will be filled from user session
+          privateKey: "", // Handled securely on backend
         },
-        "" // TODO: Add NFC authorization token
+        token
       )
       // Reset form on success
       setFromAmount("")
       setToAmount("")
       setQuote(null)
-    } catch (error) {
-      console.error("Swap failed:", error)
+    } catch (err: any) {
+      console.error("Swap failed:", err)
+      if (err.message?.includes("authorization") || err.message?.includes("token")) {
+        setError("Please login with your NFC card to execute swaps")
+      } else {
+        setError(err.message || "Swap failed")
+      }
     } finally {
       setSwapping(false)
     }

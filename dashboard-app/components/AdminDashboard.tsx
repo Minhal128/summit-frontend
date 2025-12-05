@@ -79,9 +79,18 @@ export default function AdminDashboard({ className }: { className?: string }) {
   const [totalUserPages, setTotalUserPages] = useState(1)
   const [searchQuery, setSearchQuery] = useState("")
   const [reportLoading, setReportLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   useEffect(() => {
-    loadData()
+    const token = localStorage.getItem('auth_token') || localStorage.getItem('nfc_token')
+    setIsAuthenticated(!!token)
+    if (token) {
+      loadData()
+    } else {
+      setLoading(false)
+      setError("Admin access requires authentication. Please login with your NFC card.")
+    }
   }, [])
 
   useEffect(() => {
@@ -102,8 +111,14 @@ export default function AdminDashboard({ className }: { className?: string }) {
       setStats(dashboardData.stats)
       setCards(cardsData.cards || [])
       setAnalytics(analyticsData.analytics)
-    } catch (error) {
-      console.error("Failed to load admin data:", error)
+      setError(null)
+    } catch (err: any) {
+      console.error("Failed to load admin data:", err)
+      if (err.message?.includes("authorization") || err.message?.includes("token")) {
+        setError("Admin access requires authentication. Please login with your NFC card.")
+      } else {
+        setError(err.message || "Failed to load admin data")
+      }
     } finally {
       setLoading(false)
     }
@@ -150,6 +165,18 @@ export default function AdminDashboard({ className }: { className?: string }) {
     return (
       <div className={`flex items-center justify-center min-h-[400px] ${className}`}>
         <RefreshCw className="w-8 h-8 animate-spin text-blue-400" />
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className={`flex flex-col items-center justify-center min-h-[400px] ${className}`}>
+        <Shield className="w-16 h-16 text-red-400 mb-4" />
+        <h2 className="text-2xl text-white font-bold mb-2">Authentication Required</h2>
+        <p className="text-gray-400 text-center max-w-md">
+          Please log in to access the Admin Dashboard. This area requires administrator privileges.
+        </p>
       </div>
     )
   }

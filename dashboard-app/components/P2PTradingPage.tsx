@@ -14,6 +14,8 @@ import {
   Clock,
   AlertTriangle,
   DollarSign,
+  Lock,
+  AlertCircle,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -46,6 +48,8 @@ export default function P2PTradingPage({ className }: { className?: string }) {
   const [selectedCrypto, setSelectedCrypto] = useState(CRYPTOS[0])
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+  const [error, setError] = useState<string | null>(null)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
   
   // Create order form state
   const [orderType, setOrderType] = useState<"buy" | "sell">("sell")
@@ -55,6 +59,11 @@ export default function P2PTradingPage({ className }: { className?: string }) {
   const [orderMaxLimit, setOrderMaxLimit] = useState("")
   const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<string[]>([])
   const [createLoading, setCreateLoading] = useState(false)
+
+  useEffect(() => {
+    const token = localStorage.getItem('auth_token') || localStorage.getItem('nfc_token')
+    setIsAuthenticated(!!token)
+  }, [])
 
   useEffect(() => {
     loadOrders()
@@ -80,6 +89,12 @@ export default function P2PTradingPage({ className }: { className?: string }) {
   const handleCreateOrder = async () => {
     if (!orderAmount || !orderPrice) return
     
+    if (!isAuthenticated) {
+      setError("Please login with your NFC card to create orders")
+      return
+    }
+    
+    setError(null)
     setCreateLoading(true)
     try {
       await createP2POrder({

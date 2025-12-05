@@ -213,7 +213,27 @@ export async function getDexPairs(): Promise<{ pairs: string[][] }> {
   return apiFetch('/api/dex/pairs');
 }
 
-export async function getDexQuote(fromToken: string, toToken: string, amount: number): Promise<{ quote: SwapQuote }> {
+// DEX Quote response from API
+export interface DexQuoteResponse {
+  success: boolean;
+  fromToken: string;
+  toToken: string;
+  amountIn: string;
+  amountOut: string;
+  minAmountOut: string;
+  exchangeRate: string;
+  slippageTolerance: number;
+  fee: string;
+  priceImpact: string;
+  route: string[];
+  estimatedGas: string;
+  dex: string;
+  network: string;
+  timestamp: string;
+  isSimulated: boolean;
+}
+
+export async function getDexQuote(fromToken: string, toToken: string, amount: number): Promise<DexQuoteResponse> {
   return apiFetch(`/api/dex/quote?fromToken=${fromToken}&toToken=${toToken}&amount=${amount}`);
 }
 

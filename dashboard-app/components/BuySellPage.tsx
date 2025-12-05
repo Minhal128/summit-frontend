@@ -11,6 +11,8 @@ import {
   Shield,
   Zap,
   Globe,
+  AlertCircle,
+  Lock,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,6 +21,7 @@ import {
   createProviderOrder,
   type ProviderQuote,
 } from "@/lib/exchangeApi"
+import { useWallet } from "@/contexts/WalletContext"
 
 const PROVIDERS = [
   { id: "mercuryo", name: "Mercuryo", icon: "💳", color: "from-blue-500 to-blue-600" },
@@ -37,6 +40,7 @@ const CRYPTOS = [
 ]
 
 export default function BuySellPage({ className }: { className?: string }) {
+  const { balances, isAuthenticated, loading: walletLoading } = useWallet()
   const [mode, setMode] = useState<"buy" | "sell">("buy")
   const [amount, setAmount] = useState("")
   const [selectedCrypto, setSelectedCrypto] = useState(CRYPTOS[0])
@@ -44,10 +48,28 @@ export default function BuySellPage({ className }: { className?: string }) {
   const [loading, setLoading] = useState(false)
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null)
   const [orderLoading, setOrderLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  // Get user's balance for selected crypto
+  const getUserBalance = (symbol: string): number => {
+    const balance = balances.find(b => b.symbol === symbol)
+    return balance?.amount || 0
+  }
+
+  const userBalance = getUserBalance(selectedCrypto.symbol)
+  const hasInsufficientBalance = mode === "sell" && parseFloat(amount || "0") > userBalance
 
   const fetchQuotes = async () => {
     if (!amount || parseFloat(amount) <= 0) return
     
+    // Check for insufficient balance when selling
+    if (mode === "sell" && hasInsufficientBalance) {
+      setError(`Insufficient ${selectedCrypto.symbol} balance. You have ${userBalance.toFixed(6)} ${selectedCrypto.symbol}`)
+      setQuotes([])
+      return
+    }
+    
+    setError(null)
     setLoading(true)
     try {
       const response = await getProviderQuotes({
@@ -58,8 +80,10 @@ export default function BuySellPage({ className }: { className?: string }) {
         amountType: "fiat"
       })
       setQuotes(response.quotes || [])
-    } catch (error) {
-      console.error("Failed to fetch quotes:", error)
+    } catch (err: any) {
+      console.error("Failed to fetch quotes:", err)
+      setError(err.message || "Failed to fetch quotes")
+      setQuotes([])
     } finally {
       setLoading(false)
     }
@@ -75,6 +99,19 @@ export default function BuySellPage({ className }: { className?: string }) {
   const handleCreateOrder = async (providerId: string) => {
     if (!amount) return
     
+    // Check authentication
+    if (!isAuthenticated) {
+      setError("Please login to create an order")
+      return
+    }
+    
+    // Check for insufficient balance when selling
+    if (mode === "sell" && hasInsufficientBalance) {
+      setError(`Insufficient ${selectedCrypto.symbol} balance. You have ${userBalance.toFixed(6)} ${selectedCrypto.symbol}`)
+      return
+    }
+    
+    setError(null)
     setSelectedProvider(providerId)
     setOrderLoading(true)
     try {
@@ -90,8 +127,13 @@ export default function BuySellPage({ className }: { className?: string }) {
       if (response.redirectUrl) {
         window.open(response.redirectUrl, "_blank")
       }
-    } catch (error) {
-      console.error("Failed to create order:", error)
+    } catch (err: any) {
+      console.error("Failed to create order:", err)
+      if (err.message?.includes("authorization") || err.message?.includes("token")) {
+        setError("Please login to create an order. Scan your NFC card to authenticate.")
+      } else {
+        setError(err.message || "Failed to create order")
+      }
     } finally {
       setOrderLoading(false)
       setSelectedProvider(null)
@@ -181,6 +223,26 @@ export default function BuySellPage({ className }: { className?: string }) {
 
             {/* Features */}
             <div className="space-y-3 pt-4 border-t border-slate-700">
+              {mode === "sell" && (
+                <div className="flex items-center justify-between text-sm mb-3 p-3 bg-slate-800 rounded-lg">
+                  <span className="text-gray-400">Your {selectedCrypto.symbol} Balance:</span>
+                  <span className={`font-semibold ${userBalance > 0 ? 'text-green-400' : 'text-gray-500'}`}>
+                    {userBalance.toFixed(6)} {selectedCrypto.symbol}
+                  </span>
+                </div>
+              )}
+              {!isAuthenticated && (
+                <div className="flex items-center gap-2 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-yellow-400 text-sm">
+                  <Lock className="w-4 h-4" />
+                  <span>Login with NFC card to trade</span>
+                </div>
+              )}
+              {error && (
+                <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
               <div className="flex items-center gap-3 text-gray-400 text-sm">
                 <Shield className="w-4 h-4 text-green-400" />
                 <span>Secure & Instant</span>
