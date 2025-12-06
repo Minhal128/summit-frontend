@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import Image from 'next/image';
 
 export default function OTPVerificationModal() {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -42,13 +43,15 @@ export default function OTPVerificationModal() {
   }, []);
 
   const SummitLogo = () => (
-    <div className="flex items-center justify-center gap-2">
-      <div className="relative">
-        <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
-          <div className="text-blue-600 font-bold text-lg">S</div>
-        </div>
-      </div>
-      <span className="text-white text-xl font-semibold tracking-wide">SUMMIT EXCHANGE</span>
+    <div className="flex items-center justify-center">
+      <Image
+        src="/logo.png"
+        alt="Summit Exchange"
+        width={200}
+        height={60}
+        priority
+        className="object-contain"
+      />
     </div>
   );
 
@@ -68,9 +71,9 @@ export default function OTPVerificationModal() {
               <DialogTitle className="text-white text-2xl font-semibold mb-4">
                 OTP Verification
               </DialogTitle>
-              <p className="text-slate-300 text-sm leading-relaxed px-2">
+              <DialogDescription className="text-slate-300 text-sm leading-relaxed px-2">
                 Enter the OTP code sent to your phone number, or use your email address to complete verification.
-              </p>
+              </DialogDescription>
             </div>
 
             {/* OTP Input Boxes */}

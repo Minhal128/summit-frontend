@@ -4,9 +4,8 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import CTASection from "@/components/CTASection";
+import { PhoneInput } from "react-international-phone";
+import "react-international-phone/style.css";
 // --- HELPER & SIMULATED SHADCN/UI COMPONENTS ---
 // These are simplified versions to make this a single, runnable file.
 
@@ -126,10 +125,9 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [loginMethod, setLoginMethod] = useState("email");
+  const [phone, setPhone] = useState("");
   const [formData, setFormData] = useState({
     email: "",
-    countryCode: "+65",
-    phone: "",
     password: "",
     agreeToPolicy: false,
     agreeToMarketing: false,
@@ -148,12 +146,8 @@ export default function SignupPage() {
         return false;
       }
     } else if (loginMethod === "phone") {
-      if (!formData.phone) {
-        toast.error("Phone number is required");
-        return false;
-      }
-      if (!/^\d{10}$/.test(formData.phone.replace(/\s/g, ""))) {
-        toast.error("Please enter a valid 10-digit phone number");
+      if (!phone || phone.length < 8) {
+        toast.error("Please enter a valid phone number");
         return false;
       }
     }
@@ -193,10 +187,7 @@ export default function SignupPage() {
     try {
       try {
         const { apiFetch } = await import("../../lib/api");
-        const identifier =
-          loginMethod === "email"
-            ? formData.email
-            : `${formData.countryCode}${formData.phone.replace(/\s/g, "")}`;
+        const identifier = loginMethod === "email" ? formData.email : phone;
         const data: any = await apiFetch("/api/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -276,6 +267,101 @@ export default function SignupPage() {
         dangerouslySetInnerHTML={{
           __html: `
                     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+                    /* Custom styles for react-international-phone */
+                    .react-international-phone-input-container {
+                        width: 100%;
+                    }
+
+                    .react-international-phone-input-container .react-international-phone-input {
+                        height: 48px !important;
+                        width: 100% !important;
+                        background-color: #1e293b !important;
+                        border: 1px solid #334155 !important;
+                        border-radius: 0 8px 8px 0 !important;
+                        color: #e2e8f0 !important;
+                        font-size: 14px !important;
+                    }
+
+                    .react-international-phone-input-container .react-international-phone-input:focus {
+                        outline: none !important;
+                        box-shadow: 0 0 0 2px #3b82f6 !important;
+                    }
+
+                    .react-international-phone-input-container .react-international-phone-input::placeholder {
+                        color: #64748b !important;
+                    }
+
+                    .react-international-phone-country-selector-button {
+                        height: 48px !important;
+                        background-color: #1e293b !important;
+                        border: 1px solid #334155 !important;
+                        border-radius: 8px 0 0 8px !important;
+                        border-right: none !important;
+                        padding: 0 12px !important;
+                    }
+
+                    .react-international-phone-country-selector-button:hover {
+                        background-color: #334155 !important;
+                    }
+
+                    .react-international-phone-country-selector-button__button-content {
+                        gap: 8px !important;
+                    }
+
+                    .react-international-phone-country-selector-dropdown {
+                        background-color: #1e293b !important;
+                        border: 1px solid #334155 !important;
+                        border-radius: 8px !important;
+                        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3) !important;
+                        max-height: 300px !important;
+                        z-index: 9999 !important;
+                    }
+
+                    .react-international-phone-country-selector-dropdown__list-item {
+                        padding: 10px 12px !important;
+                        color: #e2e8f0 !important;
+                    }
+
+                    .react-international-phone-country-selector-dropdown__list-item:hover {
+                        background-color: #334155 !important;
+                    }
+
+                    .react-international-phone-country-selector-dropdown__list-item--selected {
+                        background-color: #3b82f6 !important;
+                        color: white !important;
+                    }
+
+                    .react-international-phone-country-selector-dropdown__list-item--focused {
+                        background-color: #334155 !important;
+                    }
+
+                    .react-international-phone-country-selector-dropdown__list-item-country-name {
+                        color: #e2e8f0 !important;
+                    }
+
+                    .react-international-phone-country-selector-dropdown__list-item-dial-code {
+                        color: #94a3b8 !important;
+                    }
+
+                    .react-international-phone-dial-code-preview {
+                        color: #e2e8f0 !important;
+                        padding-left: 4px !important;
+                    }
+
+                    .react-international-phone-country-selector-dropdown__search {
+                        background-color: #0f172a !important;
+                        border: 1px solid #334155 !important;
+                        color: #e2e8f0 !important;
+                        padding: 8px 12px !important;
+                        margin: 8px !important;
+                        border-radius: 6px !important;
+                    }
+
+                    .react-international-phone-country-selector-dropdown__search::placeholder {
+                        color: #64748b !important;
+                    }
+
                     @media (max-width: 1024px) {
                         .mobile-responsive-card {
                             max-width: 95vw !important;
@@ -504,102 +590,15 @@ export default function SignupPage() {
 
               {loginMethod === "phone" && (
                 <div
-                  className="flex items-center gap-2 mobile-responsive-inputs"
+                  className="mobile-responsive-inputs"
                   style={{ marginLeft: "20px", marginBottom: "20px" }}
                 >
-                  <div className="relative min-w-[140px]">
-                    <select
-                      name="countryCode"
-                      value={formData.countryCode}
-                      onChange={handleInputChange}
-                      className="appearance-none h-12 w-full rounded-lg border border-slate-700 bg-slate-800 pl-6 pr-10 text-sm text-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 text-center"
-                      disabled={isLoading}
-                    >
-                      <option value="+65">SG +65</option>
-                      <option value="+86">CN +86</option>
-                      <option value="+91">IN +91</option>
-                      <option value="+81">JP +81</option>
-                      <option value="+82">KR +82</option>
-                      <option value="+852">HK +852</option>
-                      <option value="+886">TW +886</option>
-                      <option value="+60">MY +60</option>
-                      <option value="+66">TH +66</option>
-                      <option value="+62">ID +62</option>
-                      <option value="+63">PH +63</option>
-                      <option value="+84">VN +84</option>
-                      <option value="+61">AU +61</option>
-                      <option value="+64">NZ +64</option>
-                      <option value="+92">PK +92</option>
-                      <option value="+880">BD +880</option>
-                      <option value="+94">LK +94</option>
-                      <option value="+977">NP +977</option>
-                      <option value="+971">AE +971</option>
-                      <option value="+966">SA +966</option>
-                      <option value="+974">QA +974</option>
-                      <option value="+973">BH +973</option>
-                      <option value="+968">OM +968</option>
-                      <option value="+965">KW +965</option>
-                      <option value="+972">IL +972</option>
-                      <option value="+90">TR +90</option>
-                      <option value="+44">GB +44</option>
-                      <option value="+49">DE +49</option>
-                      <option value="+33">FR +33</option>
-                      <option value="+39">IT +39</option>
-                      <option value="+34">ES +34</option>
-                      <option value="+31">NL +31</option>
-                      <option value="+32">BE +32</option>
-                      <option value="+41">CH +41</option>
-                      <option value="+43">AT +43</option>
-                      <option value="+46">SE +46</option>
-                      <option value="+47">NO +47</option>
-                      <option value="+45">DK +45</option>
-                      <option value="+358">FI +358</option>
-                      <option value="+48">PL +48</option>
-                      <option value="+351">PT +351</option>
-                      <option value="+353">IE +353</option>
-                      <option value="+30">GR +30</option>
-                      <option value="+7">RU +7</option>
-                      <option value="+380">UA +380</option>
-                      <option value="+1">US +1</option>
-                      <option value="+1">CA +1</option>
-                      <option value="+52">MX +52</option>
-                      <option value="+55">BR +55</option>
-                      <option value="+54">AR +54</option>
-                      <option value="+57">CO +57</option>
-                      <option value="+56">CL +56</option>
-                      <option value="+51">PE +51</option>
-                      <option value="+27">ZA +27</option>
-                      <option value="+234">NG +234</option>
-                      <option value="+254">KE +254</option>
-                      <option value="+20">EG +20</option>
-                      <option value="+212">MA +212</option>
-                      <option value="+233">GH +233</option>
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M19 9l-7 7-7-7"
-                        ></path>
-                      </svg>
-                    </div>
-                  </div>
-                  <Input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    placeholder="000 000 0000"
-                    className="flex-1"
+                  <PhoneInput
+                    defaultCountry="sg"
+                    value={phone}
+                    onChange={(phone) => setPhone(phone)}
+                    placeholder="Enter phone number"
                     disabled={isLoading}
-                    autoComplete="tel"
                   />
                 </div>
               )}

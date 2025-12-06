@@ -36,7 +36,7 @@ const LogoIcon = (props: React.SVGProps<SVGSVGElement>) => (
 const Header = () => (
     <header className="w-full max-w-6xl mx-auto py-12 flex items-center justify-center">
         <div className="flex items-center gap-3 text-white">
-            <LogoIcon className="w-9 h-9" />
+            <img src="/logo.png" alt="Summit Logo" className="w-10 h-10 object-contain" />
             <span className="text-2xl font-bold tracking-wider">SUMMIT EXCHANGE</span>
         </div>
     </header>

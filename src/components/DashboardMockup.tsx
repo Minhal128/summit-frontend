@@ -311,7 +311,8 @@ const DashboardMockup: React.FC = () => {
       <div className="dashboard-mockup">
         <div className="dashboard-inner">
           <div className="dashboard-header">
-            <div className="dashboard-logo">
+            <div className="dashboard-logo" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <img src="/logo.png" alt="Summit Logo" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
               SUMMIT Flex 3
             </div>
             <div className="dashboard-actions">
