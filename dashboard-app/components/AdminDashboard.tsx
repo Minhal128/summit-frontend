@@ -416,7 +416,7 @@ export default function AdminDashboard({ className }: { className?: string }) {
             <StatCard
               icon={Activity}
               title="Avg Transaction"
-              value={`$${(analytics.avgTransactionSize || 0).toFixed(2)}`}
+              value={`$${(Number(analytics.avgTransactionSize) || 0).toFixed(2)}`}
             />
           </div>
 

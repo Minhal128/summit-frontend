@@ -64,7 +64,7 @@ export default function BuySellPage({ className }: { className?: string }) {
     
     // Check for insufficient balance when selling
     if (mode === "sell" && hasInsufficientBalance) {
-      setError(`Insufficient ${selectedCrypto.symbol} balance. You have ${userBalance.toFixed(6)} ${selectedCrypto.symbol}`)
+      setError(`Insufficient ${selectedCrypto.symbol} balance. You have ${(Number(userBalance) || 0).toFixed(6)} ${selectedCrypto.symbol}`)
       setQuotes([])
       return
     }
@@ -107,7 +107,7 @@ export default function BuySellPage({ className }: { className?: string }) {
     
     // Check for insufficient balance when selling
     if (mode === "sell" && hasInsufficientBalance) {
-      setError(`Insufficient ${selectedCrypto.symbol} balance. You have ${userBalance.toFixed(6)} ${selectedCrypto.symbol}`)
+      setError(`Insufficient ${selectedCrypto.symbol} balance. You have ${(Number(userBalance) || 0).toFixed(6)} ${selectedCrypto.symbol}`)
       return
     }
     
@@ -227,7 +227,7 @@ export default function BuySellPage({ className }: { className?: string }) {
                 <div className="flex items-center justify-between text-sm mb-3 p-3 bg-slate-800 rounded-lg">
                   <span className="text-gray-400">Your {selectedCrypto.symbol} Balance:</span>
                   <span className={`font-semibold ${userBalance > 0 ? 'text-green-400' : 'text-gray-500'}`}>
-                    {userBalance.toFixed(6)} {selectedCrypto.symbol}
+                    {(Number(userBalance) || 0).toFixed(6)} {selectedCrypto.symbol}
                   </span>
                 </div>
               )}
@@ -319,13 +319,13 @@ export default function BuySellPage({ className }: { className?: string }) {
                               )}
                             </div>
                             <p className="text-gray-400 text-sm">
-                              Fee: ${quote.totalFees?.toFixed(2) || "0.00"}
+                              Fee: ${(Number(quote.totalFees) || 0).toFixed(2)}
                             </p>
                           </div>
                         </div>
                         <div className="text-right">
                           <p className="text-white font-bold text-lg">
-                            {quote.cryptoAmount?.toFixed(6)} {selectedCrypto.symbol}
+                            {(Number(quote.cryptoAmount) || 0).toFixed(6)} {selectedCrypto.symbol}
                           </p>
                           <p className="text-gray-400 text-sm">
                             Rate: ${quote.exchangeRate?.toLocaleString()}

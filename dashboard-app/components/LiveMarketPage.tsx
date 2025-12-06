@@ -26,20 +26,29 @@ interface MarketCoin {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://king-prawn-app-nv72k.ondigitalocean.app'
 
+// Safe number conversion
+function safeNumber(value: unknown): number {
+  if (typeof value === 'number' && !isNaN(value)) return value
+  const num = Number(value)
+  return isNaN(num) ? 0 : num
+}
+
 // Format large numbers (market cap, volume)
-function formatLargeNumber(num: number): string {
-  if (num >= 1e12) return `$${(num / 1e12).toFixed(2)}T`
-  if (num >= 1e9) return `$${(num / 1e9).toFixed(2)}B`
-  if (num >= 1e6) return `$${(num / 1e6).toFixed(2)}M`
-  if (num >= 1e3) return `$${(num / 1e3).toFixed(2)}K`
-  return `$${num.toFixed(2)}`
+function formatLargeNumber(num: unknown): string {
+  const n = safeNumber(num)
+  if (n >= 1e12) return `$${(n / 1e12).toFixed(2)}T`
+  if (n >= 1e9) return `$${(n / 1e9).toFixed(2)}B`
+  if (n >= 1e6) return `$${(n / 1e6).toFixed(2)}M`
+  if (n >= 1e3) return `$${(n / 1e3).toFixed(2)}K`
+  return `$${n.toFixed(2)}`
 }
 
 // Format price based on value
-function formatPrice(price: number): string {
-  if (price >= 1000) return `$${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-  if (price >= 1) return `$${price.toFixed(2)}`
-  return `$${price.toFixed(6)}`
+function formatPrice(price: unknown): string {
+  const p = safeNumber(price)
+  if (p >= 1000) return `$${p.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  if (p >= 1) return `$${p.toFixed(2)}`
+  return `$${p.toFixed(6)}`
 }
 
 // Get icon colors based on symbol

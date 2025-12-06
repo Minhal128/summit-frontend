@@ -48,12 +48,13 @@ const CRYPTO_COLORS: Record<string, { icon: string; color: string }> = {
   LTC: { icon: 'L', color: 'bg-gray-400' },
 }
 
-function formatAmount(amount: number, symbol: string): string {
-  if (amount === 0) return `0 ${symbol}`
-  if (amount < 0.00001) return `<0.00001 ${symbol}`
-  if (amount < 1) return `${amount.toFixed(6)} ${symbol}`
-  if (amount < 1000) return `${amount.toFixed(4)} ${symbol}`
-  return `${amount.toLocaleString('en-US', { maximumFractionDigits: 2 })} ${symbol}`
+function formatAmount(amount: unknown, symbol: string): string {
+  const num = typeof amount === 'number' ? amount : Number(amount) || 0
+  if (num === 0) return `0 ${symbol}`
+  if (num < 0.00001) return `<0.00001 ${symbol}`
+  if (num < 1) return `${num.toFixed(6)} ${symbol}`
+  if (num < 1000) return `${num.toFixed(4)} ${symbol}`
+  return `${num.toLocaleString('en-US', { maximumFractionDigits: 2 })} ${symbol}`
 }
 
 function formatUSD(value: number): string {

@@ -62,10 +62,11 @@ const chartData = [
 const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
   if (active && payload && payload.length) {
     const time = "11:33:58 AM"
+    const value = typeof payload[0].value === 'number' ? payload[0].value : Number(payload[0].value) || 0
     return (
       <div className="bg-white text-black p-3 rounded-md shadow-lg text-center">
         <p className="font-bold text-sm">{`${time}`}</p>
-        <p className="text-xs font-semibold">{`$${payload[0].value.toFixed(3)}`}</p>
+        <p className="text-xs font-semibold">{`$${value.toFixed(3)}`}</p>
       </div>
     )
   }
@@ -301,8 +302,8 @@ const DashboardPage: NextPage = () => {
                   </div>
 
                   {/* Chart */}
-                  <div className="w-full h-48 sm:h-56 md:h-64">
-                    <ResponsiveContainer width="100%" height="100%">
+                  <div className="w-full h-48 sm:h-56 md:h-64" style={{ minHeight: '192px', minWidth: '200px' }}>
+                    <ResponsiveContainer width="100%" height="100%" minHeight={192}>
                       <AreaChart data={chartData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
                         <defs>
                           <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
@@ -317,7 +318,7 @@ const DashboardPage: NextPage = () => {
                           tickLine={false}
                           axisLine={false}
                           domain={["dataMin - 1", "dataMax + 1"]}
-                          tickFormatter={(value) => `${value.toFixed(2)}K`}
+                          tickFormatter={(value) => `${(typeof value === 'number' ? value : Number(value) || 0).toFixed(2)}K`}
                         />
                         <Tooltip
                           content={<CustomTooltip />}

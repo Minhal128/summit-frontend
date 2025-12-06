@@ -339,13 +339,13 @@ export default function DexSwapPage({ className }: { className?: string }) {
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-400">Rate</span>
                 <span className="text-white">
-                  1 {fromToken.symbol} = {quote.exchangeRate?.toFixed(6)} {toToken.symbol}
+                  1 {fromToken.symbol} = {(Number(quote.exchangeRate) || 0).toFixed(6)} {toToken.symbol}
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-400">Price Impact</span>
                 <span className={`${(quote.priceImpact || 0) > 3 ? "text-red-400" : "text-green-400"}`}>
-                  {quote.priceImpact?.toFixed(2)}%
+                  {(Number(quote.priceImpact) || 0).toFixed(2)}%
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm">

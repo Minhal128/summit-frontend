@@ -119,7 +119,7 @@ export default function ActivityTable({ className }: ActivityTableProps) {
             txId: tx.txHash || tx.txId || '',
             txIdShort: shortenAddress(tx.txHash || tx.txId || ''),
             networkFee: tx.fee?.toString() || '0',
-            networkFeeFormatted: `$${(tx.feeUsd || tx.fee || 0).toFixed(2)}`,
+            networkFeeFormatted: `$${(Number(tx.feeUsd || tx.fee) || 0).toFixed(2)}`,
             time,
             status: tx.status || 'Completed',
             blockExplorerUrl: getBlockExplorerUrl(tx.currency || 'BTC', tx.txHash || tx.txId || '')
