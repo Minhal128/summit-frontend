@@ -6,9 +6,8 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { PhoneInput } from "react-international-phone";
 import "react-international-phone/style.css";
-// --- HELPER & SIMULATED SHADCN/UI COMPONENTS ---
-// These are simplified versions to make this a single, runnable file.
 
+// --- HELPER & SIMULATED SHADCN/UI COMPONENTS ---
 const cn = (...classes: (string | undefined | null | false)[]): string =>
   classes.filter(Boolean).join(" ");
 
@@ -18,7 +17,7 @@ const Input = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <input
     className={cn(
-      "flex h-12 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm text-gray-200 placeholder:text-gray-500",
+      "flex h-12 w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-2 text-sm text-gray-200 placeholder:text-gray-500",
       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
       className,
     )}
@@ -28,58 +27,7 @@ const Input = React.forwardRef<
 ));
 Input.displayName = "Input";
 
-const Checkbox = React.forwardRef<
-  HTMLInputElement,
-  React.InputHTMLAttributes<HTMLInputElement>
->(({ className, ...props }, ref) => (
-  <input
-    type="checkbox"
-    ref={ref}
-    className={cn(
-      "h-4 w-4 shrink-0 rounded-sm border border-slate-600 bg-slate-800 text-blue-600",
-      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
-      className,
-    )}
-    {...props}
-  />
-));
-Checkbox.displayName = "Checkbox";
-
 // --- SVG ICONS ---
-
-const LogoIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg
-    width="36"
-    height="36"
-    viewBox="0 0 36 36"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    {...props}
-  >
-    <path
-      d="M12.9231 3H3V12.9231H12.9231V3Z"
-      stroke="currentColor"
-      strokeWidth="3"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M23.0769 12.9231H12.9231V23.0769H23.0769V12.9231Z"
-      stroke="currentColor"
-      strokeWidth="3"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M33 23.0769H23.0769V33H33V23.0769Z"
-      stroke="currentColor"
-      strokeWidth="3"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
-
 const EyeIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -119,18 +67,15 @@ const EyeSlashIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-// --- MAIN SIGNUP PAGE COMPONENT ---
-
-export default function SignupPage() {
+// --- MAIN LOGIN PAGE COMPONENT ---
+export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [loginMethod, setLoginMethod] = useState("email");
+  const [loginMethod, setLoginMethod] = useState<"email" | "phone">("email");
   const [phone, setPhone] = useState("");
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-    agreeToPolicy: false,
-    agreeToMarketing: false,
   });
   const router = useRouter();
 
@@ -164,16 +109,9 @@ export default function SignupPage() {
     return true;
   };
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-  ) => {
-    const { name, value, type } = e.target;
-    if (type === "checkbox") {
-      const checked = (e.target as HTMLInputElement).checked;
-      setFormData((prev) => ({ ...prev, [name]: checked }));
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
-    }
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -185,37 +123,32 @@ export default function SignupPage() {
 
     setIsLoading(true);
     try {
-      try {
-        const { apiFetch } = await import("../../lib/api");
-        const identifier = loginMethod === "email" ? formData.email : phone;
-        const data: any = await apiFetch("/api/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ identifier, password: formData.password }),
-        });
+      const { apiFetch } = await import("../../lib/api");
+      const identifier = loginMethod === "email" ? formData.email : phone;
+      const data: any = await apiFetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identifier, password: formData.password }),
+      });
 
-        if (data.token) {
-          try {
-            localStorage.setItem("auth_token", data.token);
-          } catch (e) {}
-        }
-
-        toast.success(data.message || "Login successful! Redirecting...");
-        // Redirect to the local dashboard route
-        setTimeout(() => {
-          router.push("/dashboard");
-        }, 800);
-      } catch (err: any) {
-        console.error("Login api error:", err);
-        toast.error(
-          err?.message ||
-            err?.text ||
-            "Login failed. Please check your credentials and try again.",
-        );
+      if (data.token) {
+        try {
+          localStorage.setItem("auth_token", data.token);
+        } catch (e) {}
       }
-    } catch (error) {
-      console.error("Login error:", error);
-      toast.error("Login failed. Please check your credentials and try again.");
+
+      toast.success(data.message || "Login successful! Redirecting...");
+      // Redirect to the local dashboard route
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 800);
+    } catch (err: any) {
+      console.error("Login api error:", err);
+      toast.error(
+        err?.message ||
+          err?.text ||
+          "Login failed. Please check your credentials and try again.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -233,321 +166,136 @@ export default function SignupPage() {
         background: "#0A1A2F",
       }}
     >
-      {/* Corner glow effects (same as signup) */}
+      {/* Corner glow effects */}
       <div aria-hidden className="pointer-events-none absolute inset-0 z-0">
         <div
+          className="absolute -top-20 -left-20 w-56 h-56"
           style={{
-            position: "absolute",
-            top: -80,
-            left: -80,
-            width: 220,
-            height: 220,
             background:
               "radial-gradient(closest-side, rgba(69,79,187,0.35) 0%, rgba(69,79,187,0.18) 45%, rgba(69,79,187,0.0) 70%)",
             filter: "blur(18px)",
           }}
         />
         <div
+          className="absolute -top-36 -left-36 w-[540px] h-[540px]"
           style={{
-            position: "absolute",
-            top: -140,
-            left: -140,
-            width: 540,
-            height: 540,
             background:
               "radial-gradient(closest-side, rgba(69,79,187,0.14), rgba(69,79,187,0))",
             filter: "blur(12px)",
           }}
         />
       </div>
+
       <style
         dangerouslySetInnerHTML={{
           __html: `
-                    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-                    /* Custom styles for react-international-phone */
-                    .react-international-phone-input-container {
-                        width: 100%;
-                    }
+            /* Custom styles for react-international-phone */
+            .react-international-phone-input-container {
+              width: 100%;
+            }
 
-                    .react-international-phone-input-container .react-international-phone-input {
-                        height: 48px !important;
-                        width: 100% !important;
-                        background-color: #1e293b !important;
-                        border: 1px solid #334155 !important;
-                        border-radius: 0 8px 8px 0 !important;
-                        color: #e2e8f0 !important;
-                        font-size: 14px !important;
-                    }
+            .react-international-phone-input-container .react-international-phone-input {
+              height: 48px !important;
+              width: 100% !important;
+              background-color: rgba(30, 41, 59, 0.5) !important;
+              border: 1px solid #334155 !important;
+              border-radius: 0 12px 12px 0 !important;
+              color: #e2e8f0 !important;
+              font-size: 14px !important;
+            }
 
-                    .react-international-phone-input-container .react-international-phone-input:focus {
-                        outline: none !important;
-                        box-shadow: 0 0 0 2px #3b82f6 !important;
-                    }
+            .react-international-phone-input-container .react-international-phone-input:focus {
+              outline: none !important;
+              box-shadow: 0 0 0 2px #3b82f6 !important;
+            }
 
-                    .react-international-phone-input-container .react-international-phone-input::placeholder {
-                        color: #64748b !important;
-                    }
+            .react-international-phone-input-container .react-international-phone-input::placeholder {
+              color: #64748b !important;
+            }
 
-                    .react-international-phone-country-selector-button {
-                        height: 48px !important;
-                        background-color: #1e293b !important;
-                        border: 1px solid #334155 !important;
-                        border-radius: 8px 0 0 8px !important;
-                        border-right: none !important;
-                        padding: 0 12px !important;
-                    }
+            .react-international-phone-country-selector-button {
+              height: 48px !important;
+              background-color: rgba(30, 41, 59, 0.5) !important;
+              border: 1px solid #334155 !important;
+              border-radius: 12px 0 0 12px !important;
+              border-right: none !important;
+              padding: 0 12px !important;
+            }
 
-                    .react-international-phone-country-selector-button:hover {
-                        background-color: #334155 !important;
-                    }
+            .react-international-phone-country-selector-button:hover {
+              background-color: #334155 !important;
+            }
 
-                    .react-international-phone-country-selector-button__button-content {
-                        gap: 8px !important;
-                    }
+            .react-international-phone-country-selector-dropdown {
+              background-color: #1e293b !important;
+              border: 1px solid #334155 !important;
+              border-radius: 12px !important;
+              box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3) !important;
+              max-height: 300px !important;
+              z-index: 9999 !important;
+            }
 
-                    .react-international-phone-country-selector-dropdown {
-                        background-color: #1e293b !important;
-                        border: 1px solid #334155 !important;
-                        border-radius: 8px !important;
-                        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3) !important;
-                        max-height: 300px !important;
-                        z-index: 9999 !important;
-                    }
+            .react-international-phone-country-selector-dropdown__list-item {
+              padding: 10px 12px !important;
+              color: #e2e8f0 !important;
+            }
 
-                    .react-international-phone-country-selector-dropdown__list-item {
-                        padding: 10px 12px !important;
-                        color: #e2e8f0 !important;
-                    }
+            .react-international-phone-country-selector-dropdown__list-item:hover {
+              background-color: #334155 !important;
+            }
 
-                    .react-international-phone-country-selector-dropdown__list-item:hover {
-                        background-color: #334155 !important;
-                    }
+            .react-international-phone-country-selector-dropdown__list-item--selected {
+              background-color: #3b82f6 !important;
+              color: white !important;
+            }
 
-                    .react-international-phone-country-selector-dropdown__list-item--selected {
-                        background-color: #3b82f6 !important;
-                        color: white !important;
-                    }
-
-                    .react-international-phone-country-selector-dropdown__list-item--focused {
-                        background-color: #334155 !important;
-                    }
-
-                    .react-international-phone-country-selector-dropdown__list-item-country-name {
-                        color: #e2e8f0 !important;
-                    }
-
-                    .react-international-phone-country-selector-dropdown__list-item-dial-code {
-                        color: #94a3b8 !important;
-                    }
-
-                    .react-international-phone-dial-code-preview {
-                        color: #e2e8f0 !important;
-                        padding-left: 4px !important;
-                    }
-
-                    .react-international-phone-country-selector-dropdown__search {
-                        background-color: #0f172a !important;
-                        border: 1px solid #334155 !important;
-                        color: #e2e8f0 !important;
-                        padding: 8px 12px !important;
-                        margin: 8px !important;
-                        border-radius: 6px !important;
-                    }
-
-                    .react-international-phone-country-selector-dropdown__search::placeholder {
-                        color: #64748b !important;
-                    }
-
-                    @media (max-width: 1024px) {
-                        .mobile-responsive-card {
-                            max-width: 95vw !important;
-                            margin: 1rem !important;
-                            padding: 0.5rem !important;
-                        }
-                        .mobile-responsive-form {
-                            padding: 1rem !important;
-                            margin-top: 0.5rem !important;
-                            min-height: auto !important;
-                        }
-                        .mobile-responsive-title {
-                            font-size: 1.5rem !important;
-                            margin-left: 0.5rem !important;
-                            text-align: center !important;
-                        }
-                        .mobile-responsive-subtitle {
-                            font-size: 0.875rem !important;
-                            margin-left: 0.5rem !important;
-                            text-align: center !important;
-                        }
-                        .mobile-responsive-toggle {
-                            margin-left: 0.5rem !important;
-                            margin-top: 1rem !important;
-                            margin-bottom: 1rem !important;
-                            gap: 0.25rem !important;
-                            padding: 0.25rem !important;
-                        }
-                        .mobile-responsive-toggle button {
-                            padding: 0.5rem 0.75rem !important;
-                            font-size: 0.75rem !important;
-                            height: 2.5rem !important;
-                        }
-                        .mobile-responsive-inputs {
-                            margin-left: 0.5rem !important;
-                            margin-bottom: 1rem !important;
-                            padding-left: 0.75rem !important;
-                        }
-                        .mobile-responsive-button {
-                            margin-left: 0.5rem !important;
-                            width: calc(100% - 1rem) !important;
-                            height: 2.5rem !important;
-                            font-size: 0.875rem !important;
-                        }
-                        .mobile-responsive-link {
-                            margin-left: 0.5rem !important;
-                            margin-top: 1rem !important;
-                            font-size: 0.75rem !important;
-                        }
-                        .mobile-responsive-main {
-                            padding: 1.5rem !important;
-                            padding-top: 2rem !important;
-                            padding-bottom: 2rem !important;
-                        }
-                        .mobile-form {
-                            margin: 1rem !important;
-                            padding: 1.5rem !important;
-                        }
-                        .mobile-responsive-header {
-                            font-size: 1.25rem !important;
-                            margin-top: 1rem !important;
-                            margin-bottom: 1rem !important;
-                        }
-                    }
-                    @media (max-width: 768px) {
-                        .mobile-responsive-card {
-                            max-width: 98vw !important;
-                            grid-template-columns: 1fr !important;
-                            gap: 0 !important;
-                            margin: 0.5rem !important;
-                        }
-                        .mobile-responsive-form {
-                            padding: 0.75rem !important;
-                            border-radius: 1rem !important;
-                            margin-top: 0 !important;
-                        }
-                        .mobile-responsive-toggle {
-                            margin-left: 0.25rem !important;
-                            margin-right: 0.25rem !important;
-                        }
-                        .mobile-responsive-inputs {
-                            margin-left: 0.25rem !important;
-                            margin-right: 0.25rem !important;
-                        }
-                        .mobile-responsive-button {
-                            margin-left: 0.25rem !important;
-                            margin-right: 0.25rem !important;
-                            width: calc(100% - 0.5rem) !important;
-                        }
-                        .mobile-responsive-link {
-                            margin-left: 0.25rem !important;
-                            margin-right: 0.25rem !important;
-                        }
-                    }
-                    @media (max-width: 480px) {
-                        .mobile-responsive-main {
-                            padding: 0.5rem !important;
-                            padding-top: 1rem !important;
-                            padding-bottom: 1rem !important;
-                        }
-                        .mobile-responsive-header {
-                            font-size: 1.125rem !important;
-                            margin-top: 0.5rem !important;
-                            margin-bottom: 0.5rem !important;
-                        }
-                        .mobile-responsive-title {
-                            font-size: 1.25rem !important;
-                            margin-bottom: 0.5rem !important;
-                        }
-                        .mobile-responsive-subtitle {
-                            font-size: 0.75rem !important;
-                            margin-bottom: 1rem !important;
-                        }
-                        .mobile-responsive-toggle button {
-                            padding: 0.375rem 0.5rem !important;
-                            font-size: 0.6875rem !important;
-                            height: 2rem !important;
-                        }
-                        .mobile-responsive-inputs {
-                            margin-bottom: 0.75rem !important;
-                            padding-left: 0.5rem !important;
-                        }
-                        .mobile-responsive-button {
-                            height: 2.25rem !important;
-                            font-size: 0.8125rem !important;
-                        }
-                    }
-                `,
+            .react-international-phone-dial-code-preview {
+              color: #e2e8f0 !important;
+            }
+          `,
         }}
       />
-      {/* <Header /> */}
-      <div
-        className="flex flex-col items-center justify-center"
-        style={{ marginTop: "50px", marginBottom: "50px" }}
-      >
+
+      {/* Logo */}
+      <div className="flex flex-col items-center justify-center pt-12 pb-8">
         <img
           src="/logo.png"
           alt="Summit Exchange Logo"
-          className="h-16 w-auto mb-4"
+          className="h-16 w-auto"
         />
       </div>
-      <main className="relative z-10 flex-grow flex items-center justify-center px-4 py-8 sm:px-8 sm:py-16">
-        <div
-          className="w-full max-w-3xl bg-[#10233D] backdrop-blur-md border border-slate-800 rounded-2xl shadow-2xl grid grid-cols-1 md:grid-cols-2 gap-0 md:gap-10 overflow-hidden mobile-container"
-          style={{ margin: "20px" }}
-        >
-          {/* Form Section */}
-          <div
-            className="p-8 rounded-l-2xl mobile-form"
-            style={{ marginTop: "30px" }}
-          >
-            <h1
-              className="text-3xl font-bold text-white mb-2 mobile-title"
-              style={{ marginLeft: "20px" }}
-            >
+
+      {/* Main Content */}
+      <main className="relative z-10 flex-grow flex items-start justify-center px-4 pb-12">
+        <div className="w-full max-w-md">
+          {/* Card */}
+          <div className="bg-[#0d1f35] border border-slate-800/50 rounded-3xl shadow-2xl p-8">
+            {/* Header */}
+            <h1 className="text-2xl font-bold text-white mb-2">
               Login to your account
             </h1>
-            <p
-              className="text-gray-400 text-sm mb-8 mobile-subtitle"
-              style={{ marginLeft: "20px", marginTop: "8px" }}
-            >
+            <p className="text-gray-400 text-sm mb-8">
               Don&apos;t have an account?{" "}
               <a
                 href="/signup"
-                className="font-medium text-blue-400 hover:underline"
+                className="font-medium text-blue-400 hover:text-blue-300 hover:underline transition-colors"
               >
                 Sign up
               </a>
             </p>
 
             {/* Login Method Toggle */}
-            <div
-              className="bg-[#10233D] rounded-lg grid grid-cols-2 mb-10 p-2 mobile-toggle"
-              style={{
-                marginLeft: "20px",
-                marginTop: "20px",
-                gap: "10px",
-                marginBottom: "20px",
-                width: "calc(100% - 40px)",
-              }}
-            >
+            <div className="flex gap-3 mb-8">
               <button
                 type="button"
                 onClick={() => setLoginMethod("email")}
                 className={cn(
-                  "py-4 px-6 rounded-md text-base font-semibold transition-colors duration-200 h-12",
+                  "flex-1 py-3 px-4 rounded-xl text-sm font-semibold transition-all duration-200",
                   loginMethod === "email"
-                    ? "bg-blue-600 text-white"
-                    : "text-gray-300 hover:bg-slate-700",
+                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25"
+                    : "bg-slate-800/50 text-gray-400 hover:bg-slate-700/50 hover:text-gray-300 border border-slate-700",
                 )}
               >
                 Email Address
@@ -556,40 +304,33 @@ export default function SignupPage() {
                 type="button"
                 onClick={() => setLoginMethod("phone")}
                 className={cn(
-                  "py-4 px-6 rounded-md text-base font-semibold transition-colors duration-200 h-12",
+                  "flex-1 py-3 px-4 rounded-xl text-sm font-semibold transition-all duration-200",
                   loginMethod === "phone"
-                    ? "bg-blue-600 text-white"
-                    : "text-gray-300 hover:bg-slate-700",
+                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25"
+                    : "bg-slate-800/50 text-gray-400 hover:bg-slate-700/50 hover:text-gray-300 border border-slate-700",
                 )}
               >
-                Phone number
+                Phone Number
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-12">
-              {loginMethod === "email" && (
-                <Input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  placeholder="Enter your email address"
-                  className="mobile-responsive-inputs"
-                  style={{
-                    marginLeft: "20px",
-                    marginBottom: "20px",
-                    paddingLeft: "20px",
-                  }}
-                  disabled={isLoading}
-                  autoComplete="username"
-                />
-              )}
-
-              {loginMethod === "phone" && (
-                <div
-                  className="mobile-responsive-inputs"
-                  style={{ marginLeft: "20px", marginBottom: "20px" }}
-                >
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Email or Phone Input */}
+              {loginMethod === "email" ? (
+                <div>
+                  <Input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    placeholder="Enter your email address"
+                    disabled={isLoading}
+                    autoComplete="username"
+                  />
+                </div>
+              ) : (
+                <div>
                   <PhoneInput
                     defaultCountry="sg"
                     value={phone}
@@ -600,10 +341,8 @@ export default function SignupPage() {
                 </div>
               )}
 
-              <div
-                className="relative mobile-responsive-inputs"
-                style={{ marginLeft: "20px" }}
-              >
+              {/* Password Input */}
+              <div className="relative">
                 <Input
                   type={showPassword ? "text" : "password"}
                   name="password"
@@ -612,13 +351,12 @@ export default function SignupPage() {
                   placeholder="Enter your password"
                   className="pr-12"
                   disabled={isLoading}
-                  style={{ marginBottom: "20px", paddingLeft: "20px" }}
                   autoComplete="current-password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-4 flex items-center text-gray-400 hover:text-white"
+                  className="absolute inset-y-0 right-4 flex items-center text-gray-500 hover:text-gray-300 transition-colors"
                 >
                   {showPassword ? (
                     <EyeSlashIcon className="h-5 w-5" />
@@ -628,43 +366,55 @@ export default function SignupPage() {
                 </button>
               </div>
 
+              {/* Login Button */}
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-blue-600 text-white font-semibold h-12 rounded-lg text-base hover:bg-blue-700 disabled:bg-slate-600 disabled:cursor-not-allowed transition-colors shadow-lg shadow-blue-600/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-blue-500 mobile-responsive-button"
-                style={{ marginLeft: "20px", width: "calc(100% - 20px)" }}
+                className="w-full bg-blue-600 text-white font-semibold h-12 rounded-xl text-sm hover:bg-blue-500 disabled:bg-slate-600 disabled:cursor-not-allowed transition-all duration-200 shadow-lg shadow-blue-600/25 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#0d1f35] focus:ring-blue-500 mt-8"
               >
-                {isLoading ? "Logging in..." : "Login"}
+                {isLoading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg
+                      className="animate-spin h-4 w-4"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
+                    </svg>
+                    Logging in...
+                  </span>
+                ) : (
+                  "Login"
+                )}
               </button>
 
               {/* Forgot Password Link */}
-              <div
-                className="text-center pt-4 mobile-responsive-link"
-                style={{ marginLeft: "20px", marginTop: "20px" }}
-              >
+              <div className="text-center pt-4">
                 <button
                   type="button"
                   onClick={handleForgotPassword}
-                  className="text-sm text-blue-400 hover:underline font-medium bg-transparent border-none cursor-pointer"
+                  className="text-sm text-blue-400 hover:text-blue-300 hover:underline font-medium bg-transparent border-none cursor-pointer transition-colors"
                 >
                   Forgot your password?
                 </button>
               </div>
             </form>
           </div>
-
-          {/* Image Section */}
-          <div className="hidden lg:flex items-center justify-center bg-gradient-to-br from-blue-600 to-blue-800 rounded-r-2xl">
-            <img
-              src="/signup.png"
-              alt="Summit Exchange Wallet"
-              className="w-full h-full object-cover"
-            />
-          </div>
         </div>
       </main>
-      {/* <CTASection /> */}
-      {/* <Footer />/7 */}
 
       {/* Toast Container */}
       <ToastContainer
