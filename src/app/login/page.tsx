@@ -17,7 +17,7 @@ const Input = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <input
     className={cn(
-      "flex h-12 w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-2 text-sm text-gray-200 placeholder:text-gray-500",
+      "flex h-12 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm text-gray-200 placeholder:text-gray-500",
       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
       className,
     )}
@@ -169,16 +169,24 @@ export default function LoginPage() {
       {/* Corner glow effects */}
       <div aria-hidden className="pointer-events-none absolute inset-0 z-0">
         <div
-          className="absolute -top-20 -left-20 w-56 h-56"
           style={{
+            position: "absolute",
+            top: -80,
+            left: -80,
+            width: 220,
+            height: 220,
             background:
               "radial-gradient(closest-side, rgba(69,79,187,0.35) 0%, rgba(69,79,187,0.18) 45%, rgba(69,79,187,0.0) 70%)",
             filter: "blur(18px)",
           }}
         />
         <div
-          className="absolute -top-36 -left-36 w-[540px] h-[540px]"
           style={{
+            position: "absolute",
+            top: -140,
+            left: -140,
+            width: 540,
+            height: 540,
             background:
               "radial-gradient(closest-side, rgba(69,79,187,0.14), rgba(69,79,187,0))",
             filter: "blur(12px)",
@@ -199,9 +207,9 @@ export default function LoginPage() {
             .react-international-phone-input-container .react-international-phone-input {
               height: 48px !important;
               width: 100% !important;
-              background-color: rgba(30, 41, 59, 0.5) !important;
+              background-color: #1e293b !important;
               border: 1px solid #334155 !important;
-              border-radius: 0 12px 12px 0 !important;
+              border-radius: 0 8px 8px 0 !important;
               color: #e2e8f0 !important;
               font-size: 14px !important;
             }
@@ -217,9 +225,9 @@ export default function LoginPage() {
 
             .react-international-phone-country-selector-button {
               height: 48px !important;
-              background-color: rgba(30, 41, 59, 0.5) !important;
+              background-color: #1e293b !important;
               border: 1px solid #334155 !important;
-              border-radius: 12px 0 0 12px !important;
+              border-radius: 8px 0 0 8px !important;
               border-right: none !important;
               padding: 0 12px !important;
             }
@@ -231,7 +239,7 @@ export default function LoginPage() {
             .react-international-phone-country-selector-dropdown {
               background-color: #1e293b !important;
               border: 1px solid #334155 !important;
-              border-radius: 12px !important;
+              border-radius: 8px !important;
               box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3) !important;
               max-height: 300px !important;
               z-index: 9999 !important;
@@ -254,83 +262,127 @@ export default function LoginPage() {
             .react-international-phone-dial-code-preview {
               color: #e2e8f0 !important;
             }
+
+            /* Mobile responsive styles */
+            @media (max-width: 768px) {
+              .mobile-container {
+                margin: 0 16px;
+              }
+              .mobile-form {
+                padding: 24px 16px !important;
+              }
+              .mobile-title {
+                font-size: 24px !important;
+                margin-left: 0 !important;
+              }
+              .mobile-subtitle {
+                margin-left: 0 !important;
+              }
+              .mobile-input-container {
+                margin-left: 0 !important;
+              }
+              .mobile-button {
+                margin-left: 0 !important;
+              }
+            }
           `,
         }}
       />
 
       {/* Logo */}
-      <div className="flex flex-col items-center justify-center pt-12 pb-8">
+      <div
+        className="flex flex-col items-center justify-center"
+        style={{ marginTop: "50px", marginBottom: "50px" }}
+      >
         <img
           src="/logo.png"
           alt="Summit Exchange Logo"
-          className="h-16 w-auto"
+          className="h-16 w-auto mb-4"
         />
       </div>
 
       {/* Main Content */}
-      <main className="relative z-10 flex-grow flex items-start justify-center px-4 pb-12">
-        <div className="w-full max-w-md">
-          {/* Card */}
-          <div className="bg-[#0d1f35] border border-slate-800/50 rounded-3xl shadow-2xl p-8">
-            {/* Header */}
-            <h1 className="text-2xl font-bold text-white mb-2">
+      <main className="relative z-10 flex-grow flex items-center justify-center p-2 sm:p-6 py-8 sm:py-24">
+        <div className="w-full max-w-3xl bg-[#10233D] backdrop-blur-md border border-slate-800 rounded-2xl shadow-2xl grid grid-cols-1 md:grid-cols-2 gap-0 md:gap-10 overflow-hidden mb-16 mobile-container">
+          {/* Form Section */}
+          <div
+            className="p-8 rounded-l-2xl mobile-form"
+            style={{ marginTop: "30px" }}
+          >
+            <h1
+              className="text-3xl font-bold text-white mb-2 mobile-title"
+              style={{ marginLeft: "20px" }}
+            >
               Login to your account
             </h1>
-            <p className="text-gray-400 text-sm mb-8">
+            <p
+              className="text-gray-400 text-sm mb-8 mobile-subtitle"
+              style={{ marginLeft: "20px" }}
+            >
               Don&apos;t have an account?{" "}
               <a
                 href="/signup"
-                className="font-medium text-blue-400 hover:text-blue-300 hover:underline transition-colors"
+                className="font-medium text-blue-400 hover:underline"
               >
                 Sign up
               </a>
             </p>
 
             {/* Login Method Toggle */}
-            <div className="flex gap-3 mb-8">
+            <div
+              className="flex gap-3 mb-6 mobile-input-container"
+              style={{ marginLeft: "15px" }}
+            >
               <button
                 type="button"
                 onClick={() => setLoginMethod("email")}
                 className={cn(
-                  "flex-1 py-3 px-4 rounded-xl text-sm font-semibold transition-all duration-200",
+                  "flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors",
                   loginMethod === "email"
-                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25"
-                    : "bg-slate-800/50 text-gray-400 hover:bg-slate-700/50 hover:text-gray-300 border border-slate-700",
+                    ? "bg-blue-600 text-white"
+                    : "bg-slate-800 text-gray-400 hover:bg-slate-700 hover:text-gray-300 border border-slate-700",
                 )}
               >
-                Email Address
+                Email
               </button>
               <button
                 type="button"
                 onClick={() => setLoginMethod("phone")}
                 className={cn(
-                  "flex-1 py-3 px-4 rounded-xl text-sm font-semibold transition-all duration-200",
+                  "flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors",
                   loginMethod === "phone"
-                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25"
-                    : "bg-slate-800/50 text-gray-400 hover:bg-slate-700/50 hover:text-gray-300 border border-slate-700",
+                    ? "bg-blue-600 text-white"
+                    : "bg-slate-800 text-gray-400 hover:bg-slate-700 hover:text-gray-300 border border-slate-700",
                 )}
               >
-                Phone Number
+                Phone
               </button>
             </div>
 
             {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-6">
               {/* Email or Phone Input */}
               {loginMethod === "email" ? (
-                <div>
+                <div
+                  className="mobile-input-container"
+                  style={{ marginLeft: "15px", marginTop: "30px" }}
+                >
                   <Input
                     type="email"
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
                     placeholder="Enter your email address"
+                    style={{ paddingLeft: "15px", width: "100%" }}
                     disabled={isLoading}
                     autoComplete="username"
                   />
                 </div>
               ) : (
-                <div>
+                <div
+                  className="mobile-input-container"
+                  style={{ marginLeft: "15px", marginTop: "30px" }}
+                >
                   <PhoneInput
                     defaultCountry="sg"
                     value={phone}
@@ -342,7 +394,10 @@ export default function LoginPage() {
               )}
 
               {/* Password Input */}
-              <div className="relative">
+              <div
+                className="relative mobile-input-container"
+                style={{ marginLeft: "15px", marginTop: "30px" }}
+              >
                 <Input
                   type={showPassword ? "text" : "password"}
                   name="password"
@@ -350,13 +405,14 @@ export default function LoginPage() {
                   onChange={handleInputChange}
                   placeholder="Enter your password"
                   className="pr-12"
+                  style={{ paddingLeft: "15px", width: "100%" }}
                   disabled={isLoading}
                   autoComplete="current-password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-4 flex items-center text-gray-500 hover:text-gray-300 transition-colors"
+                  className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-white"
                 >
                   {showPassword ? (
                     <EyeSlashIcon className="h-5 w-5" />
@@ -370,39 +426,17 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-blue-600 text-white font-semibold h-12 rounded-xl text-sm hover:bg-blue-500 disabled:bg-slate-600 disabled:cursor-not-allowed transition-all duration-200 shadow-lg shadow-blue-600/25 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#0d1f35] focus:ring-blue-500 mt-8"
+                className="w-full bg-blue-600 text-white font-semibold h-12 rounded-lg text-base hover:bg-blue-700 disabled:bg-slate-600 disabled:cursor-not-allowed transition-colors shadow-lg shadow-blue-600/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-blue-500 mobile-button"
+                style={{ marginTop: "20px", marginLeft: "10px" }}
               >
-                {isLoading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg
-                      className="animate-spin h-4 w-4"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      />
-                    </svg>
-                    Logging in...
-                  </span>
-                ) : (
-                  "Login"
-                )}
+                {isLoading ? "Logging in..." : "Login"}
               </button>
 
               {/* Forgot Password Link */}
-              <div className="text-center pt-4">
+              <div
+                className="text-center pt-2"
+                style={{ marginLeft: "10px", marginBottom: "30px" }}
+              >
                 <button
                   type="button"
                   onClick={handleForgotPassword}
@@ -412,6 +446,15 @@ export default function LoginPage() {
                 </button>
               </div>
             </form>
+          </div>
+
+          {/* Image Section */}
+          <div className="hidden md:flex items-center justify-center bg-gradient-to-br from-blue-600 to-blue-800 rounded-r-2xl">
+            <img
+              src="/login.png"
+              alt="Summit Exchange Login"
+              className="w-full h-full object-cover"
+            />
           </div>
         </div>
       </main>
