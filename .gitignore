@@ -1,7 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
+node_modules/
+**/node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -14,16 +15,16 @@
 /coverage
 
 # next.js
-/.next/
+.next/
+**/.next/
 /out/
-
-# dashboard build files
-/src/app/dashboard/.next/
-/src/app/dashboard/out/
-/src/app/dashboard/node_modules/
+**/out/
 
 # production
 /build
+**/build/
+/dist
+**/dist/
 
 # misc
 .DS_Store
@@ -45,4 +46,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-.vercel
+# lock files (optional - uncomment if you want to ignore)
+# package-lock.json
+# pnpm-lock.yaml
+# yarn.lock

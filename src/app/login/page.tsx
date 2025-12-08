@@ -201,12 +201,9 @@ export default function SignupPage() {
         }
 
         toast.success(data.message || "Login successful! Redirecting...");
-        // Redirect to the deployed dashboard
-        const dashboardUrl =
-          process.env.NEXT_PUBLIC_DASHBOARD_URL ||
-          "https://dashboardsummit.vercel.app";
+        // Redirect to the local dashboard route
         setTimeout(() => {
-          window.location.href = dashboardUrl;
+          router.push("/dashboard");
         }, 800);
       } catch (err: any) {
         console.error("Login api error:", err);

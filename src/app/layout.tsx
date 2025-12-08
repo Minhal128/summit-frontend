@@ -1,22 +1,25 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { ToastContainer } from 'react-toastify';
-import { CartProvider } from '@/contexts/CartContext';
+import { ToastContainer } from "react-toastify";
+import { CartProvider } from "@/contexts/CartContext";
+import { WalletProvider } from "@/contexts/WalletContext";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
-  display: 'swap',
+  display: "swap",
 });
 
 export const metadata: Metadata = {
   title: "Summit Exchange",
-  description: "Professional trading platform for cryptocurrencies and traditional assets",
+  description:
+    "Professional trading platform for cryptocurrencies and traditional assets",
   icons: {
-    icon: '/logo.png',
-    shortcut: '/logo.png',
-    apple: '/logo.png',
+    icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
   },
 };
 
@@ -26,11 +29,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`}>
-        <CartProvider>
-          {children}
-        </CartProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <CartProvider>
+            <WalletProvider>{children}</WalletProvider>
+          </CartProvider>
+        </ThemeProvider>
         <ToastContainer
           position="top-right"
           autoClose={5000}
