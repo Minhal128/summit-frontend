@@ -566,7 +566,6 @@ const Header: React.FC<HeaderProps> = ({ onScrollToFeatures }) => {
               className="mobile-language"
               onClick={() => setIsLanguageDropdownOpen(!isLanguageDropdownOpen)}
             >
-              <div className="flag"></div>
               <span style={{color: '#EBE2FF', fontSize: '14px'}}>{selectedLanguage.code}</span>
               <svg 
                 width="12" 
@@ -767,7 +766,6 @@ const Header: React.FC<HeaderProps> = ({ onScrollToFeatures }) => {
             className="language"
             onClick={() => setIsLanguageDropdownOpen(!isLanguageDropdownOpen)}
           >
-            <div className="flag"></div>
             <span>{selectedLanguage.code}</span>
             <svg 
               width="14" 
