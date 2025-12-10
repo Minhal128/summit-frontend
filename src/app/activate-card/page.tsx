@@ -34,7 +34,7 @@ const ActivateCardPage = () => {
   // Initialize Socket.io connection
   useEffect(() => {
     const socket = io(
-      process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000",
+      process.env.NEXT_PUBLIC_API_BASE_URL || "https://king-prawn-app-nv72k.ondigitalocean.app",
       {
         transports: ["websocket", "polling"],
         withCredentials: true,

@@ -21,7 +21,7 @@ export default function NfcAccessPage() {
     async function loadProducts() {
       try {
         console.log('🔄 Fetching products from backend...');
-        console.log('API URL:', process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000');
+        console.log('API URL:', process.env.NEXT_PUBLIC_API_BASE_URL || 'https://king-prawn-app-nv72k.ondigitalocean.app');
         
         const fetchedProducts = await fetchProducts();
         
