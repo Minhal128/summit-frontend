@@ -29,14 +29,31 @@ const PROVIDERS = [
   { id: "transak", name: "Transak", icon: "🔄", color: "from-green-500 to-green-600" },
   { id: "simplex", name: "Simplex", icon: "💎", color: "from-orange-500 to-orange-600" },
   { id: "coinbase", name: "Coinbase Pay", icon: "🪙", color: "from-blue-600 to-blue-700" },
+  { id: "binance", name: "Binance", icon: "🔶", color: "from-yellow-500 to-yellow-600" },
+  { id: "crypto_com", name: "Crypto.com", icon: "💠", color: "from-indigo-500 to-indigo-600" },
 ]
 
 const CRYPTOS = [
   { symbol: "BTC", name: "Bitcoin", icon: "₿", color: "bg-orange-500" },
   { symbol: "ETH", name: "Ethereum", icon: "Ξ", color: "bg-purple-500" },
   { symbol: "USDT", name: "Tether", icon: "$", color: "bg-green-500" },
-  { symbol: "SOL", name: "Solana", icon: "◎", color: "bg-gradient-to-r from-purple-500 to-green-400" },
   { symbol: "BNB", name: "BNB", icon: "B", color: "bg-yellow-500" },
+  { symbol: "SOL", name: "Solana", icon: "◎", color: "bg-gradient-to-r from-purple-500 to-green-400" },
+  { symbol: "USDC", name: "USD Coin", icon: "$", color: "bg-blue-500" },
+  { symbol: "XRP", name: "Ripple", icon: "X", color: "bg-gray-500" },
+  { symbol: "ADA", name: "Cardano", icon: "₳", color: "bg-blue-600" },
+  { symbol: "DOGE", name: "Dogecoin", icon: "Ð", color: "bg-yellow-600" },
+  { symbol: "TRX", name: "TRON", icon: "T", color: "bg-red-500" },
+  { symbol: "DOT", name: "Polkadot", icon: "•", color: "bg-pink-500" },
+  { symbol: "MATIC", name: "Polygon", icon: "M", color: "bg-purple-600" },
+  { symbol: "LTC", name: "Litecoin", icon: "Ł", color: "bg-gray-400" },
+  { symbol: "AVAX", name: "Avalanche", icon: "A", color: "bg-red-600" },
+  { symbol: "LINK", name: "Chainlink", icon: "⬡", color: "bg-blue-700" },
+  { symbol: "UNI", name: "Uniswap", icon: "U", color: "bg-pink-600" },
+  { symbol: "ATOM", name: "Cosmos", icon: "⚛", color: "bg-indigo-500" },
+  { symbol: "XLM", name: "Stellar", icon: "✦", color: "bg-cyan-500" },
+  { symbol: "ALGO", name: "Algorand", icon: "A", color: "bg-gray-700" },
+  { symbol: "VET", name: "VeChain", icon: "V", color: "bg-blue-800" },
 ]
 
 export default function BuySellPage({ className }: { className?: string }) {

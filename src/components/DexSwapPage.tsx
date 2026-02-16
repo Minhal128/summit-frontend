@@ -29,6 +29,14 @@ const DEFAULT_TOKENS: DexToken[] = [
   { symbol: "DAI", name: "Dai", address: "0x6b175474e89094c44da98b954eedeac495271d0f", decimals: 18 },
   { symbol: "UNI", name: "Uniswap", address: "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984", decimals: 18 },
   { symbol: "LINK", name: "Chainlink", address: "0x514910771af9ca656af840dff83e8264ecf986ca", decimals: 18 },
+  { symbol: "AAVE", name: "Aave", address: "0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9", decimals: 18 },
+  { symbol: "MATIC", name: "Polygon", address: "0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0", decimals: 18 },
+  { symbol: "SHIB", name: "Shiba Inu", address: "0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce", decimals: 18 },
+  { symbol: "CRV", name: "Curve DAO", address: "0xd533a949740bb3306d119cc777fa900ba034cd52", decimals: 18 },
+  { symbol: "MKR", name: "Maker", address: "0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2", decimals: 18 },
+  { symbol: "SNX", name: "Synthetix", address: "0xc011a73ee8576fb46f5e1c5751ca3b9fe0af2a6f", decimals: 18 },
+  { symbol: "COMP", name: "Compound", address: "0xc00e94cb662c3520282e6f5717214004a7f26888", decimals: 18 },
+  { symbol: "SUSHI", name: "SushiSwap", address: "0x6b3595068778dd592e39a122f4f5a5cf09c90fe2", decimals: 18 },
 ]
 
 const TOKEN_COLORS: Record<string, string> = {
@@ -39,6 +47,14 @@ const TOKEN_COLORS: Record<string, string> = {
   DAI: "bg-yellow-500",
   UNI: "bg-pink-500",
   LINK: "bg-blue-600",
+  AAVE: "bg-purple-600",
+  MATIC: "bg-indigo-500",
+  SHIB: "bg-orange-600",
+  CRV: "bg-blue-700",
+  MKR: "bg-teal-500",
+  SNX: "bg-cyan-500",
+  COMP: "bg-green-600",
+  SUSHI: "bg-pink-600",
 }
 
 export default function DexSwapPage({ className }: { className?: string }) {

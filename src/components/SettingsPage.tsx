@@ -27,7 +27,28 @@ const settingsTabs: SettingsTab[] = [
 
 const LanguageSettings = () => {
   const [selectedLanguage, setSelectedLanguage] = useState(0);
-  const languages = ['Default (Device language)', 'English', 'Chinese', 'Francais', 'Spanish', 'Benghali'];
+  const languages = [
+    'Default (Device language)', 
+    'English', 
+    'Chinese (Simplified)', 
+    'Chinese (Traditional)',
+    'French', 
+    'Spanish', 
+    'Bengali',
+    'Hindi',
+    'Arabic',
+    'Portuguese',
+    'Russian',
+    'Japanese',
+    'German',
+    'Korean',
+    'Italian',
+    'Turkish',
+    'Vietnamese',
+    'Thai',
+    'Indonesian',
+    'Malay'
+  ];
 
   return (
     <div>
@@ -52,12 +73,17 @@ const LanguageSettings = () => {
 
 const CurrencySettings = () => {
   const [selectedCurrency, setSelectedCurrency] = useState(0);
-  const currencies = ['USD', 'CAD', 'GBP', 'EUR', 'JPY', 'NZD'];
+  const currencies = [
+    'USD', 'EUR', 'GBP', 'JPY', 'CNY', 'CAD', 'AUD', 'CHF', 'HKD', 'SGD',
+    'SEK', 'KRW', 'NOK', 'NZD', 'INR', 'MXN', 'TWD', 'ZAR', 'BRL', 'DKK',
+    'PLN', 'THB', 'IDR', 'HUF', 'CZK', 'ILS', 'CLP', 'PHP', 'AED', 'SAR',
+    'MYR', 'TRY', 'RUB', 'VND', 'ARS', 'EGP', 'PKR', 'BDT', 'NGN', 'UAH'
+  ];
 
   return (
     <div className="space-y-2" style={{ marginLeft: '15px', paddingLeft: '15px', marginTop: '10px', width: 'calc(100% - 15px)',padding:'10px' ,marginBottom:'10px'}}>
       <h2 className="text-2xl font-bold text-white mb-6" style={{ marginLeft: '15px', paddingLeft: '15px', marginTop: '10px', width: 'calc(100% - 15px)',padding:'10px' ,marginBottom:'10px'}}>Currency</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4" style={{ marginLeft: '15px', paddingLeft: '15px', marginTop: '10px', width: 'calc(100% - 15px)',padding:'10px' ,marginBottom:'10px'}}>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4" style={{ marginLeft: '15px', paddingLeft: '15px', marginTop: '10px', width: 'calc(100% - 15px)',padding:'10px' ,marginBottom:'10px'}}>
         {currencies.map((currency, index) => (
           <div 
             key={currency} 

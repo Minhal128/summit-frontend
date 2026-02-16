@@ -30,7 +30,17 @@ const CRYPTOS = [
   { symbol: "BTC", name: "Bitcoin", icon: "₿", color: "bg-orange-500" },
   { symbol: "ETH", name: "Ethereum", icon: "Ξ", color: "bg-purple-500" },
   { symbol: "USDT", name: "Tether", icon: "$", color: "bg-green-500" },
+  { symbol: "BNB", name: "BNB", icon: "B", color: "bg-yellow-500" },
   { symbol: "SOL", name: "Solana", icon: "◎", color: "bg-gradient-to-r from-purple-500 to-green-400" },
+  { symbol: "USDC", name: "USD Coin", icon: "$", color: "bg-blue-500" },
+  { symbol: "XRP", name: "Ripple", icon: "X", color: "bg-gray-500" },
+  { symbol: "ADA", name: "Cardano", icon: "₳", color: "bg-blue-600" },
+  { symbol: "DOGE", name: "Dogecoin", icon: "Ð", color: "bg-yellow-600" },
+  { symbol: "TRX", name: "TRON", icon: "T", color: "bg-red-500" },
+  { symbol: "DOT", name: "Polkadot", icon: "•", color: "bg-pink-500" },
+  { symbol: "MATIC", name: "Polygon", icon: "M", color: "bg-purple-600" },
+  { symbol: "LTC", name: "Litecoin", icon: "Ł", color: "bg-gray-400" },
+  { symbol: "AVAX", name: "Avalanche", icon: "A", color: "bg-red-600" },
 ]
 
 const PAYMENT_METHODS = [

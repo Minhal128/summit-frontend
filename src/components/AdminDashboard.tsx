@@ -69,7 +69,7 @@ function StatCard({
 }
 
 export default function AdminDashboard({ className }: { className?: string }) {
-  const [activeTab, setActiveTab] = useState<"overview" | "users" | "cards" | "analytics" | "reports">("overview")
+  const [activeTab, setActiveTab] = useState<"overview" | "users" | "cards" | "analytics" | "reports" | "partners" | "rates">("overview")
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [users, setUsers] = useState<UserData[]>([])
   const [cards, setCards] = useState<CardData[]>([])
@@ -203,6 +203,8 @@ export default function AdminDashboard({ className }: { className?: string }) {
           { id: "users", label: "Users", icon: Users },
           { id: "cards", label: "NFC Cards", icon: CreditCard },
           { id: "analytics", label: "Analytics", icon: Activity },
+          { id: "partners", label: "Partners", icon: Users },
+          { id: "rates", label: "Rate Control", icon: DollarSign },
           { id: "reports", label: "Reports", icon: FileText },
         ].map((tab) => (
           <button
@@ -469,6 +471,202 @@ export default function AdminDashboard({ className }: { className?: string }) {
               </Button>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Partners Tab */}
+      {activeTab === "partners" && (
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h3 className="text-xl font-semibold text-white">Partner Commission Management</h3>
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+              <Users className="w-4 h-4 mr-2" /> Add Partner
+            </Button>
+          </div>
+
+          <div className="bg-[#1E293B] rounded-xl border border-slate-700/50 overflow-hidden">
+            <table className="w-full">
+              <thead className="bg-slate-700/30">
+                <tr>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase">Partner</th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase">NFC Cards</th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase">Commission %</th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase">Total Earned</th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-700/50">
+                {[
+                  { id: 1, name: "Partner A", email: "partnera@example.com", cards: 150, commission: 5.0, earned: 12500 },
+                  { id: 2, name: "Partner B", email: "partnerb@example.com", cards: 89, commission: 7.5, earned: 8900 },
+                  { id: 3, name: "Partner C", email: "partnerc@example.com", cards: 234, commission: 4.0, earned: 18700 },
+                  { id: 4, name: "Partner D", email: "partnerd@example.com", cards: 45, commission: 10.0, earned: 5600 },
+                ].map((partner) => (
+                  <tr key={partner.id} className="hover:bg-slate-700/20">
+                    <td className="px-6 py-4">
+                      <div>
+                        <p className="text-white font-medium">{partner.name}</p>
+                        <p className="text-gray-400 text-sm">{partner.email}</p>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-white">{partner.cards} cards</td>
+                    <td className="px-6 py-4">
+                      <Input
+                        type="number"
+                        defaultValue={partner.commission}
+                        className="w-24 bg-slate-800 border-slate-700 text-white"
+                        step="0.1"
+                      />
+                    </td>
+                    <td className="px-6 py-4 text-green-400 font-semibold">${partner.earned.toLocaleString()}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex gap-2">
+                        <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
+                          Update
+                        </Button>
+                        <Button size="sm" variant="outline" className="border-slate-700 text-gray-400">
+                          View
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="bg-[#1E293B] rounded-xl p-6 border border-slate-700/50">
+            <h4 className="text-lg font-semibold text-white mb-4">Commission Settings</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-gray-400 text-sm mb-2">Default Commission %</label>
+                <Input type="number" defaultValue="5.0" className="bg-slate-800 border-slate-700 text-white" step="0.1" />
+              </div>
+              <div>
+                <label className="block text-gray-400 text-sm mb-2">Min Commission %</label>
+                <Input type="number" defaultValue="2.0" className="bg-slate-800 border-slate-700 text-white" step="0.1" />
+              </div>
+              <div>
+                <label className="block text-gray-400 text-sm mb-2">Max Commission %</label>
+                <Input type="number" defaultValue="15.0" className="bg-slate-800 border-slate-700 text-white" step="0.1" />
+              </div>
+            </div>
+            <Button className="mt-4 bg-green-600 hover:bg-green-700 text-white">
+              Save Settings
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Rates Tab */}
+      {activeTab === "rates" && (
+        <div className="space-y-6">
+          <h3 className="text-xl font-semibold text-white">Exchange Rate Control</h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Transaction Fees */}
+            <div className="bg-[#1E293B] rounded-xl p-6 border border-slate-700/50">
+              <h4 className="text-lg font-semibold text-white mb-4">Transaction Fees</h4>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-gray-400 text-sm mb-2">Send Fee %</label>
+                  <Input type="number" defaultValue="0.5" className="bg-slate-800 border-slate-700 text-white" step="0.01" />
+                </div>
+                <div>
+                  <label className="block text-gray-400 text-sm mb-2">Swap Fee %</label>
+                  <Input type="number" defaultValue="0.3" className="bg-slate-800 border-slate-700 text-white" step="0.01" />
+                </div>
+                <div>
+                  <label className="block text-gray-400 text-sm mb-2">Withdrawal Fee %</label>
+                  <Input type="number" defaultValue="0.2" className="bg-slate-800 border-slate-700 text-white" step="0.01" />
+                </div>
+                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                  Update Transaction Fees
+                </Button>
+              </div>
+            </div>
+
+            {/* Trading Fees */}
+            <div className="bg-[#1E293B] rounded-xl p-6 border border-slate-700/50">
+              <h4 className="text-lg font-semibold text-white mb-4">Trading Fees</h4>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-gray-400 text-sm mb-2">Maker Fee %</label>
+                  <Input type="number" defaultValue="0.1" className="bg-slate-800 border-slate-700 text-white" step="0.01" />
+                </div>
+                <div>
+                  <label className="block text-gray-400 text-sm mb-2">Taker Fee %</label>
+                  <Input type="number" defaultValue="0.2" className="bg-slate-800 border-slate-700 text-white" step="0.01" />
+                </div>
+                <div>
+                  <label className="block text-gray-400 text-sm mb-2">P2P Fee %</label>
+                  <Input type="number" defaultValue="0.5" className="bg-slate-800 border-slate-700 text-white" step="0.01" />
+                </div>
+                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                  Update Trading Fees
+                </Button>
+              </div>
+            </div>
+
+            {/* Spread Control */}
+            <div className="bg-[#1E293B] rounded-xl p-6 border border-slate-700/50">
+              <h4 className="text-lg font-semibold text-white mb-4">Spread Control</h4>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-gray-400 text-sm mb-2">Buy Spread %</label>
+                  <Input type="number" defaultValue="0.5" className="bg-slate-800 border-slate-700 text-white" step="0.01" />
+                </div>
+                <div>
+                  <label className="block text-gray-400 text-sm mb-2">Sell Spread %</label>
+                  <Input type="number" defaultValue="0.5" className="bg-slate-800 border-slate-700 text-white" step="0.01" />
+                </div>
+                <div>
+                  <label className="block text-gray-400 text-sm mb-2">Max Spread %</label>
+                  <Input type="number" defaultValue="2.0" className="bg-slate-800 border-slate-700 text-white" step="0.01" />
+                </div>
+                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                  Update Spread
+                </Button>
+              </div>
+            </div>
+
+            {/* Lending Rates */}
+            <div className="bg-[#1E293B] rounded-xl p-6 border border-slate-700/50">
+              <h4 className="text-lg font-semibold text-white mb-4">Lending APY Rates</h4>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-gray-400 text-sm mb-2">Flexible APY %</label>
+                  <Input type="number" defaultValue="5.0" className="bg-slate-800 border-slate-700 text-white" step="0.1" />
+                </div>
+                <div>
+                  <label className="block text-gray-400 text-sm mb-2">30-Day APY %</label>
+                  <Input type="number" defaultValue="7.5" className="bg-slate-800 border-slate-700 text-white" step="0.1" />
+                </div>
+                <div>
+                  <label className="block text-gray-400 text-sm mb-2">90-Day APY %</label>
+                  <Input type="number" defaultValue="10.0" className="bg-slate-800 border-slate-700 text-white" step="0.1" />
+                </div>
+                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                  Update Lending Rates
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Global Rate Multiplier */}
+          <div className="bg-[#1E293B] rounded-xl p-6 border border-slate-700/50">
+            <h4 className="text-lg font-semibold text-white mb-4">Global Rate Multiplier</h4>
+            <div className="flex items-center gap-4">
+              <div className="flex-1">
+                <label className="block text-gray-400 text-sm mb-2">Apply multiplier to all rates</label>
+                <Input type="number" defaultValue="1.0" className="bg-slate-800 border-slate-700 text-white" step="0.01" min="0.5" max="2.0" />
+                <p className="text-gray-400 text-xs mt-1">Range: 0.5x to 2.0x</p>
+              </div>
+              <Button className="bg-yellow-600 hover:bg-yellow-700 text-white mt-6">
+                Apply Multiplier
+              </Button>
+            </div>
+          </div>
         </div>
       )}
     </div>

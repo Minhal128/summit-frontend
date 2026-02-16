@@ -22,10 +22,12 @@ import {
   Users,
   ArrowLeftRight,
   ShieldCheck,
+  LogOut,
 } from "lucide-react"
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
+import { useRouter } from "next/navigation"
 import RecentTransactionsModal from "@/components/modals/RecentTransactionsModal"
 import SendReceiveModal from "@/components/modals/SendReceiveModal"
 import SendCoinModal from "@/components/modals/SendCoinModal"
@@ -45,6 +47,8 @@ import AdminDashboard from "@/components/AdminDashboard"
 import BuySellPage from "@/components/BuySellPage"
 import P2PTradingPage from "@/components/P2PTradingPage"
 import DexSwapPage from "@/components/DexSwapPage"
+import LendingPage from "@/components/LendingPage"
+import NfcShopPage from "@/components/NfcShopPage"
 import type { Token, TooltipProps, Network } from "@/types"
 
 // Data for the chart
@@ -75,6 +79,7 @@ const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
 
 // Main Dashboard Component
 const DashboardPage: NextPage = () => {
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState("Swap")
   const [activePage, setActivePage] = useState("Dashboard")
   const [isTransactionsModalOpen, setIsTransactionsModalOpen] = useState(false)
@@ -91,6 +96,15 @@ const DashboardPage: NextPage = () => {
   const [selectedToken, setSelectedToken] = useState<Token | null>(null)
   const [selectedNetwork, setSelectedNetwork] = useState<Network | null>(null)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  const handleLogout = () => {
+    // Clear all authentication tokens
+    localStorage.removeItem('auth_token')
+    localStorage.removeItem('nfc_token')
+    localStorage.removeItem('user')
+    // Redirect to login page
+    router.push('/login')
+  }
 
   useEffect(() => {
     const handleHardwareWalletConfirmed = () => {
@@ -223,6 +237,10 @@ const DashboardPage: NextPage = () => {
         return <P2PTradingPage className="w-full" />
       case "DEX":
         return <DexSwapPage className="w-full" />
+      case "Lending":
+        return <LendingPage className="w-full" />
+      case "NFC Shop":
+        return <NfcShopPage className="w-full" />
       default: // Dashboard
         return (
           <>
@@ -248,7 +266,7 @@ const DashboardPage: NextPage = () => {
                   <RefreshCw className="w-4 h-4" /> Swap
                 </Button>
                 <Button
-                  onClick={() => console.log('Lending clicked')}
+                  onClick={() => setActivePage("Lending")}
                   className="bg-white text-black font-semibold hover:bg-gray-200 flex items-center justify-center gap-2 px-4 lg:px-6 py-3 text-xs lg:text-sm rounded-xl shadow-lg"
                 >
                   <Banknote className="w-4 h-4" /> Lending
@@ -534,6 +552,17 @@ const DashboardPage: NextPage = () => {
                 <ShieldCheck className="w-5 h-5" /> Admin
               </button>
             </nav>
+            
+            {/* Logout Button */}
+            <div className="mt-6 pt-6 border-t border-slate-700">
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors w-full text-left hover:bg-red-500/10 text-red-400 hover:text-red-300"
+              >
+                <LogOut className="w-5 h-5" /> Logout
+              </button>
+            </div>
+            
             <div className="relative mt-6">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
@@ -681,6 +710,16 @@ const DashboardPage: NextPage = () => {
                     </button>
                     <button
                       onClick={() => {
+                        setActivePage("NFC Shop")
+                        setIsMobileMenuOpen(false)
+                      }}
+                      className={`px-4 py-3 rounded-xl transition-all duration-200 w-full text-left font-medium flex items-center gap-2 ${activePage === "NFC Shop" ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25" : "hover:bg-slate-700/50 text-gray-300 hover:text-white"}`}
+                    >
+                      <ShoppingCart className="w-4 h-4" />
+                      NFC Shop
+                    </button>
+                    <button
+                      onClick={() => {
                         setActivePage("Admin")
                         setIsMobileMenuOpen(false)
                       }}
@@ -688,6 +727,18 @@ const DashboardPage: NextPage = () => {
                     >
                       <ShieldCheck className="w-4 h-4" />
                       Admin
+                    </button>
+                    
+                    {/* Logout Button */}
+                    <button
+                      onClick={() => {
+                        handleLogout()
+                        setIsMobileMenuOpen(false)
+                      }}
+                      className="px-4 py-3 rounded-xl transition-all duration-200 w-full text-left font-medium flex items-center gap-2 hover:bg-red-500/10 text-red-400 hover:text-red-300 border-t border-slate-700 mt-4 pt-6"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Logout
                     </button>
                   </nav>
                 </div>
