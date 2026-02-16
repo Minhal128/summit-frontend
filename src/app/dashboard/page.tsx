@@ -8,6 +8,10 @@ import {
   Settings,
   BarChart,
   Search,
+  Globe,
+  Banknote as BanknoteIcon,
+  CreditCard as CreditCardIcon,
+  Map,
   ArrowUpRight,
   ArrowDownLeft,
   ChevronDown,
@@ -49,7 +53,9 @@ import P2PTradingPage from "@/components/P2PTradingPage"
 import DexSwapPage from "@/components/DexSwapPage"
 import LendingPage from "@/components/LendingPage"
 import NfcShopPage from "@/components/NfcShopPage"
+import PartnersMapPage from "@/components/PartnersMapPage"
 import type { Token, TooltipProps, Network } from "@/types"
+import { useTranslation } from "@/contexts/I18nContext"
 
 // Data for the chart
 const chartData = [
@@ -80,6 +86,7 @@ const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
 // Main Dashboard Component
 const DashboardPage: NextPage = () => {
   const router = useRouter()
+  const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState("Swap")
   const [activePage, setActivePage] = useState("Dashboard")
   const [isTransactionsModalOpen, setIsTransactionsModalOpen] = useState(false)
@@ -241,6 +248,8 @@ const DashboardPage: NextPage = () => {
         return <LendingPage className="w-full" />
       case "NFC Shop":
         return <NfcShopPage className="w-full" />
+      case "Partners":
+        return <PartnersMapPage className="w-full" />
       default: // Dashboard
         return (
           <>
@@ -269,7 +278,7 @@ const DashboardPage: NextPage = () => {
                   onClick={() => setActivePage("Lending")}
                   className="bg-white text-black font-semibold hover:bg-gray-200 flex items-center justify-center gap-2 px-4 lg:px-6 py-3 text-xs lg:text-sm rounded-xl shadow-lg"
                 >
-                  <Banknote className="w-4 h-4" /> Lending
+                  <Banknote className="w-4 h-4" /> {t('nav.lending')}
                 </Button>
               </div>
             </header>
@@ -507,7 +516,7 @@ const DashboardPage: NextPage = () => {
                 onClick={() => setActivePage("Dashboard")}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors w-full text-left ${activePage === "Dashboard" ? "bg-blue-500 text-white" : "hover:bg-slate-700/50 text-gray-300"}`}
               >
-                <LayoutDashboard className="w-5 h-5" /> Dashboard
+                <LayoutDashboard className="w-5 h-5" /> {t('nav.dashboard')}
               </button>
               <button
                 onClick={() => setActivePage("Activity")}
@@ -519,37 +528,55 @@ const DashboardPage: NextPage = () => {
                 onClick={() => setActivePage("Buy & Sell")}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors w-full text-left ${activePage === "Buy & Sell" ? "bg-blue-500 text-white" : "hover:bg-slate-700/50 text-gray-300"}`}
               >
-                <ShoppingCart className="w-5 h-5" /> Buy & Sell
+                <ShoppingCart className="w-5 h-5" /> {t('nav.buy_sell')}
               </button>
               <button
                 onClick={() => setActivePage("DEX")}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors w-full text-left ${activePage === "DEX" ? "bg-blue-500 text-white" : "hover:bg-slate-700/50 text-gray-300"}`}
               >
-                <ArrowLeftRight className="w-5 h-5" /> DEX Swap
+                <ArrowLeftRight className="w-5 h-5" /> {t('nav.dex_swap')}
               </button>
               <button
                 onClick={() => setActivePage("P2P")}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors w-full text-left ${activePage === "P2P" ? "bg-blue-500 text-white" : "hover:bg-slate-700/50 text-gray-300"}`}
               >
-                <Users className="w-5 h-5" /> P2P Trading
+                <Users className="w-5 h-5" /> {t('nav.p2p_trading')}
               </button>
               <button
                 onClick={() => setActivePage("Live Market")}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors w-full text-left ${activePage === "Live Market" ? "bg-blue-500 text-white" : "hover:bg-slate-700/50 text-gray-300"}`}
               >
-                <BarChart className="w-5 h-5" /> Live Market
+                <BarChart className="w-5 h-5" /> {t('nav.live_market')}
+              </button>
+              <button
+                onClick={() => setActivePage("Lending")}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors w-full text-left ${activePage === "Lending" ? "bg-blue-500 text-white" : "hover:bg-slate-700/50 text-gray-300"}`}
+              >
+                <BanknoteIcon className="w-5 h-5" /> {t('nav.lending')}
+              </button>
+              <button
+                onClick={() => setActivePage("NFC Shop")}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors w-full text-left ${activePage === "NFC Shop" ? "bg-blue-500 text-white" : "hover:bg-slate-700/50 text-gray-300"}`}
+              >
+                <CreditCardIcon className="w-5 h-5" /> {t('nav.nfc_shop')}
+              </button>
+              <button
+                onClick={() => setActivePage("Partners")}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors w-full text-left ${activePage === "Partners" ? "bg-blue-500 text-white" : "hover:bg-slate-700/50 text-gray-300"}`}
+              >
+                <Map className="w-5 h-5" /> {t('nav.partners')}
               </button>
               <button
                 onClick={() => setActivePage("Settings")}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors w-full text-left ${activePage === "Settings" ? "bg-blue-500 text-white" : "hover:bg-slate-700/50 text-gray-300"}`}
               >
-                <Settings className="w-5 h-5" /> Settings
+                <Settings className="w-5 h-5" /> {t('nav.settings')}
               </button>
               <button
                 onClick={() => setActivePage("Admin")}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors w-full text-left ${activePage === "Admin" ? "bg-blue-500 text-white" : "hover:bg-slate-700/50 text-gray-300"}`}
               >
-                <ShieldCheck className="w-5 h-5" /> Admin
+                <ShieldCheck className="w-5 h-5" /> {t('nav.admin')}
               </button>
             </nav>
             
@@ -559,7 +586,7 @@ const DashboardPage: NextPage = () => {
                 onClick={handleLogout}
                 className="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors w-full text-left hover:bg-red-500/10 text-red-400 hover:text-red-300"
               >
-                <LogOut className="w-5 h-5" /> Logout
+                <LogOut className="w-5 h-5" /> {t('nav.logout')}
               </button>
             </div>
             
@@ -639,7 +666,7 @@ const DashboardPage: NextPage = () => {
                       }}
                       className={`px-4 py-3 rounded-xl transition-all duration-200 w-full text-left font-medium ${activePage === "Dashboard" ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25" : "hover:bg-slate-700/50 text-gray-300 hover:text-white"}`}
                     >
-                      Dashboard
+                      {t('nav.dashboard')}
                     </button>
                     <button
                       onClick={() => {
@@ -658,7 +685,7 @@ const DashboardPage: NextPage = () => {
                       className={`px-4 py-3 rounded-xl transition-all duration-200 w-full text-left font-medium flex items-center gap-2 ${activePage === "Buy & Sell" ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25" : "hover:bg-slate-700/50 text-gray-300 hover:text-white"}`}
                     >
                       <ShoppingCart className="w-4 h-4" />
-                      Buy & Sell
+                      {t('nav.buy_sell')}
                     </button>
                     <button
                       onClick={() => {
@@ -668,7 +695,7 @@ const DashboardPage: NextPage = () => {
                       className={`px-4 py-3 rounded-xl transition-all duration-200 w-full text-left font-medium flex items-center gap-2 ${activePage === "DEX" ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25" : "hover:bg-slate-700/50 text-gray-300 hover:text-white"}`}
                     >
                       <ArrowLeftRight className="w-4 h-4" />
-                      DEX Swap
+                      {t('nav.dex_swap')}
                     </button>
                     <button
                       onClick={() => {
@@ -678,7 +705,7 @@ const DashboardPage: NextPage = () => {
                       className={`px-4 py-3 rounded-xl transition-all duration-200 w-full text-left font-medium flex items-center gap-2 ${activePage === "P2P" ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25" : "hover:bg-slate-700/50 text-gray-300 hover:text-white"}`}
                     >
                       <Users className="w-4 h-4" />
-                      P2P Trading
+                      {t('nav.p2p_trading')}
                     </button>
                     <button
                       onClick={() => {
@@ -687,7 +714,7 @@ const DashboardPage: NextPage = () => {
                       }}
                       className={`px-4 py-3 rounded-xl transition-all duration-200 w-full text-left font-medium ${activePage === "Live Market" ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25" : "hover:bg-slate-700/50 text-gray-300 hover:text-white"}`}
                     >
-                      Live Market
+                      {t('nav.live_market')}
                     </button>
                     <button
                       onClick={() => {
@@ -696,7 +723,7 @@ const DashboardPage: NextPage = () => {
                       }}
                       className={`px-4 py-3 rounded-xl transition-all duration-200 w-full text-left font-medium ${activePage === "Settings" ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25" : "hover:bg-slate-700/50 text-gray-300 hover:text-white"}`}
                     >
-                      Settings
+                      {t('nav.settings')}
                     </button>
                     <button
                       onClick={() => {
@@ -716,7 +743,7 @@ const DashboardPage: NextPage = () => {
                       className={`px-4 py-3 rounded-xl transition-all duration-200 w-full text-left font-medium flex items-center gap-2 ${activePage === "NFC Shop" ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25" : "hover:bg-slate-700/50 text-gray-300 hover:text-white"}`}
                     >
                       <ShoppingCart className="w-4 h-4" />
-                      NFC Shop
+                      {t('nav.nfc_shop')}
                     </button>
                     <button
                       onClick={() => {
@@ -726,7 +753,7 @@ const DashboardPage: NextPage = () => {
                       className={`px-4 py-3 rounded-xl transition-all duration-200 w-full text-left font-medium flex items-center gap-2 ${activePage === "Admin" ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25" : "hover:bg-slate-700/50 text-gray-300 hover:text-white"}`}
                     >
                       <ShieldCheck className="w-4 h-4" />
-                      Admin
+                      {t('nav.admin')}
                     </button>
                     
                     {/* Logout Button */}
@@ -738,7 +765,7 @@ const DashboardPage: NextPage = () => {
                       className="px-4 py-3 rounded-xl transition-all duration-200 w-full text-left font-medium flex items-center gap-2 hover:bg-red-500/10 text-red-400 hover:text-red-300 border-t border-slate-700 mt-4 pt-6"
                     >
                       <LogOut className="w-4 h-4" />
-                      Logout
+                      {t('nav.logout')}
                     </button>
                   </nav>
                 </div>

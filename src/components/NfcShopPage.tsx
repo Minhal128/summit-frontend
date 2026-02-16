@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   CreditCard,
   ShoppingCart,
@@ -11,9 +11,11 @@ import {
   Package,
   Truck,
   Lock,
+  RefreshCw,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { getMarketRates } from "@/lib/exchangeApi"
 
 const NFC_PRODUCTS = [
   {
@@ -75,6 +77,8 @@ const NFC_PRODUCTS = [
 export default function NfcShopPage({ className }: { className?: string }) {
   const [selectedProduct, setSelectedProduct] = useState<typeof NFC_PRODUCTS[0] | null>(null)
   const [quantity, setQuantity] = useState(1)
+  const [cryptoRates, setCryptoRates] = useState<Record<string, number>>({})
+  const [ratesLoading, setRatesLoading] = useState(true)
   const [shippingInfo, setShippingInfo] = useState({
     name: "",
     email: "",
@@ -83,6 +87,35 @@ export default function NfcShopPage({ className }: { className?: string }) {
     country: "",
     zip: "",
   })
+
+  useEffect(() => {
+    loadCryptoRates()
+    const interval = setInterval(loadCryptoRates, 60000) // refresh every minute
+    return () => clearInterval(interval)
+  }, [])
+
+  const loadCryptoRates = async () => {
+    try {
+      const res = await getMarketRates()
+      const rates: Record<string, number> = {}
+      if (res.data) {
+        res.data.forEach((r: any) => {
+          if (r.price) rates[r.symbol?.toUpperCase()] = r.price
+        })
+      }
+      if (Object.keys(rates).length > 0) setCryptoRates(rates)
+    } catch (err) {
+      console.error("Failed to load crypto rates:", err)
+    } finally {
+      setRatesLoading(false)
+    }
+  }
+
+  const getCryptoEquivalent = (usdPrice: number, symbol: string) => {
+    const rate = cryptoRates[symbol]
+    if (!rate || rate === 0) return null
+    return (usdPrice / rate).toFixed(symbol === 'BTC' ? 6 : 4)
+  }
 
   const calculateTotal = () => {
     if (!selectedProduct) return 0
@@ -164,13 +197,34 @@ export default function NfcShopPage({ className }: { className?: string }) {
 
               <h3 className="text-xl font-bold text-white mb-2">{product.name}</h3>
               
-              <div className="flex items-baseline gap-2 mb-4">
+              <div className="flex items-baseline gap-2 mb-2">
                 <span className="text-3xl font-bold text-white">${product.price}</span>
                 <span className="text-gray-400 line-through text-sm">${product.originalPrice}</span>
                 <span className="text-green-400 text-sm font-semibold">
                   {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
                 </span>
               </div>
+
+              {/* Live Crypto Equivalents */}
+              {!ratesLoading && Object.keys(cryptoRates).length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {getCryptoEquivalent(product.price, 'BTC') && (
+                    <span className="px-2 py-1 bg-orange-500/10 border border-orange-500/20 rounded-lg text-orange-400 text-xs font-medium">
+                      ₿ {getCryptoEquivalent(product.price, 'BTC')} BTC
+                    </span>
+                  )}
+                  {getCryptoEquivalent(product.price, 'ETH') && (
+                    <span className="px-2 py-1 bg-purple-500/10 border border-purple-500/20 rounded-lg text-purple-400 text-xs font-medium">
+                      Ξ {getCryptoEquivalent(product.price, 'ETH')} ETH
+                    </span>
+                  )}
+                  {getCryptoEquivalent(product.price, 'USDT') && (
+                    <span className="px-2 py-1 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400 text-xs font-medium">
+                      {getCryptoEquivalent(product.price, 'USDT')} USDT
+                    </span>
+                  )}
+                </div>
+              )}
 
               <div className="space-y-2 mb-4">
                 {product.features.map((feature, i) => (

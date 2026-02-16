@@ -9,6 +9,7 @@ import {
   Check
 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation, SUPPORTED_LANGUAGES, LanguageCode } from '@/contexts/I18nContext';
 
 // Define the structure for a settings tab
 interface SettingsTab {
@@ -26,43 +27,30 @@ const settingsTabs: SettingsTab[] = [
 ];
 
 const LanguageSettings = () => {
-  const [selectedLanguage, setSelectedLanguage] = useState(0);
-  const languages = [
-    'Default (Device language)', 
-    'English', 
-    'Chinese (Simplified)', 
-    'Chinese (Traditional)',
-    'French', 
-    'Spanish', 
-    'Bengali',
-    'Hindi',
-    'Arabic',
-    'Portuguese',
-    'Russian',
-    'Japanese',
-    'German',
-    'Korean',
-    'Italian',
-    'Turkish',
-    'Vietnamese',
-    'Thai',
-    'Indonesian',
-    'Malay'
-  ];
+  const { language, setLanguage, t } = useTranslation();
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-white mb-6">Language</h2>
+      <h2 className="text-2xl font-bold text-white mb-6">{t('settings.language')}</h2>
+      <p className="text-gray-400 text-sm mb-4">Select your preferred language. The app interface will update immediately.</p>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {languages.map((lang, index) => (
+        {SUPPORTED_LANGUAGES.map((lang) => (
           <div 
-            key={lang} 
-            onClick={() => setSelectedLanguage(index)}
-            className="flex justify-between items-center p-4 rounded-lg hover:bg-slate-700/50 cursor-pointer bg-[#0F172A] border border-slate-700"
+            key={lang.code} 
+            onClick={() => setLanguage(lang.code as LanguageCode)}
+            className={`flex justify-between items-center p-4 rounded-lg hover:bg-slate-700/50 cursor-pointer bg-[#0F172A] border ${
+              language === lang.code ? 'border-blue-500 ring-1 ring-blue-500/50' : 'border-slate-700'
+            }`}
           >
-            <span className="font-medium text-white">{lang}</span>
-            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedLanguage === index ? 'border-blue-500 bg-blue-500' : 'border-gray-500'}`}>
-              {selectedLanguage === index && <Check className="w-3 h-3 text-white" />}
+            <div className="flex items-center gap-3">
+              <span className="text-xl">{lang.flag}</span>
+              <div>
+                <span className="font-medium text-white">{lang.name}</span>
+                {lang.dir === 'rtl' && <span className="text-xs text-gray-500 ml-2">(RTL)</span>}
+              </div>
+            </div>
+            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${language === lang.code ? 'border-blue-500 bg-blue-500' : 'border-gray-500'}`}>
+              {language === lang.code && <Check className="w-3 h-3 text-white" />}
             </div>
           </div>
         ))}

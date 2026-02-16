@@ -13,6 +13,7 @@ import {
   Globe,
   AlertCircle,
   Lock,
+  ChevronDown,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -56,6 +57,49 @@ const CRYPTOS = [
   { symbol: "VET", name: "VeChain", icon: "V", color: "bg-blue-800" },
 ]
 
+const FIAT_CURRENCIES = [
+  { code: "USD", name: "US Dollar", symbol: "$" },
+  { code: "EUR", name: "Euro", symbol: "€" },
+  { code: "GBP", name: "British Pound", symbol: "£" },
+  { code: "JPY", name: "Japanese Yen", symbol: "¥" },
+  { code: "CNY", name: "Chinese Yuan", symbol: "¥" },
+  { code: "CAD", name: "Canadian Dollar", symbol: "C$" },
+  { code: "AUD", name: "Australian Dollar", symbol: "A$" },
+  { code: "CHF", name: "Swiss Franc", symbol: "Fr" },
+  { code: "HKD", name: "Hong Kong Dollar", symbol: "HK$" },
+  { code: "SGD", name: "Singapore Dollar", symbol: "S$" },
+  { code: "SEK", name: "Swedish Krona", symbol: "kr" },
+  { code: "KRW", name: "South Korean Won", symbol: "₩" },
+  { code: "NOK", name: "Norwegian Krone", symbol: "kr" },
+  { code: "NZD", name: "New Zealand Dollar", symbol: "NZ$" },
+  { code: "INR", name: "Indian Rupee", symbol: "₹" },
+  { code: "MXN", name: "Mexican Peso", symbol: "MX$" },
+  { code: "TWD", name: "Taiwan Dollar", symbol: "NT$" },
+  { code: "ZAR", name: "South African Rand", symbol: "R" },
+  { code: "BRL", name: "Brazilian Real", symbol: "R$" },
+  { code: "DKK", name: "Danish Krone", symbol: "kr" },
+  { code: "PLN", name: "Polish Zloty", symbol: "zł" },
+  { code: "THB", name: "Thai Baht", symbol: "฿" },
+  { code: "IDR", name: "Indonesian Rupiah", symbol: "Rp" },
+  { code: "HUF", name: "Hungarian Forint", symbol: "Ft" },
+  { code: "CZK", name: "Czech Koruna", symbol: "Kč" },
+  { code: "ILS", name: "Israeli Shekel", symbol: "₪" },
+  { code: "CLP", name: "Chilean Peso", symbol: "CLP$" },
+  { code: "PHP", name: "Philippine Peso", symbol: "₱" },
+  { code: "AED", name: "UAE Dirham", symbol: "د.إ" },
+  { code: "SAR", name: "Saudi Riyal", symbol: "﷼" },
+  { code: "MYR", name: "Malaysian Ringgit", symbol: "RM" },
+  { code: "TRY", name: "Turkish Lira", symbol: "₺" },
+  { code: "RUB", name: "Russian Ruble", symbol: "₽" },
+  { code: "VND", name: "Vietnamese Dong", symbol: "₫" },
+  { code: "ARS", name: "Argentine Peso", symbol: "AR$" },
+  { code: "EGP", name: "Egyptian Pound", symbol: "E£" },
+  { code: "PKR", name: "Pakistani Rupee", symbol: "₨" },
+  { code: "BDT", name: "Bangladeshi Taka", symbol: "৳" },
+  { code: "NGN", name: "Nigerian Naira", symbol: "₦" },
+  { code: "UAH", name: "Ukrainian Hryvnia", symbol: "₴" },
+]
+
 export default function BuySellPage({ className }: { className?: string }) {
   const { balances, isAuthenticated, loading: walletLoading } = useWallet()
   const [mode, setMode] = useState<"buy" | "sell">("buy")
@@ -66,6 +110,8 @@ export default function BuySellPage({ className }: { className?: string }) {
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null)
   const [orderLoading, setOrderLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [selectedFiat, setSelectedFiat] = useState(FIAT_CURRENCIES[0])
+  const [showFiatDropdown, setShowFiatDropdown] = useState(false)
 
   // Get user's balance for selected crypto
   const getUserBalance = (symbol: string): number => {
@@ -93,7 +139,7 @@ export default function BuySellPage({ className }: { className?: string }) {
         action: mode,
         cryptocurrency: selectedCrypto.symbol,
         amount: parseFloat(amount),
-        fiatCurrency: "USD",
+        fiatCurrency: selectedFiat.code,
         amountType: "fiat"
       })
       setQuotes(response.quotes || [])
@@ -111,7 +157,7 @@ export default function BuySellPage({ className }: { className?: string }) {
       if (amount) fetchQuotes()
     }, 500)
     return () => clearTimeout(debounce)
-  }, [amount, selectedCrypto, mode])
+  }, [amount, selectedCrypto, mode, selectedFiat])
 
   const handleCreateOrder = async (providerId: string) => {
     if (!amount) return
@@ -135,7 +181,7 @@ export default function BuySellPage({ className }: { className?: string }) {
       const response = await createProviderOrder(providerId, {
         action: mode,
         cryptocurrency: selectedCrypto.symbol,
-        fiatCurrency: "USD",
+        fiatCurrency: selectedFiat.code,
         amount: parseFloat(amount),
         walletAddress: "0x...", // This should come from user's wallet
         returnUrl: window.location.href
@@ -205,11 +251,33 @@ export default function BuySellPage({ className }: { className?: string }) {
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="0.00"
-                  className="bg-slate-800 border-slate-700 text-white text-2xl font-bold h-16 pr-20"
+                  className="bg-slate-800 border-slate-700 text-white text-2xl font-bold h-16 pr-24"
                 />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">
-                  USD
-                </span>
+                <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                  <button
+                    onClick={() => setShowFiatDropdown(!showFiatDropdown)}
+                    className="flex items-center gap-1 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-white text-sm font-medium transition-colors"
+                  >
+                    {selectedFiat.code}
+                    <ChevronDown className="w-3 h-3" />
+                  </button>
+                  {showFiatDropdown && (
+                    <div className="absolute right-0 top-full mt-1 w-56 max-h-60 overflow-y-auto bg-slate-800 border border-slate-700 rounded-xl shadow-xl z-50">
+                      {FIAT_CURRENCIES.map((fiat) => (
+                        <button
+                          key={fiat.code}
+                          onClick={() => { setSelectedFiat(fiat); setShowFiatDropdown(false); }}
+                          className={`w-full px-3 py-2 text-left text-sm hover:bg-slate-700 transition-colors flex items-center justify-between ${
+                            selectedFiat.code === fiat.code ? "text-blue-400 bg-slate-700/50" : "text-gray-300"
+                          }`}
+                        >
+                          <span>{fiat.symbol} {fiat.code}</span>
+                          <span className="text-xs text-gray-500">{fiat.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 

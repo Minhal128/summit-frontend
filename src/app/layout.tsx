@@ -4,6 +4,7 @@ import "./globals.css";
 import { ToastContainer } from "react-toastify";
 import { CartProvider } from "@/contexts/CartContext";
 import { WalletProvider } from "@/contexts/WalletContext";
+import { I18nProvider } from "@/contexts/I18nContext";
 import { ThemeProvider } from "@/components/theme-provider";
 
 const inter = Inter({
@@ -37,9 +38,11 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <CartProvider>
-            <WalletProvider>{children}</WalletProvider>
-          </CartProvider>
+          <I18nProvider>
+            <CartProvider>
+              <WalletProvider>{children}</WalletProvider>
+            </CartProvider>
+          </I18nProvider>
         </ThemeProvider>
         <ToastContainer
           position="top-right"

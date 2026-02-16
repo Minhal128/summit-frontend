@@ -37,6 +37,19 @@ const DEFAULT_TOKENS: DexToken[] = [
   { symbol: "SNX", name: "Synthetix", address: "0xc011a73ee8576fb46f5e1c5751ca3b9fe0af2a6f", decimals: 18 },
   { symbol: "COMP", name: "Compound", address: "0xc00e94cb662c3520282e6f5717214004a7f26888", decimals: 18 },
   { symbol: "SUSHI", name: "SushiSwap", address: "0x6b3595068778dd592e39a122f4f5a5cf09c90fe2", decimals: 18 },
+  { symbol: "GRT", name: "The Graph", address: "0xc944e90c64b2c07662a292be6244bdf05cda44a7", decimals: 18 },
+  { symbol: "ENJ", name: "Enjin Coin", address: "0xf629cbd94d3791c9250152bd8dfbdf380e2a3b9c", decimals: 18 },
+  { symbol: "BAT", name: "Basic Attention", address: "0x0d8775f648430679a709e98d2b0cb6250d2887ef", decimals: 18 },
+  { symbol: "MANA", name: "Decentraland", address: "0x0f5d2fb29fb7d3cfee444a200298f468908cc942", decimals: 18 },
+  { symbol: "SAND", name: "The Sandbox", address: "0x3845badade8e6dff049820680d1f14bd3903a5d0", decimals: 18 },
+  { symbol: "AXS", name: "Axie Infinity", address: "0xbb0e17ef65f82ab018d8edd776e8dd940327b28b", decimals: 18 },
+  { symbol: "IMX", name: "Immutable", address: "0xf57e7e7c23978c3caec3c3548e3d615c346e79ff", decimals: 18 },
+  { symbol: "CHZ", name: "Chiliz", address: "0x3506424f91fd33084466f402d5d97f05f8e3b4af", decimals: 18 },
+  { symbol: "RNDR", name: "Render", address: "0x6de037ef9ad2725eb40118bb1702ebb27e4aeb24", decimals: 18 },
+  { symbol: "LDO", name: "Lido DAO", address: "0x5a98fcbea516cf06857215779fd812ca3bef1b32", decimals: 18 },
+  { symbol: "APE", name: "ApeCoin", address: "0x4d224452801aced8b2f0aebe155379bb5d594381", decimals: 18 },
+  { symbol: "PEPE", name: "Pepe", address: "0x6982508145454ce325ddbe47a25d4ec3d2311933", decimals: 18 },
+  { symbol: "FET", name: "Fetch.ai", address: "0xaea46a60368a7bd060eec7df8cba43b7ef41ad85", decimals: 18 },
 ]
 
 const TOKEN_COLORS: Record<string, string> = {
@@ -55,6 +68,19 @@ const TOKEN_COLORS: Record<string, string> = {
   SNX: "bg-cyan-500",
   COMP: "bg-green-600",
   SUSHI: "bg-pink-600",
+  GRT: "bg-indigo-600",
+  ENJ: "bg-purple-700",
+  BAT: "bg-orange-500",
+  MANA: "bg-red-500",
+  SAND: "bg-blue-400",
+  AXS: "bg-blue-800",
+  IMX: "bg-teal-600",
+  CHZ: "bg-red-600",
+  RNDR: "bg-indigo-400",
+  LDO: "bg-cyan-600",
+  APE: "bg-blue-500",
+  PEPE: "bg-green-700",
+  FET: "bg-purple-400",
 }
 
 export default function DexSwapPage({ className }: { className?: string }) {

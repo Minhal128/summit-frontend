@@ -536,3 +536,114 @@ export async function getHealthStatus(): Promise<{
 export async function getDatabaseStatus(): Promise<any> {
   return apiFetch('/api/db-status');
 }
+
+// ==========================================
+// LENDING API
+// ==========================================
+
+export interface LendingPool {
+  poolId: string;
+  asset: string;
+  name: string;
+  apy: number;
+  borrowApy: number;
+  minAmount: number;
+  maxAmount: number;
+  lockPeriod: string;
+  lockDays: number;
+  totalDeposited: number;
+  totalBorrowed: number;
+  available: boolean;
+  collateralFactor: number;
+  utilization: string;
+}
+
+export interface LendingPosition {
+  positionId: string;
+  userId: string;
+  poolId: string;
+  type: 'lend' | 'borrow';
+  asset: string;
+  amount: number;
+  apy: number;
+  lockPeriod: string;
+  lockDays: number;
+  status: 'active' | 'matured' | 'withdrawn' | 'liquidated';
+  accruedInterest: number;
+  totalValue?: number;
+  maturesAt?: string;
+  withdrawnAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export async function getLendingPools(params?: {
+  asset?: string;
+  lockPeriod?: string;
+}): Promise<{ pools: LendingPool[]; total: number }> {
+  const queryParams = new URLSearchParams();
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined) queryParams.append(key, String(value));
+    });
+  }
+  const qs = queryParams.toString();
+  return apiFetch(`/api/lending/pools${qs ? `?${qs}` : ''}`);
+}
+
+export async function getLendingPool(poolId: string): Promise<{ pool: LendingPool }> {
+  return apiFetch(`/api/lending/pools/${poolId}`);
+}
+
+export async function getLendingStats(): Promise<{ data: any }> {
+  return apiFetch('/api/lending/stats');
+}
+
+export async function createLendingDeposit(poolId: string, amount: number): Promise<{
+  success: boolean;
+  positionId: string;
+  position: LendingPosition;
+  message: string;
+}> {
+  return apiFetch('/api/lending/deposit', {
+    method: 'POST',
+    body: JSON.stringify({ poolId, amount }),
+  });
+}
+
+export async function createLendingBorrow(poolId: string, amount: number): Promise<{
+  success: boolean;
+  positionId: string;
+  position: LendingPosition;
+  message: string;
+}> {
+  return apiFetch('/api/lending/borrow', {
+    method: 'POST',
+    body: JSON.stringify({ poolId, amount }),
+  });
+}
+
+export async function getUserLendingPositions(status?: string): Promise<{
+  positions: LendingPosition[];
+  total: number;
+  summary: {
+    totalDeposited: number;
+    totalBorrowed: number;
+    totalInterestEarned: number;
+  };
+}> {
+  const qs = status ? `?status=${status}` : '';
+  return apiFetch(`/api/lending/positions${qs}`);
+}
+
+export async function withdrawLendingPosition(positionId: string): Promise<{
+  success: boolean;
+  position: LendingPosition;
+  withdrawn: number;
+  interest: number;
+  message: string;
+}> {
+  return apiFetch(`/api/lending/withdraw/${positionId}`, {
+    method: 'POST',
+  });
+}

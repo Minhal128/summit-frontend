@@ -69,6 +69,9 @@ export default function P2PTradingPage({ className }: { className?: string }) {
   const [orderMaxLimit, setOrderMaxLimit] = useState("")
   const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<string[]>([])
   const [createLoading, setCreateLoading] = useState(false)
+  const [traderTypeFilter, setTraderTypeFilter] = useState<"all" | "individual" | "institutional">("all")
+  const [orderTraderType, setOrderTraderType] = useState<"individual" | "institutional">("individual")
+  const [institutionName, setInstitutionName] = useState("")
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token') || localStorage.getItem('nfc_token')
@@ -155,11 +158,14 @@ export default function P2PTradingPage({ className }: { className?: string }) {
   }
 
   const filteredOrders = orders.filter(order => {
-    if (!searchQuery) return true
-    return (
+    if (!searchQuery && traderTypeFilter === "all") return true
+    const matchSearch = !searchQuery || (
       order.cryptocurrency?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.createdBy?.toLowerCase().includes(searchQuery.toLowerCase())
     )
+    const matchType = traderTypeFilter === "all" || 
+      (order as any).traderType === traderTypeFilter
+    return matchSearch && matchType
   })
 
   return (
@@ -253,6 +259,23 @@ export default function P2PTradingPage({ className }: { className?: string }) {
         </Button>
       </div>
 
+      {/* Trader Type Filter */}
+      <div className="flex gap-2 mb-6">
+        {(["all", "individual", "institutional"] as const).map((type) => (
+          <button
+            key={type}
+            onClick={() => setTraderTypeFilter(type)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              traderTypeFilter === type
+                ? "bg-blue-600 text-white"
+                : "bg-[#1E293B] text-gray-400 hover:text-white border border-slate-700"
+            }`}
+          >
+            {type === "all" ? "All Traders" : type === "individual" ? "👤 Individual" : "🏢 Institutional"}
+          </button>
+        ))}
+      </div>
+
       {/* Orders List */}
       <div className="space-y-4">
         {loading ? (
@@ -271,9 +294,21 @@ export default function P2PTradingPage({ className }: { className?: string }) {
                     {order.createdBy?.charAt(0).toUpperCase() || "?"}
                   </div>
                   <div>
-                    <p className="text-white font-semibold">
-                      {order.createdBy || "Anonymous"}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-white font-semibold">
+                        {order.createdBy || "Anonymous"}
+                      </p>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                        (order as any).traderType === "institutional"
+                          ? "bg-purple-500/20 text-purple-400 border border-purple-500/30"
+                          : "bg-slate-700/50 text-gray-400 border border-slate-600/30"
+                      }`}>
+                        {(order as any).traderType === "institutional" ? "🏢 Institutional" : "👤 Individual"}
+                      </span>
+                    </div>
+                    {(order as any).institutionName && (
+                      <p className="text-purple-400 text-xs mt-0.5">{(order as any).institutionName}</p>
+                    )}
                     <div className="flex items-center gap-2 text-gray-400 text-sm">
                       {getStatusIcon(order.status)}
                       <span className="capitalize">{order.status}</span>
@@ -417,6 +452,46 @@ export default function P2PTradingPage({ className }: { className?: string }) {
             </div>
 
             {/* Payment Methods */}
+            <div className="mb-4">
+              <label className="block text-gray-400 text-sm mb-2">Trader Type</label>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setOrderTraderType("individual")}
+                  className={`flex-1 py-2 rounded-lg font-medium transition-all text-sm ${
+                    orderTraderType === "individual"
+                      ? "bg-blue-600 text-white"
+                      : "bg-slate-800 text-gray-400"
+                  }`}
+                >
+                  👤 Individual
+                </button>
+                <button
+                  onClick={() => setOrderTraderType("institutional")}
+                  className={`flex-1 py-2 rounded-lg font-medium transition-all text-sm ${
+                    orderTraderType === "institutional"
+                      ? "bg-purple-600 text-white"
+                      : "bg-slate-800 text-gray-400"
+                  }`}
+                >
+                  🏢 Institutional
+                </button>
+              </div>
+            </div>
+
+            {orderTraderType === "institutional" && (
+              <div className="mb-4">
+                <label className="block text-gray-400 text-sm mb-2">Institution Name</label>
+                <Input
+                  type="text"
+                  value={institutionName}
+                  onChange={(e) => setInstitutionName(e.target.value)}
+                  placeholder="Enter company or institution name"
+                  className="bg-slate-800 border-slate-700 text-white"
+                />
+              </div>
+            )}
+
+            {/* Payment Methods Selection */}
             <div className="mb-6">
               <label className="block text-gray-400 text-sm mb-2">Payment Methods</label>
               <div className="flex flex-wrap gap-2">
