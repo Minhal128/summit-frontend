@@ -100,6 +100,33 @@ export async function loginByUid(cardUid: string): Promise<NfcAuthResponse & { u
   return response;
 }
 
+/**
+ * Link an NFC card to an existing account (self-service provisioning).
+ * User taps card → unregistered → enters email/password → card gets linked.
+ * Backend authenticates user, provisions card with the WebHID UID, returns JWT.
+ */
+export async function linkCard(data: {
+  identifier: string;
+  password: string;
+  cardUid: string;
+}): Promise<NfcAuthResponse & { cardInfo?: { cardId: string; cardUid: string } }> {
+  const response = await apiFetch('/api/nfc/link-card', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+
+  if (response.success && response.token) {
+    localStorage.setItem('nfc_token', response.token);
+    localStorage.setItem('auth_token', response.token);
+    if (response.cardInfo?.cardId) {
+      localStorage.setItem('nfc_card_id', response.cardInfo.cardId);
+    }
+  }
+
+  return response;
+}
+
 // ==========================================
 // PROTECTED ENDPOINTS (Require authentication)
 // ==========================================

@@ -6,7 +6,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { PhoneInput } from "react-international-phone";
 import "react-international-phone/style.css";
-import { loginByUid } from "@/lib/nfcApi";
+import { loginByUid, linkCard } from "@/lib/nfcApi";
 import { useNfcReader } from "@/contexts/NfcReaderContext";
 
 // --- HELPER & SIMULATED SHADCN/UI COMPONENTS ---
@@ -86,6 +86,9 @@ export default function LoginPage() {
   const [nfcStep, setNfcStep] = useState<"idle" | "connecting" | "waiting" | "verifying" | "success" | "error" | "unregistered">("idle");
   const [nfcError, setNfcError] = useState("");
   const [detectedUid, setDetectedUid] = useState<string | null>(null);
+  const [linkEmail, setLinkEmail] = useState("");
+  const [linkPassword, setLinkPassword] = useState("");
+  const [isLinking, setIsLinking] = useState(false);
   const nfcStepRef = useRef(nfcStep);
   nfcStepRef.current = nfcStep;
 
@@ -153,6 +156,36 @@ export default function LoginPage() {
     setNfcStep("idle");
     setNfcError("");
     setDetectedUid(null);
+    setLinkEmail("");
+    setLinkPassword("");
+  };
+
+  // Link an unregistered card to user's account
+  const handleLinkCard = async () => {
+    if (!detectedUid) return;
+    if (!linkEmail || !linkPassword) {
+      toast.error("Enter your email and password to link this card");
+      return;
+    }
+    setIsLinking(true);
+    try {
+      const res = await linkCard({
+        identifier: linkEmail,
+        password: linkPassword,
+        cardUid: detectedUid,
+      });
+      if (res.success) {
+        setNfcStep("success");
+        toast.success("Card linked & logged in!");
+        setTimeout(() => router.push("/dashboard"), 800);
+      } else {
+        throw new Error(res.message || "Failed to link card");
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to link card. Check your credentials.");
+    } finally {
+      setIsLinking(false);
+    }
   };
 
   // Form validation
@@ -512,27 +545,52 @@ export default function LoginPage() {
 
                 {nfcStep === "unregistered" && (
                   <div className="text-center py-4">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto">
                       <circle cx="12" cy="12" r="10" />
                       <line x1="12" y1="8" x2="12" y2="12" />
                       <line x1="12" y1="16" x2="12.01" y2="16" />
                     </svg>
-                    <p className="text-amber-400 font-medium mt-3">Card Not Registered</p>
-                    <p className="text-gray-400 text-xs mt-1">
-                      This card hasn&apos;t been linked to an account yet.
+                    <p className="text-amber-400 font-medium mt-2">Card Not Linked Yet</p>
+                    <p className="text-gray-400 text-xs mt-1 mb-4">
+                      Enter your account credentials to link this card for instant login.
                     </p>
-                    <p className="text-gray-500 text-xs mt-1">
-                      Log in with email/password below, then link this card from your dashboard.
-                    </p>
+
+                    {/* Inline link-card form */}
+                    <div className="space-y-3 text-left max-w-xs mx-auto">
+                      <Input
+                        type="email"
+                        placeholder="Email address"
+                        value={linkEmail}
+                        onChange={(e) => setLinkEmail(e.target.value)}
+                        autoComplete="email"
+                      />
+                      <Input
+                        type="password"
+                        placeholder="Password"
+                        value={linkPassword}
+                        onChange={(e) => setLinkPassword(e.target.value)}
+                        autoComplete="current-password"
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleLinkCard(); }}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleLinkCard}
+                        disabled={isLinking}
+                        className="w-full py-2.5 bg-amber-600 hover:bg-amber-500 disabled:bg-amber-800 text-white font-medium rounded-lg text-sm transition-colors"
+                      >
+                        {isLinking ? "Linking..." : "Link Card & Login"}
+                      </button>
+                    </div>
+
                     {detectedUid && (
-                      <p className="text-gray-600 text-xs mt-2 font-mono">Card UID: {detectedUid}</p>
+                      <p className="text-gray-600 text-xs mt-3 font-mono">Card: {detectedUid}</p>
                     )}
                     <button
                       type="button"
                       onClick={resetNfcLogin}
-                      className="mt-3 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm transition-colors"
+                      className="mt-3 px-4 py-1.5 text-gray-400 hover:text-gray-200 text-xs transition-colors"
                     >
-                      Try Another Card
+                      Cancel / Try Another Card
                     </button>
                   </div>
                 )}

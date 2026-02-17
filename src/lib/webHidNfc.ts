@@ -195,11 +195,17 @@ class WebHidNfcReader {
    * Process incoming HID report from the CYB reader
    */
   private handleInputReport(event: HIDInputReportEvent) {
-    const data = new Uint8Array(event.data.buffer);
+    // Handle DataView properly (may have byteOffset)
+    const data = new Uint8Array(event.data.buffer, event.data.byteOffset, event.data.byteLength);
 
-    // Check if all zeros → no card / card removed
-    const allZero = data.every(b => b === 0);
-    if (allZero) {
+    // Count non-zero bytes
+    let nonZeroCount = 0;
+    for (let i = 0; i < data.length; i++) {
+      if (data[i] !== 0) nonZeroCount++;
+    }
+
+    // All zeros or only 1-2 non-zero bytes → no card / card removed
+    if (nonZeroCount < 3) {
       if (this.lastUid !== null) {
         this.lastUid = null;
         this.sameUidCount = 0;
@@ -209,14 +215,7 @@ class WebHidNfcReader {
       return;
     }
 
-    // CYB protocol: byte 0 = status, byte 1 = card type, byte 2 = seq counter
-    const status = data[0];
-    const cardType = data[1];
-
-    // Only process if card is present (status byte has bit 0x08 set)
-    if ((status & 0x08) === 0) return;
-
-    // Extract UID: skip byte 2 (sequence counter), take bytes 3+ until zero padding
+    // Extract a stable card fingerprint from the report
     const uid = this.extractUid(data);
     if (!uid) return;
 
@@ -225,19 +224,18 @@ class WebHidNfcReader {
       clearTimeout(this.cardPresentTimeout);
     }
     this.cardPresentTimeout = setTimeout(() => {
-      // If no report received for 500ms, assume card removed
       if (this.lastUid !== null) {
         this.lastUid = null;
         this.sameUidCount = 0;
         this.callbacks.onCardRemoved?.();
         this.setStatus('connected');
       }
-    }, 500);
+    }, 800);
 
     // Deduplicate: same card still present
     if (uid === this.lastUid) {
       this.sameUidCount++;
-      return; // Suppress duplicate events
+      return;
     }
 
     // New card detected!
@@ -252,45 +250,44 @@ class WebHidNfcReader {
   }
 
   /**
-   * Extract stable UID from the CYB reader report.
-   * 
-   * The CYB reader sends the card UID in a vendor-specific format.
-   * We've confirmed with the CYB_NfcTool that the real UID for a DESFire EV3 card
-   * like "0441C082A92190" is 7 bytes. The reader may encode it differently in HID
-   * reports, so we try multiple extraction strategies.
+   * Extract a stable card fingerprint from the CYB reader HID report.
+   *
+   * The HID report format observed is:
+   *   [status][cardType][seqCounter][...cardData...][checksum][padding zeros]
+   *
+   * Example: 08 85 24 AC 34 19 12 29 00 00 ...
+   *   - Byte 0 (08): status/header
+   *   - Byte 1 (85): card type (13.56 MHz)
+   *   - Byte 2 (24→25→26): sequence counter — SKIP
+   *   - Bytes 3-6 (AC 34 19 12): card-specific data — USE THIS
+   *   - Byte 7 (29→93→5A): checksum — SKIP
+   *
+   * We build a fingerprint from ALL non-zero bytes, excluding
+   * byte 2 (seq counter) and the last non-zero byte (checksum).
    */
   private extractUid(data: Uint8Array): string | null {
-    // Strategy 1: The full report header is [status][type][seq][...uid bytes...]
-    // Skip first 3 bytes, take non-zero bytes as UID
-    const uidBytes: number[] = [];
-    let foundNonZero = false;
+    const allBytes = Array.from(data);
 
-    for (let i = 3; i < data.length; i++) {
-      if (data[i] !== 0) {
-        uidBytes.push(data[i]);
-        foundNonZero = true;
-      } else if (foundNonZero) {
-        // Once we hit zeros after UID data, stop
-        // But allow single zero within UID (some UIDs contain 0x00)
-        if (i + 1 < data.length && data[i + 1] !== 0) {
-          uidBytes.push(data[i]); // zero within UID
-        } else {
-          break;
-        }
-      }
+    // Find the last non-zero byte index
+    let lastNonZero = -1;
+    for (let i = allBytes.length - 1; i >= 0; i--) {
+      if (allBytes[i] !== 0) { lastNonZero = i; break; }
     }
 
-    if (uidBytes.length < 3) return null;
+    if (lastNonZero < 3) return null; // Not enough data
 
-    // If we get exactly the right length, great
-    const uid = uidBytes.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
-    
-    // Strategy 2: If the UID from bytes 3+ doesn't match what CYB_NfcTool shows,
-    // try using ALL non-zero bytes including header bytes
-    // The CYB_NfcTool may reassemble the UID from the raw report differently
-    // For now, use strategy 1 which should work for most cases
+    // Collect stable bytes:
+    // - Skip byte 2 (sequence counter)
+    // - Skip lastNonZero byte (likely checksum that varies)
+    const stableBytes: number[] = [];
+    for (let i = 0; i <= lastNonZero - 1; i++) {
+      if (i === 2) continue; // skip sequence counter
+      stableBytes.push(allBytes[i]);
+    }
 
-    return uid;
+    if (stableBytes.length < 3) return null;
+
+    return stableBytes.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
   }
 
   private setStatus(status: NfcReaderStatus) {
