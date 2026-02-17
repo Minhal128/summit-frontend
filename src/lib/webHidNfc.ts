@@ -10,6 +10,10 @@
  *   - Byte 1: Card type (0x85 = 13.56 MHz)
  *   - Byte 2: Sequence counter (increments each poll, ignore for UID)
  *   - Bytes 3+: Card UID data (until padding zeros)
+ * 
+ * IMPORTANT: The reader requires initialization commands (output reports)
+ * to start its polling loop. Without sending these, the reader sits idle
+ * and never fires inputreport events even though the device is "open".
  */
 
 // CYB Reader USB identifiers
@@ -30,6 +34,14 @@ export interface NfcReaderCallbacks {
   onError?: (error: string) => void;
 }
 
+function hexByte(b: number): string {
+  return b.toString(16).toUpperCase().padStart(2, '0');
+}
+
+function hexDump(arr: Uint8Array): string {
+  return Array.from(arr).map(b => hexByte(b)).join(' ');
+}
+
 class WebHidNfcReader {
   private device: HIDDevice | null = null;
   private callbacks: NfcReaderCallbacks = {};
@@ -38,6 +50,8 @@ class WebHidNfcReader {
   private sameUidCount = 0;
   private cardPresentTimeout: ReturnType<typeof setTimeout> | null = null;
   private connectInProgress = false;
+  private reportCount = 0;
+  private boundHandleInputReport: ((event: HIDInputReportEvent) => void) | null = null;
 
   /**
    * Check if WebHID is available in this browser
@@ -68,6 +82,89 @@ class WebHidNfcReader {
   }
 
   /**
+   * Attach the inputreport listener and start reader polling.
+   * Removes any previous listener to avoid duplicates.
+   */
+  private attachListener(device: HIDDevice): void {
+    // Remove old listener if exists
+    if (this.boundHandleInputReport) {
+      try { device.removeEventListener('inputreport', this.boundHandleInputReport); } catch { /* ignore */ }
+    }
+    // Create and store bound handler
+    this.boundHandleInputReport = (event: HIDInputReportEvent) => {
+      this.handleInputReport(event);
+    };
+    device.addEventListener('inputreport', this.boundHandleInputReport);
+    console.log('[NFC] inputreport listener attached');
+  }
+
+  /**
+   * Send initialization/polling commands to wake up the CYB reader.
+   * Without these commands, the reader stays idle and won't send card data.
+   * This mimics what the CYB_NfcTool does on connect.
+   */
+  private async sendInitCommands(): Promise<void> {
+    if (!this.device || !this.device.opened) return;
+
+    console.log('[NFC] Sending init commands to wake up reader...');
+
+    try {
+      const collections = this.device.collections;
+      console.log(`[NFC] Device has ${collections.length} HID collection(s)`);
+
+      for (const col of collections) {
+        console.log(`[NFC] Collection: UsagePage=0x${(col.usagePage ?? 0).toString(16).toUpperCase()}, Usage=0x${(col.usage ?? 0).toString(16).toUpperCase()}`);
+
+        // Log input report info
+        if (col.inputReports?.length) {
+          for (const r of col.inputReports) {
+            const itemInfo = r.items?.map(item => `size=${item.reportSize}\u00d7${item.reportCount}`).join(', ') || 'none';
+            console.log(`[NFC]   Input Report ID: ${r.reportId} (items: ${itemInfo})`);
+          }
+        }
+
+        // Try reading feature reports (queries device state)
+        if (col.featureReports?.length) {
+          for (const r of col.featureReports) {
+            try {
+              const data = await this.device.receiveFeatureReport(r.reportId);
+              console.log(`[NFC]   Feature Report ${r.reportId}: ${hexDump(new Uint8Array(data.buffer))}`);
+            } catch (e: any) {
+              console.log(`[NFC]   Feature Report ${r.reportId} failed: ${e.message}`);
+            }
+          }
+        }
+
+        // Send output reports — this wakes up the reader's polling loop
+        if (col.outputReports?.length) {
+          for (const r of col.outputReports) {
+            try {
+              // Calculate correct report size from the HID descriptor items
+              const reportSize = r.items?.reduce(
+                (acc: number, item: HIDReportItem) => acc + Math.ceil((item.reportSize * item.reportCount) / 8), 0
+              ) || 64;
+
+              console.log(`[NFC]   Output Report ID: ${r.reportId}, size=${reportSize} bytes`);
+
+              // Send a basic poll/initialization command
+              const buf = new Uint8Array(Math.max(reportSize, 8));
+              buf[0] = 0x01; // Generic poll/status request
+              await this.device.sendReport(r.reportId, buf);
+              console.log(`[NFC]   \u2713 Sent init command to Output Report ${r.reportId}`);
+            } catch (e: any) {
+              console.log(`[NFC]   Output Report ${r.reportId} send failed: ${e.message}`);
+            }
+          }
+        }
+      }
+
+      console.log('[NFC] Init commands complete — reader should now be polling for cards');
+    } catch (e: any) {
+      console.log('[NFC] Init commands error:', e.message);
+    }
+  }
+
+  /**
    * Connect to the CYB NFC reader
    * MUST be called from a user gesture (click/tap) — WebHID requirement
    */
@@ -83,8 +180,11 @@ class WebHidNfcReader {
       return false;
     }
 
-    // Already connected and open
+    // Already connected and open — just re-send init commands to be safe
     if (this.device && this.device.opened) {
+      console.log('[NFC] Already connected, re-sending init commands');
+      this.attachListener(this.device);
+      await this.sendInitCommands();
       this.setStatus('connected');
       return true;
     }
@@ -95,6 +195,8 @@ class WebHidNfcReader {
     try {
       // Check if we already have permission for a paired device
       const existingDevices = await navigator.hid.getDevices();
+      console.log(`[NFC] Found ${existingDevices.length} previously paired device(s)`);
+
       let device = existingDevices.find(
         d => d.vendorId === CYB_VENDOR_ID && d.productId === CYB_PRODUCT_ID
       );
@@ -104,9 +206,13 @@ class WebHidNfcReader {
         device = existingDevices.find(d => d.vendorId === CYB_VENDOR_ID);
       }
 
+      if (device) {
+        console.log(`[NFC] Found paired device: ${device.productName} (VID:0x${device.vendorId.toString(16)}, PID:0x${device.productId.toString(16)})`);
+      }
+
       if (!device) {
         // Request user permission to access the device
-        // Use vendorId-only filter for broader compatibility
+        console.log('[NFC] No paired device found, showing picker...');
         const devices = await navigator.hid.requestDevice({
           filters: [
             { vendorId: CYB_VENDOR_ID, productId: CYB_PRODUCT_ID },
@@ -120,16 +226,18 @@ class WebHidNfcReader {
           return false; // User cancelled — don't show error
         }
         device = devices[0];
+        console.log(`[NFC] User selected: ${device.productName} (VID:0x${device.vendorId.toString(16)}, PID:0x${device.productId.toString(16)})`);
       }
 
       // Open the device
       if (!device.opened) {
         try {
+          console.log('[NFC] Opening device...');
           await device.open();
+          console.log('[NFC] Device opened successfully');
         } catch (openErr: any) {
           this.setStatus('error');
           this.connectInProgress = false;
-          // Exclusive access error — another app (CYB Tool) holds the device
           if (openErr?.message?.includes('access') || openErr?.message?.includes('open') || openErr?.name === 'InvalidStateError') {
             this.callbacks.onError?.('Cannot open NFC reader — close CYB_NfcTool or any other NFC software first, then try again.');
           } else {
@@ -137,18 +245,19 @@ class WebHidNfcReader {
           }
           return false;
         }
+      } else {
+        console.log('[NFC] Device already open');
       }
 
       this.device = device;
 
       // Listen for input reports (card data)
-      device.addEventListener('inputreport', (event: HIDInputReportEvent) => {
-        this.handleInputReport(event);
-      });
+      this.attachListener(device);
 
       // Listen for disconnect
       navigator.hid.addEventListener('disconnect', (event: HIDConnectionEvent) => {
         if (event.device === this.device) {
+          console.log('[NFC] Reader disconnected');
           this.device = null;
           this.lastUid = null;
           this.setStatus('disconnected');
@@ -156,15 +265,18 @@ class WebHidNfcReader {
         }
       });
 
+      // CRITICAL: Send init commands to start the reader's polling loop
+      await this.sendInitCommands();
+
       this.setStatus('connected');
       this.connectInProgress = false;
+      console.log('[NFC] \u2713 Reader ready — waiting for card taps');
       return true;
     } catch (err: any) {
       this.connectInProgress = false;
-      // User cancelled the picker dialog — not an error, just cancelled
       if (err?.name === 'NotAllowedError' || err?.message?.includes('cancelled') || err?.message?.includes('canceled')) {
         this.setStatus('disconnected');
-        return false; // Silent — user just clicked Cancel
+        return false;
       }
       this.setStatus('error');
       const msg = err?.message || 'Failed to connect to NFC reader';
@@ -183,31 +295,42 @@ class WebHidNfcReader {
       const devices = await navigator.hid.getDevices();
       const device = devices.find(
         d => d.vendorId === CYB_VENDOR_ID && d.productId === CYB_PRODUCT_ID
-      );
+      ) || devices.find(d => d.vendorId === CYB_VENDOR_ID);
 
-      if (!device) return false;
+      if (!device) {
+        console.log('[NFC] tryReconnect: no paired device found');
+        return false;
+      }
+
+      console.log(`[NFC] tryReconnect: found ${device.productName}`);
 
       if (!device.opened) {
         await device.open();
+        console.log('[NFC] tryReconnect: device opened');
       }
 
       this.device = device;
 
-      device.addEventListener('inputreport', (event: HIDInputReportEvent) => {
-        this.handleInputReport(event);
-      });
+      // Attach listener
+      this.attachListener(device);
 
       navigator.hid.addEventListener('disconnect', (event: HIDConnectionEvent) => {
         if (event.device === this.device) {
+          console.log('[NFC] Reader disconnected (auto-reconnect)');
           this.device = null;
           this.lastUid = null;
           this.setStatus('disconnected');
         }
       });
 
+      // CRITICAL: Send init commands to start polling
+      await this.sendInitCommands();
+
       this.setStatus('connected');
+      console.log('[NFC] \u2713 Auto-reconnected — waiting for card taps');
       return true;
-    } catch {
+    } catch (e: any) {
+      console.log('[NFC] tryReconnect failed:', e?.message);
       return false;
     }
   }
@@ -220,24 +343,54 @@ class WebHidNfcReader {
       clearTimeout(this.cardPresentTimeout);
       this.cardPresentTimeout = null;
     }
-    if (this.device && this.device.opened) {
-      try {
-        await this.device.close();
-      } catch {
-        // ignore
+    if (this.device) {
+      if (this.boundHandleInputReport) {
+        try { this.device.removeEventListener('inputreport', this.boundHandleInputReport); } catch { /* ignore */ }
+      }
+      if (this.device.opened) {
+        try {
+          await this.device.close();
+        } catch {
+          // ignore
+        }
       }
     }
     this.device = null;
     this.lastUid = null;
+    this.boundHandleInputReport = null;
     this.setStatus('disconnected');
+    console.log('[NFC] Disconnected');
   }
 
   /**
    * Process incoming HID report from the CYB reader
    */
   private handleInputReport(event: HIDInputReportEvent) {
-    // Handle DataView properly (may have byteOffset)
-    const data = new Uint8Array(event.data.buffer, event.data.byteOffset, event.data.byteLength);
+    this.reportCount++;
+    const reportId = event.reportId;
+
+    // Handle DataView properly — may have non-zero byteOffset
+    const dv = event.data;
+    const data = new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength);
+
+    // Log every report for first 10, then every 50th
+    if (this.reportCount <= 10 || this.reportCount % 50 === 0) {
+      console.log(`[NFC] Report #${this.reportCount} | ID:${reportId} | ${data.byteLength}B | ${hexDump(data)}`);
+    }
+
+    // Check if all bytes are zero → no card / idle polling
+    const allZero = data.every(b => b === 0);
+    if (allZero) {
+      // Card removed (if we had one)
+      if (this.lastUid !== null) {
+        console.log('[NFC] Card removed (all-zero report)');
+        this.lastUid = null;
+        this.sameUidCount = 0;
+        this.callbacks.onCardRemoved?.();
+        this.setStatus('connected');
+      }
+      return;
+    }
 
     // Count non-zero bytes
     let nonZeroCount = 0;
@@ -245,9 +398,10 @@ class WebHidNfcReader {
       if (data[i] !== 0) nonZeroCount++;
     }
 
-    // All zeros or only 1-2 non-zero bytes → no card / card removed
+    // Only 1-2 non-zero bytes → noise, not a card
     if (nonZeroCount < 3) {
       if (this.lastUid !== null) {
+        console.log(`[NFC] Card removed (only ${nonZeroCount} non-zero bytes)`);
         this.lastUid = null;
         this.sameUidCount = 0;
         this.callbacks.onCardRemoved?.();
@@ -258,7 +412,12 @@ class WebHidNfcReader {
 
     // Extract a stable card fingerprint from the report
     const uid = this.extractUid(data);
-    if (!uid) return;
+    if (!uid) {
+      if (this.reportCount <= 20) {
+        console.log(`[NFC] Report #${this.reportCount}: extractUid returned null`);
+      }
+      return;
+    }
 
     // Reset card-removal detection timer
     if (this.cardPresentTimeout) {
@@ -266,6 +425,7 @@ class WebHidNfcReader {
     }
     this.cardPresentTimeout = setTimeout(() => {
       if (this.lastUid !== null) {
+        console.log('[NFC] Card removed (timeout)');
         this.lastUid = null;
         this.sameUidCount = 0;
         this.callbacks.onCardRemoved?.();
@@ -284,6 +444,8 @@ class WebHidNfcReader {
     this.sameUidCount = 1;
     this.setStatus('reading');
 
+    console.log(`[NFC] \u2705 NEW CARD DETECTED! UID: ${uid}`);
+
     this.callbacks.onCardDetected?.({
       uid,
       timestamp: Date.now()
@@ -293,47 +455,46 @@ class WebHidNfcReader {
   /**
    * Extract a stable card fingerprint from the CYB reader HID report.
    *
-   * The HID report format observed is:
-   *   [status][cardType][seqCounter][...cardData...][checksum][padding zeros]
-   *
+   * Report format: [status][cardType][seqCounter][uid_bytes...][zeros...][extra][checksum]
    * Example: 08 85 24 AC 34 19 12 29 00 00 ...
-   *   - Byte 0 (08): status/header
-   *   - Byte 1 (85): card type (13.56 MHz)
-   *   - Byte 2 (24→25→26): sequence counter — SKIP
-   *   - Bytes 3-6 (AC 34 19 12): card-specific data — USE THIS
-   *   - Byte 7 (29→93→5A): checksum — SKIP
    *
-   * We build a fingerprint from ALL non-zero bytes, excluding
-   * byte 2 (seq counter) and the last non-zero byte (checksum).
+   * Strategy: Extract non-zero bytes from positions 3-12 (card UID data),
+   * stopping at the first zero after UID data starts.
+   * Also include bytes 0-1 (header/type) for uniqueness.
+   * Skip byte 2 (sequence counter) and trailing checksum.
    */
   private extractUid(data: Uint8Array): string | null {
-    const allBytes = Array.from(data);
+    const len = data.length;
+    if (len < 4) return null;
 
-    // Find the last non-zero byte index
-    let lastNonZero = -1;
-    for (let i = allBytes.length - 1; i >= 0; i--) {
-      if (allBytes[i] !== 0) { lastNonZero = i; break; }
+    // Extract UID bytes: positions 3 onward, non-zero, stop at first zero gap
+    const uidBytes: number[] = [];
+    for (let i = 3; i < Math.min(len, 12); i++) {
+      if (data[i] !== 0) {
+        uidBytes.push(data[i]);
+      } else if (uidBytes.length > 0) {
+        break; // first zero after UID data started → stop
+      }
     }
 
-    if (lastNonZero < 3) return null; // Not enough data
-
-    // Collect stable bytes:
-    // - Skip byte 2 (sequence counter)
-    // - Skip lastNonZero byte (likely checksum that varies)
-    const stableBytes: number[] = [];
-    for (let i = 0; i <= lastNonZero - 1; i++) {
-      if (i === 2) continue; // skip sequence counter
-      stableBytes.push(allBytes[i]);
+    // If we got very few uid bytes, also include byte 1 (card type)
+    if (uidBytes.length < 3 && data[1] !== 0) {
+      uidBytes.unshift(data[1]);
     }
 
-    if (stableBytes.length < 3) return null;
+    // Need at least 3 bytes for a usable fingerprint
+    if (uidBytes.length < 3) return null;
 
-    return stableBytes.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+    // Build fingerprint: header byte + uid bytes (skip byte 2 = seq counter)
+    const fingerprint = [data[0], data[1], ...uidBytes];
+
+    return fingerprint.map(b => hexByte(b)).join('');
   }
 
   private setStatus(status: NfcReaderStatus) {
     if (this.status !== status) {
       this.status = status;
+      console.log(`[NFC] Status: ${status}`);
       this.callbacks.onStatusChange?.(status);
     }
   }
