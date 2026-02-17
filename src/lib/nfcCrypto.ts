@@ -1,7 +1,18 @@
 /**
  * NFC Crypto Utilities for Browser
- * Simulates NFC card operations for demonstration
- * In production, this would interface with actual NFC hardware via Web NFC API
+ * 
+ * Supports two modes:
+ * 
+ * 1. REAL CARD MODE (production):
+ *    - Physical DESFire EV3 card stores cardId as NDEF text
+ *    - User taps card → phone reads cardId via Web NFC API
+ *    - Backend holds the private key (generated during provisioning)
+ *    - Authentication uses server-side signing via /nfc/auth-tap endpoint
+ * 
+ * 2. DEMO MODE (development/testing):
+ *    - Key pair generated in browser via Web Crypto API
+ *    - Private key stored in localStorage (NEVER do this in production)
+ *    - Used when no physical card is available
  */
 
 export interface KeyPair {
@@ -11,8 +22,74 @@ export interface KeyPair {
 }
 
 /**
+ * Scan for a physical NFC card using Web NFC API.
+ * Returns the cardId (from NDEF text record) and serialNumber (UID).
+ * 
+ * This is the PRIMARY method for real card authentication.
+ */
+export async function scanNfcCard(): Promise<{ cardId: string; cardUid: string }> {
+  if (!isWebNfcAvailable()) {
+    throw new Error('Web NFC not available. Use Chrome on Android with NFC enabled.');
+  }
+
+  return new Promise((resolve, reject) => {
+    const ndef = new (window as any).NDEFReader();
+    let resolved = false;
+
+    ndef.scan().then(() => {
+      ndef.addEventListener('reading', ({ message, serialNumber }: any) => {
+        if (resolved) return;
+        resolved = true;
+
+        let cardId = '';
+
+        // Read cardId from NDEF text record
+        for (const record of message.records) {
+          if (record.recordType === 'text') {
+            const textDecoder = new TextDecoder(record.encoding || 'utf-8');
+            cardId = textDecoder.decode(record.data);
+            break;
+          }
+        }
+
+        // Fallback: use serial number if no text record found
+        if (!cardId) {
+          cardId = `NFC-${serialNumber.replace(/:/g, '').toUpperCase()}`;
+        }
+
+        resolve({
+          cardId,
+          cardUid: serialNumber.replace(/:/g, '').toUpperCase()
+        });
+      });
+
+      ndef.addEventListener('readingerror', () => {
+        if (!resolved) {
+          resolved = true;
+          reject(new Error('Error reading NFC card. Please try again.'));
+        }
+      });
+
+      // Timeout after 30 seconds
+      setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          reject(new Error('NFC scan timed out. Please try again.'));
+        }
+      }, 30000);
+    }).catch((err: Error) => {
+      reject(new Error(`NFC scan failed: ${err.message}`));
+    });
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// DEMO MODE - Browser-simulated crypto (for development only)
+// ══════════════════════════════════════════════════════════════
+
+/**
  * Generate a key pair for demonstration
- * In production, this would be done on the NFC card's secure element
+ * In production, keys are generated during card provisioning (on your computer)
  */
 export async function generateKeyPair(keyType: 'P-256' | 'Ed25519' | 'secp256k1' = 'P-256'): Promise<KeyPair> {
   try {
@@ -36,7 +113,6 @@ export async function generateKeyPair(keyType: 'P-256' | 'Ed25519' | 'secp256k1'
       };
     }
 
-    // For other key types, we'll use a simplified approach for demo
     throw new Error('Only P-256 is currently supported in browser demo');
   } catch (error) {
     console.error('Key generation error:', error);
@@ -45,8 +121,8 @@ export async function generateKeyPair(keyType: 'P-256' | 'Ed25519' | 'secp256k1'
 }
 
 /**
- * Sign a message with the private key
- * In production, this would happen inside the NFC card's secure element
+ * Sign a message with the private key (DEMO MODE ONLY)
+ * In production, the backend signs using the key generated during provisioning
  */
 export async function signMessage(message: string, privateKeyJwk: string): Promise<string> {
   try {
@@ -124,7 +200,9 @@ export function createActionMessage(nonce: string, actionPayload: any): string {
 }
 
 /**
- * Store key pair securely (for demo - in production this would be in hardware)
+ * Store key pair (DEMO MODE - localStorage)
+ * WARNING: Never store private keys in localStorage in production!
+ * In production, keys are on the backend from card provisioning.
  */
 export function storeKeyPair(cardId: string, keyPair: KeyPair): void {
   if (typeof window === 'undefined') return;
@@ -151,8 +229,9 @@ export function getStoredKeyPair(cardId: string): KeyPair | null {
 }
 
 /**
- * Simulate NFC card tap (for demo)
- * In production, this would use Web NFC API or native bridge
+ * Simulate NFC card tap (DEMO MODE ONLY)
+ * In production, use scanNfcCard() to read cardId from physical card,
+ * then call authenticateWithTap() from nfcApi.ts
  */
 export async function simulateNfcTap(cardId: string, message: string): Promise<string> {
   // Simulate delay of physical card tap

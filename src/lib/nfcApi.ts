@@ -30,7 +30,7 @@ export async function createAuthNonce(cardId: string): Promise<NonceResponse> {
 }
 
 /**
- * Step 2: Authenticate with NFC card
+ * Step 2: Authenticate with NFC card (demo mode - browser signs)
  */
 export async function authenticateWithNfc(data: {
   cardId: string;
@@ -47,7 +47,31 @@ export async function authenticateWithNfc(data: {
   // Store NFC token in localStorage
   if (response.success && response.token) {
     localStorage.setItem('nfc_token', response.token);
-    localStorage.setItem('auth_token', response.token); // Also store as main auth token
+    localStorage.setItem('auth_token', response.token);
+  }
+
+  return response;
+}
+
+/**
+ * Authenticate with physical NFC card tap (PRODUCTION MODE)
+ * The backend holds the private key and performs the signing internally.
+ * The frontend only needs to provide the cardId (read from NDEF) and cardUid.
+ */
+export async function authenticateWithTap(data: {
+  cardId: string;
+  cardUid: string;
+}): Promise<NfcAuthResponse> {
+  const response = await apiFetch('/api/nfc/auth-tap', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+
+  if (response.success && response.token) {
+    localStorage.setItem('nfc_token', response.token);
+    localStorage.setItem('auth_token', response.token);
+    localStorage.setItem('nfc_card_id', data.cardId);
   }
 
   return response;

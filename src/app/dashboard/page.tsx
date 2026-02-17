@@ -109,9 +109,18 @@ const DashboardPage: NextPage = () => {
     localStorage.removeItem('auth_token')
     localStorage.removeItem('nfc_token')
     localStorage.removeItem('user')
+    localStorage.removeItem('nfc_card_id')
     // Redirect to login page
     router.push('/login')
   }
+
+  // Auth guard: redirect to login if no token
+  useEffect(() => {
+    const token = localStorage.getItem('auth_token') || localStorage.getItem('nfc_token')
+    if (!token) {
+      router.push('/login')
+    }
+  }, [router])
 
   useEffect(() => {
     const handleHardwareWalletConfirmed = () => {

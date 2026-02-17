@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { CreditCard, Loader2, CheckCircle, XCircle } from 'lucide-react';
-import { createAuthNonce, authenticateWithNfc } from '@/lib/nfcApi';
-import { createAuthMessage, simulateNfcTap } from '@/lib/nfcCrypto';
+import { CreditCard, Loader2, CheckCircle, XCircle, Smartphone } from 'lucide-react';
+import { createAuthNonce, authenticateWithNfc, authenticateWithTap } from '@/lib/nfcApi';
+import { createAuthMessage, simulateNfcTap, scanNfcCard, isWebNfcAvailable } from '@/lib/nfcCrypto';
 import { toast } from 'react-toastify';
 
 interface NfcLoginProps {
@@ -22,8 +23,58 @@ export function NfcLogin({ onSuccess, onError }: NfcLoginProps) {
   const [step, setStep] = useState<LoginStep>('input');
   const [error, setError] = useState('');
   const [nonce, setNonce] = useState('');
+  const hasWebNfc = typeof window !== 'undefined' && isWebNfcAvailable();
+  const router = useRouter();
 
-  const handleLogin = async () => {
+  /**
+   * Login with physical NFC card tap (PRODUCTION MODE)
+   * Uses Web NFC to read cardId from DESFire EV3, then authenticates via backend
+   */
+  const handleTapLogin = async () => {
+    try {
+      setStep('tap');
+      setError('');
+
+      // Scan physical NFC card
+      const cardData = await scanNfcCard();
+      
+      setStep('verifying');
+      
+      // Authenticate with backend (backend verifies card ownership by cardId + UID)
+      const authResponse = await authenticateWithTap({
+        cardId: cardData.cardId,
+        cardUid: cardData.cardUid
+      });
+
+      setStep('success');
+      toast.success('Authentication successful!');
+      
+      if (onSuccess) {
+        onSuccess(authResponse.token, authResponse.user);
+      }
+
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 1500);
+
+    } catch (err: any) {
+      console.error('NFC tap login error:', err);
+      setStep('error');
+      const errorMessage = err.message || 'Authentication failed';
+      setError(errorMessage);
+      toast.error(errorMessage);
+      
+      if (onError) {
+        onError(errorMessage);
+      }
+    }
+  };
+
+  /**
+   * Login with card ID input (DEMO MODE or manual entry)
+   * Uses browser-simulated signing
+   */
+  const handleManualLogin = async () => {
     if (!cardId.trim()) {
       toast.error('Please enter your card ID');
       return;
@@ -65,7 +116,7 @@ export function NfcLogin({ onSuccess, onError }: NfcLoginProps) {
 
       // Redirect or perform action after short delay
       setTimeout(() => {
-        // Could redirect to dashboard here
+        router.push('/dashboard');
       }, 1500);
 
     } catch (err: any) {
@@ -92,23 +143,50 @@ export function NfcLogin({ onSuccess, onError }: NfcLoginProps) {
       case 'input':
         return (
           <div className="space-y-4">
+            {/* Real NFC tap button (shows only on supported devices) */}
+            {hasWebNfc && (
+              <Button 
+                onClick={handleTapLogin} 
+                className="w-full"
+                size="lg"
+                variant="default"
+              >
+                <Smartphone className="mr-2 h-4 w-4" />
+                Tap NFC Card to Login
+              </Button>
+            )}
+
+            {hasWebNfc && (
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">
+                    Or enter manually
+                  </span>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="cardId">NFC Card ID</Label>
               <Input
                 id="cardId"
-                placeholder="Enter your card ID (e.g., CARD_12345)"
+                placeholder="Enter your card ID (e.g., SUMMIT-EV3-A1B2C3D4)"
                 value={cardId}
                 onChange={(e) => setCardId(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+                onKeyDown={(e) => e.key === 'Enter' && handleManualLogin()}
               />
             </div>
             <Button 
-              onClick={handleLogin} 
+              onClick={handleManualLogin} 
               className="w-full"
               size="lg"
+              variant={hasWebNfc ? "outline" : "default"}
             >
               <CreditCard className="mr-2 h-4 w-4" />
-              Login with NFC Card
+              Login with Card ID
             </Button>
           </div>
         );

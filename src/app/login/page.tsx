@@ -1,11 +1,14 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { PhoneInput } from "react-international-phone";
 import "react-international-phone/style.css";
+import { scanNfcCard, isWebNfcAvailable } from "@/lib/nfcCrypto";
+import { authenticateWithTap, createAuthNonce, authenticateWithNfc } from "@/lib/nfcApi";
+import { createAuthMessage, simulateNfcTap } from "@/lib/nfcCrypto";
 
 // --- HELPER & SIMULATED SHADCN/UI COMPONENTS ---
 const cn = (...classes: (string | undefined | null | false)[]): string =>
@@ -78,6 +81,81 @@ export default function LoginPage() {
     password: "",
   });
   const router = useRouter();
+
+  // NFC Login State
+  const [nfcCardId, setNfcCardId] = useState("");
+  const [nfcStep, setNfcStep] = useState<"idle" | "scanning" | "verifying" | "success" | "error">("idle");
+  const [nfcError, setNfcError] = useState("");
+  const [hasWebNfc, setHasWebNfc] = useState(false);
+
+  useEffect(() => {
+    setHasWebNfc(isWebNfcAvailable());
+    // If already logged in, redirect to dashboard
+    const token = localStorage.getItem("auth_token") || localStorage.getItem("nfc_token");
+    if (token) {
+      router.push("/dashboard");
+    }
+  }, [router]);
+
+  // --- NFC TAP LOGIN (Production - reads physical card via Web NFC) ---
+  const handleNfcTapLogin = async () => {
+    try {
+      setNfcStep("scanning");
+      setNfcError("");
+      const cardData = await scanNfcCard();
+      setNfcStep("verifying");
+      const authResponse = await authenticateWithTap({
+        cardId: cardData.cardId,
+        cardUid: cardData.cardUid,
+      });
+      setNfcStep("success");
+      toast.success("NFC login successful! Redirecting...");
+      setTimeout(() => router.push("/dashboard"), 800);
+    } catch (err: any) {
+      setNfcStep("error");
+      const msg = err.message || "NFC tap failed";
+      setNfcError(msg);
+      toast.error(msg);
+    }
+  };
+
+  // --- NFC MANUAL CARD ID LOGIN (manual entry or non-NFC device) ---
+  const handleNfcManualLogin = async () => {
+    if (!nfcCardId.trim()) {
+      toast.error("Please enter your NFC Card ID");
+      return;
+    }
+    try {
+      setNfcStep("verifying");
+      setNfcError("");
+
+      // Request nonce → sign → authenticate (demo/manual flow)
+      const nonceResponse = await createAuthNonce(nfcCardId);
+      const timestamp = Date.now();
+      const message = createAuthMessage(nonceResponse.nonce, nfcCardId, timestamp);
+      const signature = await simulateNfcTap(nfcCardId, message);
+      const authResponse = await authenticateWithNfc({
+        cardId: nfcCardId,
+        nonce: nonceResponse.nonce,
+        signature,
+        timestamp,
+      });
+
+      setNfcStep("success");
+      toast.success("NFC login successful! Redirecting...");
+      setTimeout(() => router.push("/dashboard"), 800);
+    } catch (err: any) {
+      setNfcStep("error");
+      const msg = err.message || "Card authentication failed";
+      setNfcError(msg);
+      toast.error(msg);
+    }
+  };
+
+  const resetNfcLogin = () => {
+    setNfcStep("idle");
+    setNfcError("");
+  };
 
   // Form validation
   const validateForm = () => {
@@ -327,6 +405,128 @@ export default function LoginPage() {
                 Sign up
               </a>
             </p>
+
+            {/* ===== NFC QUICK LOGIN (PRIMARY METHOD) ===== */}
+            <div
+              className="mb-6 mobile-input-container"
+              style={{ marginLeft: "15px", marginRight: "15px" }}
+            >
+              <div className="rounded-xl border border-emerald-500/30 bg-gradient-to-br from-emerald-900/20 to-blue-900/20 p-5">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="2" y="5" width="20" height="14" rx="2" />
+                      <line x1="2" y1="10" x2="22" y2="10" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-white font-semibold text-base">NFC Quick Login</h3>
+                    <p className="text-gray-400 text-xs">Tap your card — no password needed</p>
+                  </div>
+                </div>
+
+                {nfcStep === "idle" && (
+                  <div className="space-y-3">
+                    {/* Tap NFC Card button (shows on supported devices) */}
+                    {hasWebNfc && (
+                      <button
+                        type="button"
+                        onClick={handleNfcTapLogin}
+                        className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold h-12 rounded-lg text-sm transition-colors shadow-lg shadow-emerald-600/20"
+                      >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+                          <line x1="12" y1="18" x2="12.01" y2="18" />
+                        </svg>
+                        Tap NFC Card to Login
+                      </button>
+                    )}
+
+                    {/* Manual Card ID input */}
+                    <div className="flex gap-2">
+                      <Input
+                        type="text"
+                        placeholder="Enter Card ID (e.g. SUMMIT-EV3-...)"
+                        value={nfcCardId}
+                        onChange={(e) => setNfcCardId(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleNfcManualLogin()}
+                        className="flex-1"
+                        disabled={nfcStep !== "idle"}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleNfcManualLogin}
+                        className="px-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
+                      >
+                        Go
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {nfcStep === "scanning" && (
+                  <div className="text-center py-4">
+                    <div className="relative inline-block">
+                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="animate-pulse">
+                        <rect x="2" y="5" width="20" height="14" rx="2" />
+                        <line x1="2" y1="10" x2="22" y2="10" />
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-14 h-14 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    </div>
+                    <p className="text-emerald-400 font-medium mt-3">Hold your card near the reader...</p>
+                    <p className="text-gray-500 text-xs mt-1">Waiting for NFC card</p>
+                  </div>
+                )}
+
+                {nfcStep === "verifying" && (
+                  <div className="text-center py-4">
+                    <div className="w-10 h-10 border-2 border-blue-400 border-t-transparent rounded-full animate-spin mx-auto" />
+                    <p className="text-blue-400 font-medium mt-3">Verifying your card...</p>
+                  </div>
+                )}
+
+                {nfcStep === "success" && (
+                  <div className="text-center py-4">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto">
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                      <polyline points="22 4 12 14.01 9 11.01" />
+                    </svg>
+                    <p className="text-emerald-400 font-semibold mt-3">Login Successful!</p>
+                    <p className="text-gray-500 text-xs mt-1">Redirecting to dashboard...</p>
+                  </div>
+                )}
+
+                {nfcStep === "error" && (
+                  <div className="text-center py-4">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto">
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="15" y1="9" x2="9" y2="15" />
+                      <line x1="9" y1="9" x2="15" y2="15" />
+                    </svg>
+                    <p className="text-red-400 font-medium mt-3">{nfcError}</p>
+                    <button
+                      type="button"
+                      onClick={resetNfcLogin}
+                      className="mt-3 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm transition-colors"
+                    >
+                      Try Again
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Divider between NFC and traditional login */}
+            <div
+              className="flex items-center gap-3 mb-6 mobile-input-container"
+              style={{ marginLeft: "15px", marginRight: "15px" }}
+            >
+              <div className="flex-1 h-px bg-slate-700" />
+              <span className="text-gray-500 text-xs uppercase tracking-wide">Or login with password</span>
+              <div className="flex-1 h-px bg-slate-700" />
+            </div>
 
             {/* Login Method Toggle */}
             <div

@@ -90,8 +90,9 @@ const ActivateCardPage = () => {
     try {
       // Check if Web NFC is supported
       if (!("NDEFReader" in window)) {
+        // Fallback: show manual input for desktop users
         toast.error(
-          "NFC is not supported on this device/browser. Please use Chrome on Android or a compatible device.",
+          "NFC is not supported on this device/browser. Use Chrome on Android, or enter card details manually below.",
         );
         setScanning(false);
         return;
@@ -99,7 +100,7 @@ const ActivateCardPage = () => {
 
       const ndef = new (window as any).NDEFReader();
 
-      toast.info("🔵 Hold your NFC card near your device...");
+      toast.info("Hold your NFC card near your device...");
 
       await ndef.scan();
 
@@ -107,7 +108,7 @@ const ActivateCardPage = () => {
         console.log("NFC Tag detected!");
         console.log("Serial Number:", serialNumber);
 
-        // Read the card ID from NFC tag
+        // Read the card ID from NFC tag (written during provisioning)
         let cardId = "";
         for (const record of message.records) {
           if (record.recordType === "text") {
@@ -117,17 +118,24 @@ const ActivateCardPage = () => {
           }
         }
 
+        // Use serial number as UID
+        const cardUid = serialNumber
+          ? serialNumber.replace(/:/g, "").toUpperCase()
+          : "";
+
         if (!cardId) {
-          cardId = `NFC-DEMO-${serialNumber}`; // Fallback for testing
+          // Card has no NDEF text record - use UID-based fallback
+          cardId = `NFC-${cardUid || Date.now()}`;
+          toast.info("Card detected but no Summit ID found. Using UID-based ID.");
         }
 
         setCardData({
           cardId,
-          cardUid: serialNumber,
+          cardUid,
         });
 
         setScanning(false);
-        toast.success("✅ Card detected!");
+        toast.success("Card detected!");
       });
 
       ndef.addEventListener("readingerror", () => {
@@ -206,6 +214,23 @@ const ActivateCardPage = () => {
     }
   };
 
+  // Manual card entry for desktop/reader users
+  const [manualCardId, setManualCardId] = useState("");
+  const [manualCardUid, setManualCardUid] = useState("");
+  const [showManualEntry, setShowManualEntry] = useState(false);
+
+  const handleManualEntry = () => {
+    if (!manualCardId.trim() || !manualCardUid.trim()) {
+      toast.error("Both Card ID and Card UID are required");
+      return;
+    }
+    setCardData({
+      cardId: manualCardId.trim(),
+      cardUid: manualCardUid.trim(),
+    });
+    toast.success("Card data entered!");
+  };
+
   // Simulate NFC scan for testing (remove in production)
   const handleTestScan = () => {
     const testCardData = {
@@ -214,7 +239,7 @@ const ActivateCardPage = () => {
     };
 
     setCardData(testCardData);
-    toast.success("✅ Test card detected!");
+    toast.success("Test card detected!");
   };
 
   return (
@@ -391,7 +416,124 @@ const ActivateCardPage = () => {
                 >
                   Test Mode (Development Only)
                 </button>
+
+                {/* Manual entry for desktop/reader users */}
+                <button
+                  onClick={() => setShowManualEntry(!showManualEntry)}
+                  style={{
+                    padding: "14px 32px",
+                    background: "rgba(255, 255, 255, 0.05)",
+                    border: "1px solid rgba(235, 226, 255, 0.15)",
+                    borderRadius: "12px",
+                    color: "rgba(235, 226, 255, 0.6)",
+                    fontSize: "14px",
+                    fontWeight: "600",
+                    cursor: "pointer",
+                    transition: "all 0.3s ease",
+                  }}
+                >
+                  Enter Card Details Manually
+                </button>
               </div>
+
+              {/* Manual Entry Form */}
+              {showManualEntry && (
+                <div
+                  style={{
+                    marginTop: "24px",
+                    padding: "24px",
+                    background: "rgba(255, 255, 255, 0.03)",
+                    border: "1px solid rgba(235, 226, 255, 0.15)",
+                    borderRadius: "12px",
+                    textAlign: "left",
+                  }}
+                >
+                  <p
+                    style={{
+                      fontSize: "14px",
+                      color: "rgba(235, 226, 255, 0.7)",
+                      marginBottom: "16px",
+                    }}
+                  >
+                    Enter the details from your provisioned card (shown in the
+                    provisioning tool output):
+                  </p>
+                  <div style={{ marginBottom: "12px" }}>
+                    <label
+                      style={{
+                        fontSize: "13px",
+                        color: "rgba(235, 226, 255, 0.6)",
+                        display: "block",
+                        marginBottom: "4px",
+                      }}
+                    >
+                      Card ID (e.g., SUMMIT-EV3-A1B2C3D4)
+                    </label>
+                    <input
+                      type="text"
+                      value={manualCardId}
+                      onChange={(e) => setManualCardId(e.target.value)}
+                      placeholder="SUMMIT-EV3-XXXXXXXX"
+                      style={{
+                        width: "100%",
+                        padding: "12px",
+                        background: "rgba(255, 255, 255, 0.08)",
+                        border: "1px solid rgba(235, 226, 255, 0.2)",
+                        borderRadius: "8px",
+                        color: "#EBE2FF",
+                        fontSize: "14px",
+                        fontFamily: "monospace",
+                        outline: "none",
+                      }}
+                    />
+                  </div>
+                  <div style={{ marginBottom: "16px" }}>
+                    <label
+                      style={{
+                        fontSize: "13px",
+                        color: "rgba(235, 226, 255, 0.6)",
+                        display: "block",
+                        marginBottom: "4px",
+                      }}
+                    >
+                      Card UID (7-byte hex from reader)
+                    </label>
+                    <input
+                      type="text"
+                      value={manualCardUid}
+                      onChange={(e) => setManualCardUid(e.target.value)}
+                      placeholder="04A1B2C3D4E5F6"
+                      style={{
+                        width: "100%",
+                        padding: "12px",
+                        background: "rgba(255, 255, 255, 0.08)",
+                        border: "1px solid rgba(235, 226, 255, 0.2)",
+                        borderRadius: "8px",
+                        color: "#EBE2FF",
+                        fontSize: "14px",
+                        fontFamily: "monospace",
+                        outline: "none",
+                      }}
+                    />
+                  </div>
+                  <button
+                    onClick={handleManualEntry}
+                    style={{
+                      width: "100%",
+                      padding: "14px",
+                      background: "linear-gradient(45deg, #4CAF50, #003BFC)",
+                      border: "none",
+                      borderRadius: "8px",
+                      color: "white",
+                      fontSize: "16px",
+                      fontWeight: "600",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Submit Card Details
+                  </button>
+                </div>
+              )}
 
               <div
                 style={{

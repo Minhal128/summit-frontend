@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 interface HeaderProps {
   onScrollToFeatures?: () => void;
@@ -13,8 +14,10 @@ const Header: React.FC<HeaderProps> = ({ onScrollToFeatures }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState({ code: 'Eng', name: 'English' });
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const desktopLanguageDropdownRef = useRef<HTMLDivElement>(null);
   const mobileLanguageDropdownRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   const languages = [
     { code: 'Eng', name: 'English' },
@@ -30,6 +33,33 @@ const Header: React.FC<HeaderProps> = ({ onScrollToFeatures }) => {
   const handleLanguageSelect = (language: { code: string; name: string }) => {
     setSelectedLanguage(language);
     setIsLanguageDropdownOpen(false);
+  };
+
+  // Check auth state on mount and listen for changes
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = typeof window !== 'undefined' 
+        ? (localStorage.getItem('auth_token') || localStorage.getItem('nfc_token'))
+        : null;
+      setIsLoggedIn(!!token);
+    };
+    checkAuth();
+    window.addEventListener('storage', checkAuth);
+    // Also check periodically for same-tab changes
+    const interval = setInterval(checkAuth, 2000);
+    return () => {
+      window.removeEventListener('storage', checkAuth);
+      clearInterval(interval);
+    };
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('nfc_token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('nfc_card_id');
+    setIsLoggedIn(false);
+    router.push('/login');
   };
 
   // Close dropdown when clicking outside
@@ -826,6 +856,87 @@ const Header: React.FC<HeaderProps> = ({ onScrollToFeatures }) => {
               🔐 Get NFC Card
             </button>
           </Link>
+
+          {/* Auth Buttons */}
+          {isLoggedIn ? (
+            <>
+              <Link href="/dashboard">
+                <button style={{
+                  padding: '10px 20px',
+                  background: 'rgba(59, 130, 246, 0.15)',
+                  border: '1px solid rgba(59, 130, 246, 0.4)',
+                  borderRadius: '8px',
+                  color: '#93C5FD',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(59, 130, 246, 0.25)';
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(59, 130, 246, 0.15)';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+                >
+                  Dashboard
+                </button>
+              </Link>
+              <button
+                onClick={handleLogout}
+                style={{
+                  padding: '10px 16px',
+                  background: 'rgba(239, 68, 68, 0.15)',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  borderRadius: '8px',
+                  color: '#FCA5A5',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(239, 68, 68, 0.25)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)';
+                }}
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <Link href="/login">
+              <button style={{
+                padding: '10px 24px',
+                background: 'linear-gradient(135deg, #3B82F6, #6366F1)',
+                border: 'none',
+                borderRadius: '8px',
+                color: '#fff',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                boxShadow: '0 2px 10px rgba(59, 130, 246, 0.3)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 15px rgba(59, 130, 246, 0.5)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 2px 10px rgba(59, 130, 246, 0.3)';
+              }}
+              >
+                Login
+              </button>
+            </Link>
+          )}
           <Link href="/cart">
             <div className="cart">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -965,7 +1076,7 @@ const Header: React.FC<HeaderProps> = ({ onScrollToFeatures }) => {
               margin: '0',
               color: '#EBE2FF',
               textDecoration: 'none',
-              borderBottom: 'none',
+              borderBottom: '1px solid rgba(235, 226, 255, 0.1)',
               fontSize: '16px',
               fontWeight: '500',
               cursor: 'pointer',
@@ -976,6 +1087,72 @@ const Header: React.FC<HeaderProps> = ({ onScrollToFeatures }) => {
           >
             Academy
           </Link>
+          {/* Auth buttons in mobile nav */}
+          {isLoggedIn ? (
+            <>
+              <Link 
+                href="/dashboard"
+                className="mobile-nav-item mobile-nav-uniform"
+                style={{
+                  display: 'block',
+                  padding: '18px 24px',
+                  margin: '0',
+                  color: '#93C5FD',
+                  textDecoration: 'none',
+                  borderBottom: '1px solid rgba(235, 226, 255, 0.1)',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  width: '100%',
+                  textAlign: 'left',
+                  background: 'rgba(59, 130, 246, 0.1)'
+                }}
+              >
+                📊 Dashboard
+              </Link>
+              <div
+                className="mobile-nav-item mobile-nav-uniform"
+                onClick={handleLogout}
+                style={{
+                  display: 'block',
+                  padding: '18px 24px',
+                  margin: '0',
+                  color: '#FCA5A5',
+                  textDecoration: 'none',
+                  borderBottom: 'none',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  width: '100%',
+                  textAlign: 'left',
+                  background: 'rgba(239, 68, 68, 0.1)'
+                }}
+              >
+                🚪 Logout
+              </div>
+            </>
+          ) : (
+            <Link 
+              href="/login"
+              className="mobile-nav-item mobile-nav-uniform"
+              style={{
+                display: 'block',
+                padding: '18px 24px',
+                margin: '0',
+                color: '#93C5FD',
+                textDecoration: 'none',
+                borderBottom: 'none',
+                fontSize: '16px',
+                fontWeight: '700',
+                cursor: 'pointer',
+                width: '100%',
+                textAlign: 'left',
+                background: 'linear-gradient(90deg, rgba(59, 130, 246, 0.15), rgba(99, 102, 241, 0.15))'
+              }}
+            >
+              🔑 Login
+            </Link>
+          )}
         </div>
       </header>
     </>
