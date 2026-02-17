@@ -37,6 +37,7 @@ class WebHidNfcReader {
   private lastUid: string | null = null;
   private sameUidCount = 0;
   private cardPresentTimeout: ReturnType<typeof setTimeout> | null = null;
+  private connectInProgress = false;
 
   /**
    * Check if WebHID is available in this browser
@@ -77,6 +78,18 @@ class WebHidNfcReader {
       return false;
     }
 
+    // Prevent double-connect while the browser picker is open
+    if (this.connectInProgress) {
+      return false;
+    }
+
+    // Already connected and open
+    if (this.device && this.device.opened) {
+      this.setStatus('connected');
+      return true;
+    }
+
+    this.connectInProgress = true;
     this.setStatus('connecting');
 
     try {
@@ -86,23 +99,44 @@ class WebHidNfcReader {
         d => d.vendorId === CYB_VENDOR_ID && d.productId === CYB_PRODUCT_ID
       );
 
+      // Also try vendorId-only match in case PID differs
+      if (!device) {
+        device = existingDevices.find(d => d.vendorId === CYB_VENDOR_ID);
+      }
+
       if (!device) {
         // Request user permission to access the device
+        // Use vendorId-only filter for broader compatibility
         const devices = await navigator.hid.requestDevice({
-          filters: [{ vendorId: CYB_VENDOR_ID, productId: CYB_PRODUCT_ID }]
+          filters: [
+            { vendorId: CYB_VENDOR_ID, productId: CYB_PRODUCT_ID },
+            { vendorId: CYB_VENDOR_ID }
+          ]
         });
 
         if (devices.length === 0) {
           this.setStatus('disconnected');
-          this.callbacks.onError?.('No NFC reader selected.');
-          return false;
+          this.connectInProgress = false;
+          return false; // User cancelled — don't show error
         }
         device = devices[0];
       }
 
       // Open the device
       if (!device.opened) {
-        await device.open();
+        try {
+          await device.open();
+        } catch (openErr: any) {
+          this.setStatus('error');
+          this.connectInProgress = false;
+          // Exclusive access error — another app (CYB Tool) holds the device
+          if (openErr?.message?.includes('access') || openErr?.message?.includes('open') || openErr?.name === 'InvalidStateError') {
+            this.callbacks.onError?.('Cannot open NFC reader — close CYB_NfcTool or any other NFC software first, then try again.');
+          } else {
+            this.callbacks.onError?.(openErr?.message || 'Failed to open NFC reader');
+          }
+          return false;
+        }
       }
 
       this.device = device;
@@ -123,8 +157,15 @@ class WebHidNfcReader {
       });
 
       this.setStatus('connected');
+      this.connectInProgress = false;
       return true;
     } catch (err: any) {
+      this.connectInProgress = false;
+      // User cancelled the picker dialog — not an error, just cancelled
+      if (err?.name === 'NotAllowedError' || err?.message?.includes('cancelled') || err?.message?.includes('canceled')) {
+        this.setStatus('disconnected');
+        return false; // Silent — user just clicked Cancel
+      }
       this.setStatus('error');
       const msg = err?.message || 'Failed to connect to NFC reader';
       this.callbacks.onError?.(msg);

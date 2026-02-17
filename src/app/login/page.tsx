@@ -147,10 +147,17 @@ export default function LoginPage() {
     if (ok) {
       setNfcStep("waiting");
     } else {
-      setNfcStep("error");
-      setNfcError("Could not connect to NFC reader. Make sure it's plugged in and select it in the browser popup.");
+      // If status is still 'disconnected', user just cancelled the picker — go back to idle
+      // If status is 'error', show the error state
+      if (readerStatus === 'error') {
+        setNfcStep("error");
+        setNfcError("Could not connect to NFC reader. Make sure it's plugged in and close any NFC software (like CYB_NfcTool).");
+      } else {
+        // User cancelled — silently return to idle
+        setNfcStep("idle");
+      }
     }
-  }, [readerConnected, connectReader]);
+  }, [readerConnected, readerStatus, connectReader]);
 
   const resetNfcLogin = () => {
     setNfcStep("idle");
