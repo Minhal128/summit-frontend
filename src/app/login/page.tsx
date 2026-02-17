@@ -1,14 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { PhoneInput } from "react-international-phone";
 import "react-international-phone/style.css";
-import { scanNfcCard, isWebNfcAvailable } from "@/lib/nfcCrypto";
-import { authenticateWithTap, createAuthNonce, authenticateWithNfc } from "@/lib/nfcApi";
-import { createAuthMessage, simulateNfcTap } from "@/lib/nfcCrypto";
+import { loginByUid } from "@/lib/nfcApi";
+import { useNfcReader } from "@/contexts/NfcReaderContext";
 
 // --- HELPER & SIMULATED SHADCN/UI COMPONENTS ---
 const cn = (...classes: (string | undefined | null | false)[]): string =>
@@ -81,15 +80,50 @@ export default function LoginPage() {
     password: "",
   });
   const router = useRouter();
+  const { status: readerStatus, isSupported: hasWebHid, isConnected: readerConnected, connectReader, onCardDetected } = useNfcReader();
 
   // NFC Login State
-  const [nfcCardId, setNfcCardId] = useState("");
-  const [nfcStep, setNfcStep] = useState<"idle" | "scanning" | "verifying" | "success" | "error">("idle");
+  const [nfcStep, setNfcStep] = useState<"idle" | "connecting" | "waiting" | "verifying" | "success" | "error" | "unregistered">("idle");
   const [nfcError, setNfcError] = useState("");
-  const [hasWebNfc, setHasWebNfc] = useState(false);
+  const [detectedUid, setDetectedUid] = useState<string | null>(null);
+  const nfcStepRef = useRef(nfcStep);
+  nfcStepRef.current = nfcStep;
+
+  // Auto-login when card is tapped while in "waiting" state
+  useEffect(() => {
+    const unsub = onCardDetected(async (card) => {
+      // Only process if we're actively waiting for a card tap
+      if (nfcStepRef.current !== "waiting") return;
+
+      setDetectedUid(card.uid);
+      setNfcStep("verifying");
+      setNfcError("");
+
+      try {
+        const response = await loginByUid(card.uid);
+        if (response.success) {
+          setNfcStep("success");
+          toast.success("NFC login successful! Redirecting...");
+          setTimeout(() => router.push("/dashboard"), 800);
+        } else {
+          throw new Error(response.message || "Login failed");
+        }
+      } catch (err: any) {
+        // Check if card is unregistered
+        if (err?.data?.unregistered || err?.message?.includes("not registered")) {
+          setNfcStep("unregistered");
+          setNfcError("This card is not linked to any account yet.");
+        } else {
+          setNfcStep("error");
+          setNfcError(err?.message || "Authentication failed");
+          toast.error(err?.message || "Authentication failed");
+        }
+      }
+    });
+    return unsub;
+  }, [onCardDetected, router]);
 
   useEffect(() => {
-    setHasWebNfc(isWebNfcAvailable());
     // If already logged in, redirect to dashboard
     const token = localStorage.getItem("auth_token") || localStorage.getItem("nfc_token");
     if (token) {
@@ -97,64 +131,28 @@ export default function LoginPage() {
     }
   }, [router]);
 
-  // --- NFC TAP LOGIN (Production - reads physical card via Web NFC) ---
-  const handleNfcTapLogin = async () => {
-    try {
-      setNfcStep("scanning");
-      setNfcError("");
-      const cardData = await scanNfcCard();
-      setNfcStep("verifying");
-      const authResponse = await authenticateWithTap({
-        cardId: cardData.cardId,
-        cardUid: cardData.cardUid,
-      });
-      setNfcStep("success");
-      toast.success("NFC login successful! Redirecting...");
-      setTimeout(() => router.push("/dashboard"), 800);
-    } catch (err: any) {
-      setNfcStep("error");
-      const msg = err.message || "NFC tap failed";
-      setNfcError(msg);
-      toast.error(msg);
-    }
-  };
-
-  // --- NFC MANUAL CARD ID LOGIN (manual entry or non-NFC device) ---
-  const handleNfcManualLogin = async () => {
-    if (!nfcCardId.trim()) {
-      toast.error("Please enter your NFC Card ID");
+  // --- NFC TAP LOGIN: Connect reader and wait for card ---
+  const handleNfcTapLogin = useCallback(async () => {
+    setNfcError("");
+    if (readerConnected) {
+      // Already connected, just start waiting
+      setNfcStep("waiting");
       return;
     }
-    try {
-      setNfcStep("verifying");
-      setNfcError("");
-
-      // Request nonce → sign → authenticate (demo/manual flow)
-      const nonceResponse = await createAuthNonce(nfcCardId);
-      const timestamp = Date.now();
-      const message = createAuthMessage(nonceResponse.nonce, nfcCardId, timestamp);
-      const signature = await simulateNfcTap(nfcCardId, message);
-      const authResponse = await authenticateWithNfc({
-        cardId: nfcCardId,
-        nonce: nonceResponse.nonce,
-        signature,
-        timestamp,
-      });
-
-      setNfcStep("success");
-      toast.success("NFC login successful! Redirecting...");
-      setTimeout(() => router.push("/dashboard"), 800);
-    } catch (err: any) {
+    setNfcStep("connecting");
+    const ok = await connectReader();
+    if (ok) {
+      setNfcStep("waiting");
+    } else {
       setNfcStep("error");
-      const msg = err.message || "Card authentication failed";
-      setNfcError(msg);
-      toast.error(msg);
+      setNfcError("Could not connect to NFC reader. Make sure it's plugged in and select it in the browser popup.");
     }
-  };
+  }, [readerConnected, connectReader]);
 
   const resetNfcLogin = () => {
     setNfcStep("idle");
     setNfcError("");
+    setDetectedUid(null);
   };
 
   // Form validation
@@ -421,50 +419,54 @@ export default function LoginPage() {
                   </div>
                   <div>
                     <h3 className="text-white font-semibold text-base">NFC Quick Login</h3>
-                    <p className="text-gray-400 text-xs">Tap your card — no password needed</p>
+                    <p className="text-gray-400 text-xs">
+                      {readerConnected
+                        ? "Reader connected — tap your card to login instantly"
+                        : "Tap your card — no password needed"}
+                    </p>
                   </div>
+                  {/* Reader status dot */}
+                  {hasWebHid && (
+                    <div className="ml-auto">
+                      <div className={cn(
+                        "w-3 h-3 rounded-full",
+                        readerConnected ? "bg-emerald-400 animate-pulse" : "bg-slate-600"
+                      )} title={readerConnected ? "Reader connected" : "Reader not connected"} />
+                    </div>
+                  )}
                 </div>
 
                 {nfcStep === "idle" && (
                   <div className="space-y-3">
-                    {/* Tap NFC Card button (shows on supported devices) */}
-                    {hasWebNfc && (
-                      <button
-                        type="button"
-                        onClick={handleNfcTapLogin}
-                        className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold h-12 rounded-lg text-sm transition-colors shadow-lg shadow-emerald-600/20"
-                      >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
-                          <line x1="12" y1="18" x2="12.01" y2="18" />
-                        </svg>
-                        Tap NFC Card to Login
-                      </button>
+                    <button
+                      type="button"
+                      onClick={handleNfcTapLogin}
+                      className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold h-12 rounded-lg text-sm transition-colors shadow-lg shadow-emerald-600/20"
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+                        <path d="M3 6h18" />
+                        <path d="M16 10a4 4 0 01-8 0" />
+                      </svg>
+                      {readerConnected ? "Tap Your NFC Card Now" : "Connect NFC Reader & Login"}
+                    </button>
+                    {!hasWebHid && (
+                      <p className="text-amber-400/80 text-xs text-center">
+                        WebHID not supported — use Chrome or Edge browser
+                      </p>
                     )}
-
-                    {/* Manual Card ID input */}
-                    <div className="flex gap-2">
-                      <Input
-                        type="text"
-                        placeholder="Enter Card ID (e.g. SUMMIT-EV3-...)"
-                        value={nfcCardId}
-                        onChange={(e) => setNfcCardId(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && handleNfcManualLogin()}
-                        className="flex-1"
-                        disabled={nfcStep !== "idle"}
-                      />
-                      <button
-                        type="button"
-                        onClick={handleNfcManualLogin}
-                        className="px-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
-                      >
-                        Go
-                      </button>
-                    </div>
                   </div>
                 )}
 
-                {nfcStep === "scanning" && (
+                {nfcStep === "connecting" && (
+                  <div className="text-center py-4">
+                    <div className="w-10 h-10 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin mx-auto" />
+                    <p className="text-emerald-400 font-medium mt-3">Connecting to NFC reader...</p>
+                    <p className="text-gray-500 text-xs mt-1">Select your reader in the browser popup</p>
+                  </div>
+                )}
+
+                {nfcStep === "waiting" && (
                   <div className="text-center py-4">
                     <div className="relative inline-block">
                       <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="animate-pulse">
@@ -475,15 +477,25 @@ export default function LoginPage() {
                         <div className="w-14 h-14 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
                       </div>
                     </div>
-                    <p className="text-emerald-400 font-medium mt-3">Hold your card near the reader...</p>
-                    <p className="text-gray-500 text-xs mt-1">Waiting for NFC card</p>
+                    <p className="text-emerald-400 font-medium mt-3">Tap your NFC card on the reader...</p>
+                    <p className="text-gray-500 text-xs mt-1">Reader is ready — waiting for card</p>
+                    <button
+                      type="button"
+                      onClick={resetNfcLogin}
+                      className="mt-3 px-4 py-1.5 bg-slate-700/50 hover:bg-slate-600 text-gray-400 rounded-lg text-xs transition-colors"
+                    >
+                      Cancel
+                    </button>
                   </div>
                 )}
 
                 {nfcStep === "verifying" && (
                   <div className="text-center py-4">
                     <div className="w-10 h-10 border-2 border-blue-400 border-t-transparent rounded-full animate-spin mx-auto" />
-                    <p className="text-blue-400 font-medium mt-3">Verifying your card...</p>
+                    <p className="text-blue-400 font-medium mt-3">Card detected! Verifying...</p>
+                    {detectedUid && (
+                      <p className="text-gray-500 text-xs mt-1 font-mono">UID: {detectedUid}</p>
+                    )}
                   </div>
                 )}
 
@@ -495,6 +507,33 @@ export default function LoginPage() {
                     </svg>
                     <p className="text-emerald-400 font-semibold mt-3">Login Successful!</p>
                     <p className="text-gray-500 text-xs mt-1">Redirecting to dashboard...</p>
+                  </div>
+                )}
+
+                {nfcStep === "unregistered" && (
+                  <div className="text-center py-4">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto">
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="8" x2="12" y2="12" />
+                      <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                    <p className="text-amber-400 font-medium mt-3">Card Not Registered</p>
+                    <p className="text-gray-400 text-xs mt-1">
+                      This card hasn&apos;t been linked to an account yet.
+                    </p>
+                    <p className="text-gray-500 text-xs mt-1">
+                      Log in with email/password below, then link this card from your dashboard.
+                    </p>
+                    {detectedUid && (
+                      <p className="text-gray-600 text-xs mt-2 font-mono">Card UID: {detectedUid}</p>
+                    )}
+                    <button
+                      type="button"
+                      onClick={resetNfcLogin}
+                      className="mt-3 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm transition-colors"
+                    >
+                      Try Another Card
+                    </button>
                   </div>
                 )}
 

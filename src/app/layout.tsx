@@ -6,6 +6,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import { WalletProvider } from "@/contexts/WalletContext";
 import { I18nProvider } from "@/contexts/I18nContext";
 import { ThemeProvider } from "@/components/theme-provider";
+import { NfcReaderProvider } from "@/contexts/NfcReaderContext";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -39,9 +40,11 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <I18nProvider>
-            <CartProvider>
-              <WalletProvider>{children}</WalletProvider>
-            </CartProvider>
+            <NfcReaderProvider>
+              <CartProvider>
+                <WalletProvider>{children}</WalletProvider>
+              </CartProvider>
+            </NfcReaderProvider>
           </I18nProvider>
         </ThemeProvider>
         <ToastContainer

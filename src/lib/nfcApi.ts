@@ -77,6 +77,29 @@ export async function authenticateWithTap(data: {
   return response;
 }
 
+/**
+ * Auto-login by card UID only (WebHID readers like CYB)
+ * The browser reads the hardware UID via WebHID, sends it to backend.
+ * Backend looks up the card and returns a JWT if registered.
+ */
+export async function loginByUid(cardUid: string): Promise<NfcAuthResponse & { unregistered?: boolean }> {
+  const response = await apiFetch('/api/nfc/uid-login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ cardUid })
+  });
+
+  if (response.success && response.token) {
+    localStorage.setItem('nfc_token', response.token);
+    localStorage.setItem('auth_token', response.token);
+    if (response.cardInfo?.cardId) {
+      localStorage.setItem('nfc_card_id', response.cardInfo.cardId);
+    }
+  }
+
+  return response;
+}
+
 // ==========================================
 // PROTECTED ENDPOINTS (Require authentication)
 // ==========================================
