@@ -80,10 +80,10 @@ export default function LoginPage() {
     password: "",
   });
   const router = useRouter();
-  const { isConnected: readerConnected, connectReader, onCardDetected, keyboardListening, bridgeConnected, bridgeStatus } = useNfcReader();
+  const { status: readerStatus, isSupported: hasWebHid, isConnected: readerConnected, connectReader, onCardDetected, keyboardListening, mode } = useNfcReader();
 
   // NFC Login State
-  const [nfcStep, setNfcStep] = useState<"idle" | "connecting" | "waiting" | "checking" | "link_account" | "verifying" | "success" | "error">("idle");
+  const [nfcStep, setNfcStep] = useState<"idle" | "connecting" | "waiting" | "verifying" | "success" | "error" | "unregistered">("idle");
   const [nfcError, setNfcError] = useState("");
   const [detectedUid, setDetectedUid] = useState<string | null>(null);
   const [linkEmail, setLinkEmail] = useState("");
@@ -92,38 +92,34 @@ export default function LoginPage() {
   const nfcStepRef = useRef(nfcStep);
   nfcStepRef.current = nfcStep;
 
-  // Auto-enter waiting state when bridge connects (seamless experience)
-  useEffect(() => {
-    if (bridgeConnected && nfcStep === "idle") {
-      setNfcStep("waiting");
-    }
-  }, [bridgeConnected, nfcStep]);
-
   // Auto-login when card is tapped while in "waiting" state
   useEffect(() => {
     const unsub = onCardDetected(async (card) => {
-      // Process if we're actively waiting OR if idle with bridge connected
+      // Process if we're actively waiting OR if keyboard mode is always listening
       if (nfcStepRef.current !== "waiting" && nfcStepRef.current !== "idle") return;
 
       setDetectedUid(card.uid);
+      setNfcStep("verifying");
       setNfcError("");
-      setNfcStep("checking");
 
-      // Try instant login — backend looks up UID in MongoDB
       try {
         const response = await loginByUid(card.uid);
         if (response.success) {
           setNfcStep("success");
           toast.success("NFC login successful! Redirecting...");
           setTimeout(() => router.push("/dashboard"), 800);
+        } else {
+          throw new Error(response.message || "Login failed");
         }
       } catch (err: any) {
+        // Check if card is unregistered
         if (err?.data?.unregistered || err?.message?.includes("not registered")) {
-          // Card not linked — ask user to link account (email + password)
-          setNfcStep("link_account");
+          setNfcStep("unregistered");
+          setNfcError("This card is not linked to any account yet.");
         } else {
           setNfcStep("error");
-          setNfcError(err?.message || "Failed to check card");
+          setNfcError(err?.message || "Authentication failed");
+          toast.error(err?.message || "Authentication failed");
         }
       }
     });
@@ -141,11 +137,6 @@ export default function LoginPage() {
   // --- NFC TAP LOGIN: Connect reader and wait for card ---
   const handleNfcTapLogin = useCallback(async () => {
     setNfcError("");
-    // If bridge is connected, we're already listening — just switch to waiting state
-    if (bridgeConnected) {
-      setNfcStep("waiting");
-      return;
-    }
     // If keyboard capture is active, we're already listening — just switch to waiting state
     if (keyboardListening) {
       setNfcStep("waiting");
@@ -155,9 +146,19 @@ export default function LoginPage() {
       setNfcStep("waiting");
       return;
     }
-    // Bridge or keyboard should already be active
-    setNfcStep("waiting");
-  }, [readerConnected, connectReader, keyboardListening, bridgeConnected]);
+    setNfcStep("connecting");
+    const ok = await connectReader();
+    if (ok) {
+      setNfcStep("waiting");
+    } else {
+      if (readerStatus === 'error') {
+        setNfcStep("error");
+        setNfcError("Could not connect to NFC reader. Make sure it's plugged in and close any NFC software (like CYB_NfcTool).");
+      } else {
+        setNfcStep("idle");
+      }
+    }
+  }, [readerConnected, readerStatus, connectReader, keyboardListening]);
 
   const resetNfcLogin = () => {
     setNfcStep("idle");
@@ -167,7 +168,7 @@ export default function LoginPage() {
     setLinkPassword("");
   };
 
-  // Link an unregistered card to user's account (email + password only)
+  // Link an unregistered card to user's account
   const handleLinkCard = async () => {
     if (!detectedUid) return;
     if (!linkEmail || !linkPassword) {
@@ -460,9 +461,7 @@ export default function LoginPage() {
                   <div>
                     <h3 className="text-white font-semibold text-base">NFC Quick Login</h3>
                     <p className="text-gray-400 text-xs">
-                      {bridgeConnected
-                        ? `Bridge connected${bridgeStatus?.reader ? ` — ${bridgeStatus.reader}` : ''} — tap your card`
-                        : keyboardListening
+                      {keyboardListening
                         ? "Reader ready — tap your card to login instantly"
                         : readerConnected
                         ? "Reader connected — tap your card to login instantly"
@@ -470,25 +469,17 @@ export default function LoginPage() {
                     </p>
                   </div>
                   {/* Reader status dot */}
-                  <div className="ml-auto flex items-center gap-2">
-                    {bridgeConnected && (
-                      <span className="text-[10px] text-emerald-400/70 uppercase tracking-wider">Bridge</span>
-                    )}
+                  <div className="ml-auto">
                     <div className={cn(
                       "w-3 h-3 rounded-full",
-                      bridgeConnected ? "bg-emerald-400 animate-pulse" : (readerConnected || keyboardListening) ? "bg-emerald-400 animate-pulse" : "bg-slate-600"
-                    )} title={bridgeConnected ? "NFC Bridge connected" : keyboardListening ? "Keyboard NFC capture active" : readerConnected ? "WebHID reader connected" : "Reader not connected"} />
+                      (readerConnected || keyboardListening) ? "bg-emerald-400 animate-pulse" : "bg-slate-600"
+                    )} title={keyboardListening ? "Keyboard NFC capture active" : readerConnected ? "WebHID reader connected" : "Reader not connected"} />
                   </div>
                 </div>
 
                 {nfcStep === "idle" && (
                   <div className="space-y-3">
-                    {bridgeConnected && (
-                      <p className="text-emerald-400/80 text-xs text-center animate-pulse">
-                        NFC Bridge active — tap your card on the CYB reader to login
-                      </p>
-                    )}
-                    {!bridgeConnected && keyboardListening && (
+                    {keyboardListening && (
                       <p className="text-emerald-400/80 text-xs text-center animate-pulse">
                         NFC reader active — tap your card anytime to login
                       </p>
@@ -503,15 +494,12 @@ export default function LoginPage() {
                         <path d="M3 6h18" />
                         <path d="M16 10a4 4 0 01-8 0" />
                       </svg>
-                      {bridgeConnected ? "Tap Your NFC Card Now" : keyboardListening ? "Tap Your NFC Card Now" : readerConnected ? "Tap Your NFC Card Now" : "Connect NFC Reader & Login"}
+                      {keyboardListening ? "Tap Your NFC Card Now" : readerConnected ? "Tap Your NFC Card Now" : "Connect NFC Reader & Login"}
                     </button>
-                    {!bridgeConnected && (
-                      <a
-                        href="/nfc-setup"
-                        className="block text-center text-xs text-blue-400 hover:text-blue-300 transition-colors mt-1"
-                      >
-                        ⬇ Download NFC Service for Windows
-                      </a>
+                    {!hasWebHid && !keyboardListening && (
+                      <p className="text-amber-400/80 text-xs text-center">
+                        WebHID not supported — use Chrome or Edge browser
+                      </p>
                     )}
                   </div>
                 )}
@@ -537,7 +525,7 @@ export default function LoginPage() {
                     </div>
                     <p className="text-emerald-400 font-medium mt-3">Tap your NFC card on the reader...</p>
                     <p className="text-gray-500 text-xs mt-1">
-                      {bridgeConnected ? "NFC Bridge active — tap your card on the reader" : keyboardListening ? "Keyboard capture active — just tap your card" : "Reader is ready — waiting for card"}
+                      {keyboardListening ? "Keyboard capture active — just tap your card" : "Reader is ready — waiting for card"}
                     </p>
                     <button
                       type="button"
@@ -552,28 +540,37 @@ export default function LoginPage() {
                 {nfcStep === "verifying" && (
                   <div className="text-center py-4">
                     <div className="w-10 h-10 border-2 border-blue-400 border-t-transparent rounded-full animate-spin mx-auto" />
-                    <p className="text-blue-400 font-medium mt-3">Logging in...</p>
+                    <p className="text-blue-400 font-medium mt-3">Card detected! Verifying...</p>
+                    {detectedUid && (
+                      <p className="text-gray-500 text-xs mt-1 font-mono">UID: {detectedUid}</p>
+                    )}
                   </div>
                 )}
 
-                {nfcStep === "checking" && (
+                {nfcStep === "success" && (
                   <div className="text-center py-4">
-                    <div className="w-10 h-10 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin mx-auto" />
-                    <p className="text-emerald-400 font-medium mt-3">Card detected! Logging in...</p>
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto">
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                      <polyline points="22 4 12 14.01 9 11.01" />
+                    </svg>
+                    <p className="text-emerald-400 font-semibold mt-3">Login Successful!</p>
+                    <p className="text-gray-500 text-xs mt-1">Redirecting to dashboard...</p>
                   </div>
                 )}
 
-                {nfcStep === "link_account" && (
+                {nfcStep === "unregistered" && (
                   <div className="text-center py-4">
                     <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto">
-                      <rect x="2" y="5" width="20" height="14" rx="2" />
-                      <line x1="2" y1="10" x2="22" y2="10" />
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="8" x2="12" y2="12" />
+                      <line x1="12" y1="16" x2="12.01" y2="16" />
                     </svg>
-                    <p className="text-amber-400 font-semibold mt-2">New Card Detected</p>
+                    <p className="text-amber-400 font-medium mt-2">Card Not Linked Yet</p>
                     <p className="text-gray-400 text-xs mt-1 mb-4">
-                      Link this card to your account to enable instant login.
+                      Enter your account credentials to link this card for instant login.
                     </p>
 
+                    {/* Inline link-card form */}
                     <div className="space-y-3 text-left max-w-xs mx-auto">
                       <Input
                         type="email"
@@ -581,11 +578,10 @@ export default function LoginPage() {
                         value={linkEmail}
                         onChange={(e) => setLinkEmail(e.target.value)}
                         autoComplete="email"
-                        autoFocus
                       />
                       <Input
                         type="password"
-                        placeholder="Account password"
+                        placeholder="Password"
                         value={linkPassword}
                         onChange={(e) => setLinkPassword(e.target.value)}
                         autoComplete="current-password"
@@ -594,8 +590,8 @@ export default function LoginPage() {
                       <button
                         type="button"
                         onClick={handleLinkCard}
-                        disabled={isLinking || !linkEmail || !linkPassword}
-                        className="w-full py-2.5 bg-amber-600 hover:bg-amber-500 disabled:bg-slate-700 disabled:text-gray-500 text-white font-semibold rounded-lg text-sm transition-colors"
+                        disabled={isLinking}
+                        className="w-full py-2.5 bg-amber-600 hover:bg-amber-500 disabled:bg-amber-800 text-white font-medium rounded-lg text-sm transition-colors"
                       >
                         {isLinking ? "Linking..." : "Link Card & Login"}
                       </button>
@@ -609,19 +605,8 @@ export default function LoginPage() {
                       onClick={resetNfcLogin}
                       className="mt-3 px-4 py-1.5 text-gray-400 hover:text-gray-200 text-xs transition-colors"
                     >
-                      Cancel
+                      Cancel / Try Another Card
                     </button>
-                  </div>
-                )}
-
-                {nfcStep === "success" && (
-                  <div className="text-center py-4">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto">
-                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                      <polyline points="22 4 12 14.01 9 11.01" />
-                    </svg>
-                    <p className="text-emerald-400 font-semibold mt-3">Login Successful!</p>
-                    <p className="text-gray-500 text-xs mt-1">Redirecting to dashboard...</p>
                   </div>
                 )}
 

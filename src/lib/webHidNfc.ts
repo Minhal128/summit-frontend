@@ -407,69 +407,91 @@ class WebHidNfcReader {
     });
   }
 
+  /**
+   * Extract NFC card UID from raw HID report data.
+   *
+   * CYB protocol frame format (from the reader hardware):
+   *   [55] [00] [CMD] [STATUS] [LEN] [DATA...] [CHK] [~CHK]
+   *
+   *   CMD 0x51 = card present/removed notification — NO UID (skip!)
+   *   CMD 0x69 = card data response — contains UID, ATQA, SAK
+   *
+   * Example 0x69 frame with real UID 0496A682A92190:
+   *   55 00 69 00 13 01 01 04 96 A6 82 A9 21 90 00 00 00 07 44 03 20 ...
+   *   Payload[0]=type(01) [1]=count(01) [2..8]=UID(04 96 A6 82 A9 21 90)
+   */
   private extractUid(data: Uint8Array): string | null {
     const len = data.length;
-    if (len < 3) return null;
+    if (len < 5) return null;
 
-    if (data[0] === 0x08) {
-      const uidBytes: number[] = [];
-      for (let i = 3; i < Math.min(len, 12); i++) {
-        if (data[i] !== 0) {
-          uidBytes.push(data[i]);
-        } else if (uidBytes.length > 0) {
-          break;
+    // ── Detect CYB protocol frame (starts with 0x55 0x00) ──
+    // The CYB reader sends ALL data in this format
+    if (data[0] === 0x55 && data[1] === 0x00) {
+      const cmd = data[2];
+      const dlen = data[4]; // payload length
+
+      // CMD 0x51 = notification (card present/gone) — NO UID data
+      if (cmd === 0x51) {
+        return null;
+      }
+
+      // CMD 0x69 = card data response — extract UID from payload
+      if (cmd === 0x69 && dlen >= 6 && 5 + dlen <= len) {
+        const payload = data.slice(5, 5 + dlen);
+        // payload[0] = card type, payload[1] = count
+        // payload[2..] = UID bytes
+
+        // Method 1: NXP DESFire cards start with 0x04, 7-byte UID
+        if (payload[2] === 0x04 && payload.length >= 9) {
+          const uid = payload.slice(2, 9);
+          if (Array.from(uid).filter(b => b !== 0).length >= 4) {
+            return Array.from(uid).map(b => hexByte(b)).join('');
+          }
+        }
+
+        // Method 2: Find UID length marker (4, 7, or 10) in payload
+        for (let i = 6; i < Math.min(payload.length, 15); i++) {
+          if (payload[i] === 4 || payload[i] === 7 || payload[i] === 10) {
+            const uidLen = payload[i];
+            if (2 + uidLen <= payload.length) {
+              const uid = payload.slice(2, 2 + uidLen);
+              if (Array.from(uid).some(b => b !== 0)) {
+                return Array.from(uid).map(b => hexByte(b)).join('');
+              }
+            }
+          }
+        }
+
+        // Method 3: Try 4-byte UID
+        if (payload.length >= 6) {
+          const uid = payload.slice(2, 6);
+          if (Array.from(uid).some(b => b !== 0) && !Array.from(uid).every(b => b === 0xFF)) {
+            return Array.from(uid).map(b => hexByte(b)).join('');
+          }
         }
       }
-      if (uidBytes.length >= 3) {
-        return uidBytes.map(b => hexByte(b)).join('');
+
+      // Any other CYB frame (not 0x69) — no UID
+      return null;
+    }
+
+    // ── Non-CYB data: generic UID extraction (fallback) ──
+
+    // Try 7-byte UID starting with 0x04 (NXP cards)
+    for (let i = 0; i < len - 6; i++) {
+      if (data[i] === 0x04) {
+        const uid = data.slice(i, i + 7);
+        if (Array.from(uid).filter(b => b !== 0).length >= 4) {
+          return Array.from(uid).map(b => hexByte(b)).join('');
+        }
       }
     }
 
+    // Try length-prefixed UID (byte 0 = length)
     if ((data[0] === 4 || data[0] === 7 || data[0] === 10) && data[0] + 1 <= len) {
-      const uidBytes: number[] = [];
-      for (let i = 1; i <= data[0]; i++) {
-        uidBytes.push(data[i]);
-      }
-      if (uidBytes.some(b => b !== 0) && uidBytes.length >= 3) {
-        return uidBytes.map(b => hexByte(b)).join('');
-      }
-    }
-
-    if (data[0] !== 0) {
-      const uidBytes: number[] = [];
-      for (let i = 1; i < Math.min(len, 12); i++) {
-        if (data[i] !== 0) {
-          uidBytes.push(data[i]);
-        } else if (uidBytes.length > 0) {
-          break;
-        }
-      }
-      if (uidBytes.length === 4 || uidBytes.length === 7) {
-        return uidBytes.map(b => hexByte(b)).join('');
-      }
-    }
-
-    {
-      const uidBytes: number[] = [];
-      for (let i = 0; i < Math.min(len, 15); i++) {
-        if (data[i] !== 0) {
-          uidBytes.push(data[i]);
-        } else if (uidBytes.length > 0) {
-          break;
-        }
-      }
-      if (uidBytes.length === 4 || uidBytes.length === 7) {
-        return uidBytes.map(b => hexByte(b)).join('');
-      }
-    }
-
-    {
-      const nonZero: number[] = [];
-      for (let i = 0; i < Math.min(len, 12); i++) {
-        if (data[i] !== 0) nonZero.push(data[i]);
-      }
-      if (nonZero.length >= 4 && nonZero.length <= 10) {
-        return nonZero.map(b => hexByte(b)).join('');
+      const uid = data.slice(1, 1 + data[0]);
+      if (Array.from(uid).some(b => b !== 0)) {
+        return Array.from(uid).map(b => hexByte(b)).join('');
       }
     }
 

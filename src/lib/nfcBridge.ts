@@ -184,16 +184,39 @@ class NfcBridgeClient {
     }
   }
 
+  /**
+   * Validate that a UID is a real NFC card UID, not a CYB protocol artifact.
+   * CYB frames start with 55 00 — if the Python service _extract fails,
+   * the raw frame bytes get sent as a UID (e.g. "55005100", "55510101FE01").
+   */
+  private _isValidUid(uid: string): boolean {
+    if (!uid || uid.length < 8 || uid.length > 20) return false;
+    // Reject CYB protocol artifacts (start with 5500 or 5551)
+    if (uid.startsWith('5500') || uid.startsWith('5551')) return false;
+    // Must be valid hex
+    if (!/^[0-9A-Fa-f]+$/.test(uid)) return false;
+    // Must not be all same byte
+    const bytes = uid.match(/.{2}/g);
+    if (bytes && new Set(bytes).size === 1) return false;
+    return true;
+  }
+
   private _handleMessage(msg: any): void {
     switch (msg.type) {
-      case 'card_detected':
-        console.log(`[NFC-Bridge] Card detected: ${msg.uid} (source: ${msg.source})`);
+      case 'card_detected': {
+        const uid = (msg.uid || '').toUpperCase();
+        if (!this._isValidUid(uid)) {
+          console.log(`[NFC-Bridge] Rejected invalid UID: ${uid}`);
+          break;
+        }
+        console.log(`[NFC-Bridge] Card detected: ${uid} (source: ${msg.source})`);
         this.callbacks.onCardDetected?.({
-          uid: msg.uid,
+          uid,
           source: msg.source,
           timestamp: msg.timestamp || Date.now(),
         });
         break;
+      }
 
       case 'card_removed':
         // Currently the bridge doesn't actively detect removal
