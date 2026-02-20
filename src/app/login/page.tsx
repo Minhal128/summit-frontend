@@ -83,11 +83,13 @@ export default function LoginPage() {
   const { status: readerStatus, isSupported: hasWebHid, isConnected: readerConnected, connectReader, onCardDetected, keyboardListening, bridgeConnected, bridgeStatus, mode } = useNfcReader();
 
   // NFC Login State
-  const [nfcStep, setNfcStep] = useState<"idle" | "connecting" | "waiting" | "verifying" | "success" | "error" | "unregistered">("idle");
+  const [nfcStep, setNfcStep] = useState<"idle" | "connecting" | "waiting" | "pin_entry" | "verifying" | "success" | "error" | "unregistered">("idle");
   const [nfcError, setNfcError] = useState("");
   const [detectedUid, setDetectedUid] = useState<string | null>(null);
+  const [nfcPin, setNfcPin] = useState("");
   const [linkEmail, setLinkEmail] = useState("");
   const [linkPassword, setLinkPassword] = useState("");
+  const [linkPin, setLinkPin] = useState("");
   const [isLinking, setIsLinking] = useState(false);
   const nfcStepRef = useRef(nfcStep);
   nfcStepRef.current = nfcStep;
@@ -106,32 +108,12 @@ export default function LoginPage() {
       if (nfcStepRef.current !== "waiting" && nfcStepRef.current !== "idle") return;
 
       setDetectedUid(card.uid);
-      setNfcStep("verifying");
+      setNfcPin("");
+      setNfcStep("pin_entry");
       setNfcError("");
-
-      try {
-        const response = await loginByUid(card.uid);
-        if (response.success) {
-          setNfcStep("success");
-          toast.success("NFC login successful! Redirecting...");
-          setTimeout(() => router.push("/dashboard"), 800);
-        } else {
-          throw new Error(response.message || "Login failed");
-        }
-      } catch (err: any) {
-        // Check if card is unregistered
-        if (err?.data?.unregistered || err?.message?.includes("not registered")) {
-          setNfcStep("unregistered");
-          setNfcError("This card is not linked to any account yet.");
-        } else {
-          setNfcStep("error");
-          setNfcError(err?.message || "Authentication failed");
-          toast.error(err?.message || "Authentication failed");
-        }
-      }
     });
     return unsub;
-  }, [onCardDetected, router]);
+  }, [onCardDetected]);
 
   useEffect(() => {
     // If already logged in, redirect to dashboard
@@ -176,8 +158,42 @@ export default function LoginPage() {
     setNfcStep("idle");
     setNfcError("");
     setDetectedUid(null);
+    setNfcPin("");
     setLinkEmail("");
     setLinkPassword("");
+    setLinkPin("");
+  };
+
+  // Submit PIN to login with detected card UID
+  const handlePinSubmit = async () => {
+    if (!detectedUid || !nfcPin) return;
+    if (nfcPin.length < 4) {
+      setNfcError("PIN must be at least 4 digits");
+      return;
+    }
+    setNfcStep("verifying");
+    setNfcError("");
+    try {
+      const response = await loginByUid(detectedUid, nfcPin);
+      if (response.success) {
+        setNfcStep("success");
+        toast.success("NFC login successful! Redirecting...");
+        setTimeout(() => router.push("/dashboard"), 800);
+      } else {
+        throw new Error(response.message || "Login failed");
+      }
+    } catch (err: any) {
+      if (err?.data?.unregistered || err?.message?.includes("not registered")) {
+        setNfcStep("unregistered");
+        setNfcError("This card is not linked to any account yet.");
+      } else if (err?.data?.pinRequired) {
+        setNfcStep("pin_entry");
+        setNfcError("PIN is required for this card");
+      } else {
+        setNfcStep("pin_entry");
+        setNfcError(err?.message || "Invalid PIN — try again");
+      }
+    }
   };
 
   // Link an unregistered card to user's account
@@ -187,12 +203,17 @@ export default function LoginPage() {
       toast.error("Enter your email and password to link this card");
       return;
     }
+    if (!linkPin || linkPin.length < 4) {
+      toast.error("Set a 4-digit PIN for your card");
+      return;
+    }
     setIsLinking(true);
     try {
       const res = await linkCard({
         identifier: linkEmail,
         password: linkPassword,
         cardUid: detectedUid,
+        pin: linkPin,
       });
       if (res.success) {
         setNfcStep("success");
@@ -570,10 +591,54 @@ export default function LoginPage() {
                 {nfcStep === "verifying" && (
                   <div className="text-center py-4">
                     <div className="w-10 h-10 border-2 border-blue-400 border-t-transparent rounded-full animate-spin mx-auto" />
-                    <p className="text-blue-400 font-medium mt-3">Card detected! Verifying...</p>
+                    <p className="text-blue-400 font-medium mt-3">Verifying PIN...</p>
                     {detectedUid && (
                       <p className="text-gray-500 text-xs mt-1 font-mono">UID: {detectedUid}</p>
                     )}
+                  </div>
+                )}
+
+                {nfcStep === "pin_entry" && (
+                  <div className="text-center py-4">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0110 0v4" />
+                    </svg>
+                    <p className="text-emerald-400 font-semibold mt-2">Card Detected!</p>
+                    <p className="text-gray-400 text-xs mt-1 mb-4">Enter your 4-digit PIN to login</p>
+                    {nfcError && <p className="text-red-400 text-xs mb-3">{nfcError}</p>}
+                    <div className="max-w-[200px] mx-auto space-y-3">
+                      <Input
+                        type="password"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        maxLength={6}
+                        placeholder="Enter PIN"
+                        value={nfcPin}
+                        onChange={(e) => setNfcPin(e.target.value.replace(/\D/g, ''))}
+                        onKeyDown={(e) => { if (e.key === 'Enter') handlePinSubmit(); }}
+                        autoFocus
+                        className="text-center text-xl tracking-[0.5em]"
+                      />
+                      <button
+                        type="button"
+                        onClick={handlePinSubmit}
+                        disabled={nfcPin.length < 4}
+                        className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 disabled:text-gray-500 text-white font-semibold rounded-lg text-sm transition-colors"
+                      >
+                        Login
+                      </button>
+                    </div>
+                    {detectedUid && (
+                      <p className="text-gray-600 text-xs mt-3 font-mono">Card: {detectedUid}</p>
+                    )}
+                    <button
+                      type="button"
+                      onClick={resetNfcLogin}
+                      className="mt-3 px-4 py-1.5 text-gray-400 hover:text-gray-200 text-xs transition-colors"
+                    >
+                      Cancel
+                    </button>
                   </div>
                 )}
 
@@ -597,7 +662,7 @@ export default function LoginPage() {
                     </svg>
                     <p className="text-amber-400 font-medium mt-2">Card Not Linked Yet</p>
                     <p className="text-gray-400 text-xs mt-1 mb-4">
-                      Enter your account credentials to link this card for instant login.
+                      Enter your account credentials and set a PIN to link this card.
                     </p>
 
                     {/* Inline link-card form */}
@@ -615,7 +680,17 @@ export default function LoginPage() {
                         value={linkPassword}
                         onChange={(e) => setLinkPassword(e.target.value)}
                         autoComplete="current-password"
+                      />
+                      <Input
+                        type="password"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        maxLength={6}
+                        placeholder="Set 4-digit PIN"
+                        value={linkPin}
+                        onChange={(e) => setLinkPin(e.target.value.replace(/\D/g, ''))}
                         onKeyDown={(e) => { if (e.key === 'Enter') handleLinkCard(); }}
+                        className="text-center tracking-[0.3em]"
                       />
                       <button
                         type="button"
