@@ -80,7 +80,7 @@ export default function LoginPage() {
     password: "",
   });
   const router = useRouter();
-  const { status: readerStatus, isSupported: hasWebHid, isConnected: readerConnected, connectReader, onCardDetected, keyboardListening, bridgeConnected, bridgeStatus, mode } = useNfcReader();
+  const { isConnected: readerConnected, connectReader, onCardDetected, keyboardListening, bridgeConnected, bridgeStatus } = useNfcReader();
 
   // NFC Login State
   const [nfcStep, setNfcStep] = useState<"idle" | "connecting" | "waiting" | "checking" | "link_account" | "verifying" | "success" | "error">("idle");
@@ -155,19 +155,9 @@ export default function LoginPage() {
       setNfcStep("waiting");
       return;
     }
-    setNfcStep("connecting");
-    const ok = await connectReader();
-    if (ok) {
-      setNfcStep("waiting");
-    } else {
-      if (readerStatus === 'error') {
-        setNfcStep("error");
-        setNfcError("Could not connect to NFC reader. Make sure it's plugged in and the NFC Bridge service is running.");
-      } else {
-        setNfcStep("idle");
-      }
-    }
-  }, [readerConnected, readerStatus, connectReader, keyboardListening, bridgeConnected]);
+    // Bridge or keyboard should already be active
+    setNfcStep("waiting");
+  }, [readerConnected, connectReader, keyboardListening, bridgeConnected]);
 
   const resetNfcLogin = () => {
     setNfcStep("idle");
@@ -515,11 +505,6 @@ export default function LoginPage() {
                       </svg>
                       {bridgeConnected ? "Tap Your NFC Card Now" : keyboardListening ? "Tap Your NFC Card Now" : readerConnected ? "Tap Your NFC Card Now" : "Connect NFC Reader & Login"}
                     </button>
-                    {!bridgeConnected && !hasWebHid && !keyboardListening && (
-                      <p className="text-amber-400/80 text-xs text-center">
-                        WebHID not supported — use Chrome or Edge browser
-                      </p>
-                    )}
                     {!bridgeConnected && (
                       <a
                         href="/nfc-setup"
