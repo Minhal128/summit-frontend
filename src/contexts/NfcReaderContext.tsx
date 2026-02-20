@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { getNfcReader, NfcReaderStatus, NfcCardEvent, WebHidNfcReader } from '@/lib/webHidNfc';
 import { getKeyboardNfcReader, KeyboardNfcReader, KeyboardNfcEvent } from '@/lib/keyboardNfcReader';
-import { getNfcBridge, NfcBridgeClient, BridgeStatus, BridgeCardEvent, BridgeStatusEvent } from '@/lib/nfcBridge';
+import { getNfcBridge, NfcBridgeClient, BridgeStatus, BridgeCardEvent, BridgeStatusEvent, LoginResultEvent } from '@/lib/nfcBridge';
 
 type NfcMode = 'keyboard' | 'webhid' | 'bridge' | 'both';
 
@@ -34,6 +34,8 @@ interface NfcReaderContextType {
   bridgeStatus: BridgeStatusEvent | null;
   /** Register a callback for card detection (returns unsubscribe fn) */
   onCardDetected: (callback: (card: NfcCardEvent) => void) => () => void;
+  /** Register a callback for bridge login results (returns unsubscribe fn) */
+  onLoginResult: (callback: (result: LoginResultEvent) => void) => () => void;
   /** Register a callback for card removal (returns unsubscribe fn) */
   onCardRemoved: (callback: () => void) => () => void;
 }
@@ -52,6 +54,7 @@ export function NfcReaderProvider({ children }: { children: React.ReactNode }) {
   // Refs for dynamic callback lists
   const cardDetectedCallbacks = useRef<Set<(card: NfcCardEvent) => void>>(new Set());
   const cardRemovedCallbacks = useRef<Set<() => void>>(new Set());
+  const loginResultCallbacks = useRef<Set<(result: LoginResultEvent) => void>>(new Set());
   const readerRef = useRef<WebHidNfcReader | null>(null);
   const kbReaderRef = useRef<KeyboardNfcReader | null>(null);
   const bridgeRef = useRef<NfcBridgeClient | null>(null);
@@ -173,6 +176,12 @@ export function NfcReaderProvider({ children }: { children: React.ReactNode }) {
           timestamp: bridgeCard.timestamp,
         });
       },
+      onLoginResult: (result: LoginResultEvent) => {
+        console.log(`[NFC-CTX] Login result via bridge: ${result.success ? 'SUCCESS' : result.message || 'FAILED'}`);
+        loginResultCallbacks.current.forEach(cb => {
+          try { cb(result); } catch (e) { console.error('Login result callback error:', e); }
+        });
+      },
       onBridgeStatus: (bs: BridgeStatusEvent) => {
         setBridgeStatusInfo(bs);
       },
@@ -247,6 +256,13 @@ export function NfcReaderProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  const onLoginResult = useCallback((callback: (result: LoginResultEvent) => void) => {
+    loginResultCallbacks.current.add(callback);
+    return () => {
+      loginResultCallbacks.current.delete(callback);
+    };
+  }, []);
+
   const onCardRemoved = useCallback((callback: () => void) => {
     cardRemovedCallbacks.current.add(callback);
     return () => {
@@ -270,6 +286,7 @@ export function NfcReaderProvider({ children }: { children: React.ReactNode }) {
         startKeyboardCapture,
         stopKeyboardCapture,
         onCardDetected,
+        onLoginResult,
         onCardRemoved,
       }}
     >

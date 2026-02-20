@@ -80,7 +80,7 @@ export default function LoginPage() {
     password: "",
   });
   const router = useRouter();
-  const { status: readerStatus, isSupported: hasWebHid, isConnected: readerConnected, connectReader, onCardDetected, keyboardListening, mode } = useNfcReader();
+  const { status: readerStatus, isSupported: hasWebHid, isConnected: readerConnected, connectReader, onCardDetected, onLoginResult, keyboardListening, mode } = useNfcReader();
 
   // NFC Login State
   const [nfcStep, setNfcStep] = useState<"idle" | "connecting" | "waiting" | "verifying" | "success" | "error" | "unregistered">("idle");
@@ -92,7 +92,29 @@ export default function LoginPage() {
   const nfcStepRef = useRef(nfcStep);
   nfcStepRef.current = nfcStep;
 
-  // Auto-login when card is tapped while in "waiting" state
+  // Auto-login when bridge sends login_result (bridge called the API for us)
+  useEffect(() => {
+    const unsub = onLoginResult((result) => {
+      setDetectedUid(result.uid);
+
+      if (result.success && result.token) {
+        setNfcStep("success");
+        toast.success("NFC login successful! Redirecting...");
+        setTimeout(() => router.push("/dashboard"), 800);
+      } else if (result.unregistered) {
+        setNfcStep("unregistered");
+        setNfcError("This card is not linked to any account yet.");
+      } else {
+        setNfcStep("error");
+        setNfcError(result.message || "Authentication failed");
+        toast.error(result.message || "Authentication failed");
+      }
+    });
+    return unsub;
+  }, [onLoginResult, router]);
+
+  // Fallback: Auto-login when card is tapped while in "waiting" state
+  // (used when bridge auto-login is disabled or unavailable)
   useEffect(() => {
     const unsub = onCardDetected(async (card) => {
       // Process if we're actively waiting OR if keyboard mode is always listening

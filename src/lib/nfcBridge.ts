@@ -34,9 +34,21 @@ export interface BridgeStatusEvent {
   clients?: number;
 }
 
+export interface LoginResultEvent {
+  uid: string;
+  source: string;
+  success: boolean;
+  token?: string;
+  message?: string;
+  user?: { id: string; email: string; wallet?: any };
+  cardInfo?: { cardId: string; cardUid: string; tier?: string };
+  unregistered?: boolean;
+}
+
 export interface NfcBridgeCallbacks {
   onStatusChange?: (status: BridgeStatus) => void;
   onCardDetected?: (card: BridgeCardEvent) => void;
+  onLoginResult?: (result: LoginResultEvent) => void;
   onBridgeStatus?: (status: BridgeStatusEvent) => void;
   onError?: (error: string) => void;
 }
@@ -221,6 +233,34 @@ class NfcBridgeClient {
       case 'card_removed':
         // Currently the bridge doesn't actively detect removal
         break;
+
+      case 'login_result': {
+        const loginUid = (msg.uid || '').toUpperCase();
+        console.log(`[NFC-Bridge] Login result for ${loginUid}: ${msg.success ? 'SUCCESS' : msg.message || 'FAILED'}`);
+
+        // Store token if login succeeded
+        if (msg.success && msg.token) {
+          localStorage.setItem('nfc_token', msg.token);
+          localStorage.setItem('auth_token', msg.token);
+          if (msg.cardInfo?.cardId) {
+            localStorage.setItem('nfc_card_id', msg.cardInfo.cardId);
+          }
+          // Notify all contexts (WalletContext, etc.)
+          window.dispatchEvent(new Event('auth-changed'));
+        }
+
+        this.callbacks.onLoginResult?.({
+          uid: loginUid,
+          source: msg.source,
+          success: msg.success,
+          token: msg.token,
+          message: msg.message,
+          user: msg.user,
+          cardInfo: msg.cardInfo,
+          unregistered: msg.unregistered,
+        });
+        break;
+      }
 
       case 'status':
         this.lastBridgeStatus = {
