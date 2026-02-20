@@ -21,7 +21,7 @@ const steps = [
     icon: Download,
     title: "Download Summit NFC Service",
     description:
-      'Click the download button below to get SummitNfcService.exe. This lightweight app (~28 MB) runs in your system tray and connects your NFC reader to the Summit Exchange platform.',
+      'Click the download button below to get SummitNfcService.exe. This lightweight app (~29 MB) runs in your system tray and connects your NFC reader to the Summit Exchange platform.',
   },
   {
     icon: ShieldCheck,
@@ -134,11 +134,11 @@ export default function NfcSetupPage() {
           >
             <Download className="w-6 h-6" />
             {downloading ? "Downloading..." : "Download for Windows"}
-            <span className="text-sm font-normal opacity-75">~28 MB</span>
+            <span className="text-sm font-normal opacity-75">~29 MB</span>
           </button>
 
           <p className="mt-4 text-xs text-gray-500">
-            v1.0.0 &middot; Windows 10/11 &middot; Requires administrator
+            v3.0.0 &middot; Windows 10/11 &middot; Requires administrator
             privileges
           </p>
         </div>
