@@ -856,6 +856,33 @@ const Header: React.FC<HeaderProps> = ({ onScrollToFeatures }) => {
               🔐 Get NFC Card
             </button>
           </Link>
+          <Link href="/nfc-setup">
+            <button style={{
+              padding: '10px 20px',
+              background: 'rgba(59, 130, 246, 0.15)',
+              border: '1px solid rgba(59, 130, 246, 0.4)',
+              borderRadius: '8px',
+              color: '#93C5FD',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.background = 'rgba(59, 130, 246, 0.25)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.background = 'rgba(59, 130, 246, 0.15)';
+            }}
+            >
+              ⬇ NFC Setup
+            </button>
+          </Link>
 
           {/* Auth Buttons */}
           {isLoggedIn ? (
@@ -1066,6 +1093,26 @@ const Header: React.FC<HeaderProps> = ({ onScrollToFeatures }) => {
             }}
           >
             🔐 Get NFC Card
+          </Link>
+          <Link 
+            href="/nfc-setup"
+            className="mobile-nav-item mobile-nav-uniform"
+            style={{
+              display: 'block',
+              padding: '18px 24px',
+              margin: '0',
+              color: '#93C5FD',
+              textDecoration: 'none',
+              borderBottom: '1px solid rgba(235, 226, 255, 0.1)',
+              fontSize: '16px',
+              fontWeight: '500',
+              cursor: 'pointer',
+              width: '100%',
+              textAlign: 'left',
+              background: 'transparent'
+            }}
+          >
+            ⬇ NFC Setup & Download
           </Link>
           <Link 
             href="/academy" 

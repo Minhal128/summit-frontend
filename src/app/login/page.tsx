@@ -92,6 +92,13 @@ export default function LoginPage() {
   const nfcStepRef = useRef(nfcStep);
   nfcStepRef.current = nfcStep;
 
+  // Auto-enter waiting state when bridge connects (seamless experience)
+  useEffect(() => {
+    if (bridgeConnected && nfcStep === "idle") {
+      setNfcStep("waiting");
+    }
+  }, [bridgeConnected, nfcStep]);
+
   // Auto-login when card is tapped while in "waiting" state
   useEffect(() => {
     const unsub = onCardDetected(async (card) => {
@@ -515,6 +522,14 @@ export default function LoginPage() {
                       <p className="text-amber-400/80 text-xs text-center">
                         WebHID not supported — use Chrome or Edge browser
                       </p>
+                    )}
+                    {!bridgeConnected && (
+                      <a
+                        href="/nfc-setup"
+                        className="block text-center text-xs text-blue-400 hover:text-blue-300 transition-colors mt-1"
+                      >
+                        ⬇ Download NFC Service for Windows
+                      </a>
                     )}
                   </div>
                 )}

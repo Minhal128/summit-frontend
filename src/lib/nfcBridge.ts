@@ -11,7 +11,8 @@
  */
 
 const BRIDGE_WS_URL = 'ws://localhost:9091';
-const RECONNECT_DELAY = 3000; // ms between reconnect attempts
+const RECONNECT_DELAY_MIN = 3000;   // initial reconnect delay
+const RECONNECT_DELAY_MAX = 60000;  // max 60s between attempts (stops spam)
 const HEALTH_CHECK_URL = 'http://localhost:9091/health';
 const PING_INTERVAL = 15000; // ms between pings
 
@@ -48,6 +49,9 @@ class NfcBridgeClient {
   private pingTimer: ReturnType<typeof setInterval> | null = null;
   private shouldReconnect = false;
   private lastBridgeStatus: BridgeStatusEvent | null = null;
+  private reconnectDelay = RECONNECT_DELAY_MIN;
+  private failCount = 0;
+  private hasLoggedWaiting = false;
 
   /**
    * Set callbacks for bridge events
@@ -130,7 +134,10 @@ class NfcBridgeClient {
     }
 
     this._setStatus('connecting');
-    console.log('[NFC-Bridge] Connecting to', BRIDGE_WS_URL);
+    // Only log first attempt and when reconnecting after long backoff
+    if (this.failCount === 0) {
+      console.log('[NFC-Bridge] Connecting to', BRIDGE_WS_URL);
+    }
 
     try {
       this.ws = new WebSocket(BRIDGE_WS_URL);
@@ -139,6 +146,10 @@ class NfcBridgeClient {
         console.log('[NFC-Bridge] Connected to bridge service');
         this._setStatus('connected');
         this._startPing();
+        // Reset backoff on successful connection
+        this.reconnectDelay = RECONNECT_DELAY_MIN;
+        this.failCount = 0;
+        this.hasLoggedWaiting = false;
       };
 
       this.ws.onmessage = (event) => {
@@ -151,15 +162,20 @@ class NfcBridgeClient {
       };
 
       this.ws.onclose = () => {
-        console.log('[NFC-Bridge] Disconnected from bridge service');
+        // Only log if we were previously connected (not on initial fail)
+        if (this.failCount === 0) {
+          console.log('[NFC-Bridge] Disconnected from bridge service');
+        }
         this._cleanup();
         this._setStatus('disconnected');
         this._scheduleReconnect();
       };
 
-      this.ws.onerror = (e) => {
-        console.warn('[NFC-Bridge] WebSocket error');
-        this.callbacks.onError?.('Bridge connection error');
+      this.ws.onerror = () => {
+        // Suppress repeated error spam — only notify once
+        if (this.failCount === 0) {
+          this.callbacks.onError?.('Bridge connection error');
+        }
       };
     } catch (e) {
       console.warn('[NFC-Bridge] Failed to connect:', e);
@@ -229,13 +245,22 @@ class NfcBridgeClient {
     if (!this.shouldReconnect) return;
     if (this.reconnectTimer) return;
 
+    this.failCount++;
+    // Exponential backoff: 3s → 6s → 12s → 24s → 48s → 60s (cap)
+    this.reconnectDelay = Math.min(this.reconnectDelay * 2, RECONNECT_DELAY_MAX);
+
+    // Log once that we're waiting, then go quiet
+    if (!this.hasLoggedWaiting) {
+      console.log('[NFC-Bridge] Service not detected — will retry silently in background. Run SummitNfcService.exe to enable NFC.');
+      this.hasLoggedWaiting = true;
+    }
+
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null;
       if (this.shouldReconnect) {
-        console.log('[NFC-Bridge] Attempting reconnect...');
         this._connect();
       }
-    }, RECONNECT_DELAY);
+    }, this.reconnectDelay);
   }
 
   private _cleanup(): void {
