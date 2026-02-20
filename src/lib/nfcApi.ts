@@ -82,11 +82,11 @@ export async function authenticateWithTap(data: {
  * The browser reads the hardware UID via WebHID, sends it to backend.
  * Backend looks up the card and returns a JWT if registered.
  */
-export async function loginByUid(cardUid: string, pin?: string): Promise<NfcAuthResponse & { unregistered?: boolean; pinRequired?: boolean }> {
+export async function loginByUid(cardUid: string): Promise<NfcAuthResponse & { unregistered?: boolean }> {
   const response = await apiFetch('/api/nfc/uid-login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ cardUid, pin })
+    body: JSON.stringify({ cardUid })
   });
 
   if (response.success && response.token) {
@@ -111,7 +111,6 @@ export async function linkCard(data: {
   identifier: string;
   password: string;
   cardUid: string;
-  pin: string;
 }): Promise<NfcAuthResponse & { cardInfo?: { cardId: string; cardUid: string } }> {
   const response = await apiFetch('/api/nfc/link-card', {
     method: 'POST',
