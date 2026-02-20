@@ -95,6 +95,8 @@ export async function loginByUid(cardUid: string): Promise<NfcAuthResponse & { u
     if (response.cardInfo?.cardId) {
       localStorage.setItem('nfc_card_id', response.cardInfo.cardId);
     }
+    // Notify WalletContext to refresh (same-tab event)
+    window.dispatchEvent(new Event('auth-changed'));
   }
 
   return response;
@@ -122,6 +124,8 @@ export async function linkCard(data: {
     if (response.cardInfo?.cardId) {
       localStorage.setItem('nfc_card_id', response.cardInfo.cardId);
     }
+    // Notify WalletContext to refresh (same-tab event)
+    window.dispatchEvent(new Event('auth-changed'));
   }
 
   return response;

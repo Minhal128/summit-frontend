@@ -145,13 +145,19 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(interval)
   }, [refreshBalances])
 
-  // Listen for auth changes
+  // Listen for auth changes (cross-tab and same-tab)
   useEffect(() => {
     const handleStorageChange = () => {
       refreshBalances()
     }
+    // Cross-tab storage events
     window.addEventListener('storage', handleStorageChange)
-    return () => window.removeEventListener('storage', handleStorageChange)
+    // Same-tab custom event (dispatched by NFC login/linkCard)
+    window.addEventListener('auth-changed', handleStorageChange)
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('auth-changed', handleStorageChange)
+    }
   }, [refreshBalances])
 
   return (
