@@ -555,7 +555,7 @@ export default function LoginPage() {
                     </div>
                     <p className="text-emerald-400 font-medium mt-3">Tap your NFC card on the reader...</p>
                     <p className="text-gray-500 text-xs mt-1">
-                      {bridgeConnected ? "CYB Bridge active — place card on reader and click Read in CYB_NfcTool" : keyboardListening ? "Keyboard capture active — just tap your card" : "Reader is ready — waiting for card"}
+                      {bridgeConnected ? "NFC Bridge active — tap your card on the reader" : keyboardListening ? "Keyboard capture active — just tap your card" : "Reader is ready — waiting for card"}
                     </p>
                     <button
                       type="button"

@@ -97,7 +97,7 @@ export function NfcReaderProvider({ children }: { children: React.ReactNode }) {
     // Keyboard mode is always ready — mark as connected
     setStatus('connected');
 
-    // --- WebHID NFC reader (optional, for readers with vendor HID protocol) ---
+    // --- WebHID NFC reader (prepare but don't auto-connect yet) ---
     if (webHidSupported) {
       const reader = getNfcReader();
       readerRef.current = reader;
@@ -108,10 +108,19 @@ export function NfcReaderProvider({ children }: { children: React.ReactNode }) {
           if (s === 'reading') setStatus(s);
         },
         onCardDetected: (card) => {
+          // IMPORTANT: Ignore WebHID when bridge is active.
+          // The CYB reader uses a proprietary protocol and WebHID extracts
+          // wrong UIDs from the raw HID frames (protocol bytes, not real UIDs).
+          // The bridge service correctly parses the CYB protocol.
+          if (bridgeRef.current?.getStatus() === 'connected') {
+            console.log(`[NFC-CTX] Ignoring WebHID card (bridge is active): ${card.uid}`);
+            return;
+          }
           console.log(`[NFC-CTX] Card detected via WebHID: ${card.uid}`);
           handleCardDetected(card);
         },
         onCardRemoved: () => {
+          if (bridgeRef.current?.getStatus() === 'connected') return;
           handleCardRemoved();
         },
         onError: (err) => {
@@ -119,16 +128,14 @@ export function NfcReaderProvider({ children }: { children: React.ReactNode }) {
         }
       });
 
-      // Try auto-reconnect to previously paired device
-      reader.tryReconnect().then(reconnected => {
-        if (reconnected) {
-          setMode('both');
-          console.log('[NFC-CTX] Both keyboard & WebHID modes active');
-        }
-      });
+      // NOTE: Do NOT auto-reconnect WebHID here. The bridge service needs
+      // exclusive HID access. WebHID will only be used as fallback if the
+      // user manually clicks "Connect NFC Reader" and the bridge isn't running.
     }
 
     // --- NFC Bridge Service (connects to local Python service via WebSocket) ---
+    // Bridge gets priority — it talks to the CYB reader via HID directly.
+    // WebHID and bridge CANNOT both access the USB device simultaneously.
     const bridge = getNfcBridge();
     bridgeRef.current = bridge;
 
@@ -140,6 +147,23 @@ export function NfcReaderProvider({ children }: { children: React.ReactNode }) {
           setMode('bridge');
           setStatus('connected');
           console.log('[NFC-CTX] Bridge service connected — CYB reader integration active');
+
+          // Release WebHID device so the Python bridge service can
+          // access the USB HID reader. Both can't use it at the same time.
+          if (readerRef.current) {
+            console.log('[NFC-CTX] Releasing WebHID device for bridge service...');
+            readerRef.current.disconnect().catch(() => {});
+          }
+        } else if (bridgeState === 'disconnected') {
+          // Bridge disconnected — try WebHID as fallback
+          if (webHidSupported && readerRef.current) {
+            readerRef.current.tryReconnect().then(reconnected => {
+              if (reconnected) {
+                setMode('both');
+                console.log('[NFC-CTX] Bridge offline — fell back to WebHID');
+              }
+            });
+          }
         }
       },
       onCardDetected: (bridgeCard: BridgeCardEvent) => {
@@ -167,6 +191,11 @@ export function NfcReaderProvider({ children }: { children: React.ReactNode }) {
   }, [handleCardDetected, handleCardRemoved]);
 
   const connectReader = useCallback(async (): Promise<boolean> => {
+    // If bridge is connected, don't compete for the HID device
+    if (bridgeRef.current?.getStatus() === 'connected') {
+      console.log('[NFC-CTX] Bridge active — WebHID not needed');
+      return true; // Already connected via bridge
+    }
     const reader = readerRef.current || getNfcReader();
     readerRef.current = reader;
     const ok = await reader.connect();
