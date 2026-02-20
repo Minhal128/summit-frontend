@@ -80,7 +80,7 @@ export default function LoginPage() {
     password: "",
   });
   const router = useRouter();
-  const { status: readerStatus, isSupported: hasWebHid, isConnected: readerConnected, connectReader, onCardDetected } = useNfcReader();
+  const { status: readerStatus, isSupported: hasWebHid, isConnected: readerConnected, connectReader, onCardDetected, keyboardListening, bridgeConnected, bridgeStatus, mode } = useNfcReader();
 
   // NFC Login State
   const [nfcStep, setNfcStep] = useState<"idle" | "connecting" | "waiting" | "verifying" | "success" | "error" | "unregistered">("idle");
@@ -95,8 +95,8 @@ export default function LoginPage() {
   // Auto-login when card is tapped while in "waiting" state
   useEffect(() => {
     const unsub = onCardDetected(async (card) => {
-      // Only process if we're actively waiting for a card tap
-      if (nfcStepRef.current !== "waiting") return;
+      // Process if we're actively waiting OR if keyboard mode is always listening
+      if (nfcStepRef.current !== "waiting" && nfcStepRef.current !== "idle") return;
 
       setDetectedUid(card.uid);
       setNfcStep("verifying");
@@ -137,8 +137,17 @@ export default function LoginPage() {
   // --- NFC TAP LOGIN: Connect reader and wait for card ---
   const handleNfcTapLogin = useCallback(async () => {
     setNfcError("");
+    // If bridge is connected, we're already listening — just switch to waiting state
+    if (bridgeConnected) {
+      setNfcStep("waiting");
+      return;
+    }
+    // If keyboard capture is active, we're already listening — just switch to waiting state
+    if (keyboardListening) {
+      setNfcStep("waiting");
+      return;
+    }
     if (readerConnected) {
-      // Already connected, just start waiting
       setNfcStep("waiting");
       return;
     }
@@ -147,17 +156,14 @@ export default function LoginPage() {
     if (ok) {
       setNfcStep("waiting");
     } else {
-      // If status is still 'disconnected', user just cancelled the picker — go back to idle
-      // If status is 'error', show the error state
       if (readerStatus === 'error') {
         setNfcStep("error");
-        setNfcError("Could not connect to NFC reader. Make sure it's plugged in and close any NFC software (like CYB_NfcTool).");
+        setNfcError("Could not connect to NFC reader. Make sure it's plugged in and the NFC Bridge service is running.");
       } else {
-        // User cancelled — silently return to idle
         setNfcStep("idle");
       }
     }
-  }, [readerConnected, readerStatus, connectReader]);
+  }, [readerConnected, readerStatus, connectReader, keyboardListening, bridgeConnected]);
 
   const resetNfcLogin = () => {
     setNfcStep("idle");
@@ -460,24 +466,39 @@ export default function LoginPage() {
                   <div>
                     <h3 className="text-white font-semibold text-base">NFC Quick Login</h3>
                     <p className="text-gray-400 text-xs">
-                      {readerConnected
+                      {bridgeConnected
+                        ? `Bridge connected${bridgeStatus?.reader ? ` — ${bridgeStatus.reader}` : ''} — tap your card`
+                        : keyboardListening
+                        ? "Reader ready — tap your card to login instantly"
+                        : readerConnected
                         ? "Reader connected — tap your card to login instantly"
                         : "Tap your card — no password needed"}
                     </p>
                   </div>
                   {/* Reader status dot */}
-                  {hasWebHid && (
-                    <div className="ml-auto">
-                      <div className={cn(
-                        "w-3 h-3 rounded-full",
-                        readerConnected ? "bg-emerald-400 animate-pulse" : "bg-slate-600"
-                      )} title={readerConnected ? "Reader connected" : "Reader not connected"} />
-                    </div>
-                  )}
+                  <div className="ml-auto flex items-center gap-2">
+                    {bridgeConnected && (
+                      <span className="text-[10px] text-emerald-400/70 uppercase tracking-wider">Bridge</span>
+                    )}
+                    <div className={cn(
+                      "w-3 h-3 rounded-full",
+                      bridgeConnected ? "bg-emerald-400 animate-pulse" : (readerConnected || keyboardListening) ? "bg-emerald-400 animate-pulse" : "bg-slate-600"
+                    )} title={bridgeConnected ? "NFC Bridge connected" : keyboardListening ? "Keyboard NFC capture active" : readerConnected ? "WebHID reader connected" : "Reader not connected"} />
+                  </div>
                 </div>
 
                 {nfcStep === "idle" && (
                   <div className="space-y-3">
+                    {bridgeConnected && (
+                      <p className="text-emerald-400/80 text-xs text-center animate-pulse">
+                        NFC Bridge active — tap your card on the CYB reader to login
+                      </p>
+                    )}
+                    {!bridgeConnected && keyboardListening && (
+                      <p className="text-emerald-400/80 text-xs text-center animate-pulse">
+                        NFC reader active — tap your card anytime to login
+                      </p>
+                    )}
                     <button
                       type="button"
                       onClick={handleNfcTapLogin}
@@ -488,9 +509,9 @@ export default function LoginPage() {
                         <path d="M3 6h18" />
                         <path d="M16 10a4 4 0 01-8 0" />
                       </svg>
-                      {readerConnected ? "Tap Your NFC Card Now" : "Connect NFC Reader & Login"}
+                      {bridgeConnected ? "Tap Your NFC Card Now" : keyboardListening ? "Tap Your NFC Card Now" : readerConnected ? "Tap Your NFC Card Now" : "Connect NFC Reader & Login"}
                     </button>
-                    {!hasWebHid && (
+                    {!bridgeConnected && !hasWebHid && !keyboardListening && (
                       <p className="text-amber-400/80 text-xs text-center">
                         WebHID not supported — use Chrome or Edge browser
                       </p>
@@ -518,7 +539,9 @@ export default function LoginPage() {
                       </div>
                     </div>
                     <p className="text-emerald-400 font-medium mt-3">Tap your NFC card on the reader...</p>
-                    <p className="text-gray-500 text-xs mt-1">Reader is ready — waiting for card</p>
+                    <p className="text-gray-500 text-xs mt-1">
+                      {bridgeConnected ? "CYB Bridge active — place card on reader and click Read in CYB_NfcTool" : keyboardListening ? "Keyboard capture active — just tap your card" : "Reader is ready — waiting for card"}
+                    </p>
                     <button
                       type="button"
                       onClick={resetNfcLogin}

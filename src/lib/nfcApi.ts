@@ -178,6 +178,22 @@ export async function authorizeAction(data: {
 }
 
 /**
+ * Step 4b: Authorize action by card UID only (CYB/WebHID readers)
+ * Used when the reader provides a hardware UID but no crypto signing capability.
+ * The server verifies card ownership + valid action nonce.
+ */
+export async function authorizeActionByUid(data: {
+  actionId: string;
+  cardUid: string;
+}): Promise<ActionAuthorizationResponse> {
+  return apiFetch('/api/nfc/authorize-action-uid', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+}
+
+/**
  * Get user's NFC cards
  */
 export async function getUserCards(): Promise<UserCardsResponse> {

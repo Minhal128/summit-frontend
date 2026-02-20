@@ -31,7 +31,7 @@ import {
   type SwapQuote
 } from "@/lib/transactionApi"
 import { createActionNonce, authorizeAction, getStoredCardId } from "@/lib/nfcApi"
-import NfcTransactionAuth from "./NfcTransactionAuth"
+import { NfcTransactionAuth } from "./NfcTransactionAuth"
 
 interface Token {
   symbol: string
@@ -204,14 +204,14 @@ export default function SwapModal({
   }
 
   // NFC authorization complete handler
-  const handleNfcAuthComplete = async (authResult: { authorizationId: string; success: boolean }) => {
-    if (!authResult.success || !transactionId) {
+  const handleNfcAuthComplete = async (actionPayload: any) => {
+    if (!transactionId) {
       setError("NFC authorization failed")
       setStep('error')
       return
     }
 
-    await handleExecuteSwap(transactionId, authResult.authorizationId)
+    await handleExecuteSwap(transactionId, actionPayload?.actionId || '')
   }
 
   // Render token selector dropdown
@@ -522,16 +522,20 @@ export default function SwapModal({
   const renderNfcStep = () => (
     <div className="py-4">
       <NfcTransactionAuth
-        transactionType="swap"
-        amount={fromAmount}
-        currency={fromToken.symbol}
-        details={{
+        isOpen={step === 'nfc'}
+        onClose={() => setStep('input')}
+        cardId={getStoredCardId() || ''}
+        actionType="swap"
+        actionData={{
+          amount: fromAmount,
           fromToken: fromToken.symbol,
           toToken: toToken.symbol,
-          toAmount: quote?.quote.toAmount || "0"
         }}
-        onAuthorizationComplete={handleNfcAuthComplete}
-        onCancel={() => setStep('input')}
+        onAuthorized={handleNfcAuthComplete}
+        onError={(error) => {
+          setError(error)
+          setStep('error')
+        }}
       />
     </div>
   )

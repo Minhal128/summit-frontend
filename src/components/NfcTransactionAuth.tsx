@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CreditCard, Loader2, CheckCircle, XCircle, Shield } from 'lucide-react';
-import { createActionNonce, authorizeAction } from '@/lib/nfcApi';
+import { createActionNonce, authorizeAction, authorizeActionByUid } from '@/lib/nfcApi';
 import { createActionMessage, simulateNfcTap, getStoredKeyPair } from '@/lib/nfcCrypto';
+import { useNfcReader } from '@/contexts/NfcReaderContext';
 import { toast } from 'react-toastify';
 import type { ActionPayload } from '@/types/nfc';
 
@@ -39,19 +40,65 @@ export function NfcTransactionAuth({
   const [step, setStep] = useState<AuthStep>('request');
   const [error, setError] = useState('');
   const [actionPayload, setActionPayload] = useState<ActionPayload | null>(null);
+  const [pendingActionId, setPendingActionId] = useState<string | null>(null);
+  const pendingActionIdRef = useRef<string | null>(null);
+  const stepRef = useRef<AuthStep>('request');
+
+  const { onCardDetected, bridgeConnected } = useNfcReader();
+
+  // Keep refs in sync
+  useEffect(() => { stepRef.current = step; }, [step]);
+  useEffect(() => { pendingActionIdRef.current = pendingActionId; }, [pendingActionId]);
+
+  // Listen for NFC card tap via bridge/keyboard/WebHID
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const unsub = onCardDetected(async (card) => {
+      // Only process if we're in the 'tap' step waiting for a card
+      if (stepRef.current !== 'tap') return;
+      const actionId = pendingActionIdRef.current;
+      if (!actionId) return;
+
+      try {
+        setStep('verify');
+
+        // Authorize using card UID
+        const authResponse = await authorizeActionByUid({
+          actionId,
+          cardUid: card.uid,
+        });
+
+        setStep('success');
+        toast.success('Transaction authorized!');
+
+        if (onAuthorized) {
+          onAuthorized(authResponse.actionPayload);
+        }
+
+        setTimeout(() => {
+          onClose();
+          resetState();
+        }, 2000);
+      } catch (err: any) {
+        console.error('UID authorization error:', err);
+        setStep('error');
+        const errorMessage = err.message || 'Authorization failed';
+        setError(errorMessage);
+        toast.error(errorMessage);
+        if (onError) onError(errorMessage);
+      }
+    });
+
+    return unsub;
+  }, [isOpen, onCardDetected, onAuthorized, onError, onClose]);
 
   const handleAuthorize = async () => {
     try {
       setStep('request');
       setError('');
 
-      // Check if card exists
-      const keyPair = getStoredKeyPair(cardId);
-      if (!keyPair) {
-        throw new Error('Card not found. Please provision your card first.');
-      }
-
-      // Step 1: Request action nonce
+      // Step 1: Request action nonce from server
       const nonceResponse = await createActionNonce({
         cardId,
         actionType,
@@ -59,36 +106,11 @@ export function NfcTransactionAuth({
       });
 
       setActionPayload(nonceResponse.actionPayload);
+      setPendingActionId(nonceResponse.actionId);
 
-      // Step 2: Simulate card tap
+      // Step 2: Wait for real NFC card tap
       setStep('tap');
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Step 3: Sign the action
-      const message = createActionMessage(nonceResponse.nonce, nonceResponse.actionPayload);
-      const signature = await simulateNfcTap(cardId, message);
-
-      // Step 4: Authorize with server
-      setStep('verify');
-      const authResponse = await authorizeAction({
-        actionId: nonceResponse.actionId,
-        cardId,
-        nonce: nonceResponse.nonce,
-        signature
-      });
-
-      setStep('success');
-      toast.success('Transaction authorized!');
-
-      if (onAuthorized) {
-        onAuthorized(authResponse.actionPayload);
-      }
-
-      // Close after short delay
-      setTimeout(() => {
-        onClose();
-        resetState();
-      }, 2000);
+      // The onCardDetected listener above will handle the rest
 
     } catch (err: any) {
       console.error('Authorization error:', err);
@@ -196,7 +218,14 @@ export function NfcTransactionAuth({
               </div>
               <div>
                 <p className="font-semibold text-lg">Tap your NFC card</p>
-                <p className="text-sm text-muted-foreground">Hold your card near the reader to authorize</p>
+                <p className="text-sm text-muted-foreground">
+                  {bridgeConnected
+                    ? 'Place your card on the CYB reader to authorize this transaction'
+                    : 'Hold your card near the reader to authorize'}
+                </p>
+                {bridgeConnected && (
+                  <p className="text-xs text-emerald-500 mt-1 animate-pulse">NFC Bridge connected — waiting for card...</p>
+                )}
               </div>
             </div>
           </div>
