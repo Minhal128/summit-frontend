@@ -28,6 +28,8 @@ interface WalletContextType {
   balances: WalletBalance[]
   totalValueUSD: number
   totalValueFormatted: string
+  usdBalance: number
+  usdBalanceFormatted: string
   loading: boolean
   error: string | null
   lastUpdated: Date | null
@@ -75,6 +77,7 @@ function formatUSD(value: number): string {
 export function WalletProvider({ children }: { children: ReactNode }) {
   const [balances, setBalances] = useState<WalletBalance[]>([])
   const [totalValueUSD, setTotalValueUSD] = useState(0)
+  const [usdBalance, setUsdBalance] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
@@ -133,27 +136,46 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         setIsAuthenticated(false)
         setBalances([])
         setTotalValueUSD(0)
+        setUsdBalance(0)
         setLoading(false)
         return
       }
 
       setIsAuthenticated(true)
 
-      const response = await fetch(`${API_BASE}/api/wallet/balance`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      })
+      // Fetch both wallet balance and USD balance in parallel
+      const [walletResponse, usdResponse] = await Promise.all([
+        fetch(`${API_BASE}/api/wallet/balance`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }),
+        fetch(`${API_BASE}/api/deposit/balance`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }).catch(() => null) // Don't fail if deposit endpoint doesn't exist
+      ])
 
-      if (response.status === 401) {
+      if (walletResponse.status === 401) {
         setIsAuthenticated(false)
         setBalances([])
         setTotalValueUSD(0)
+        setUsdBalance(0)
         return
       }
 
-      const result = await response.json()
+      const result = await walletResponse.json()
+      
+      // Parse USD balance
+      if (usdResponse && usdResponse.ok) {
+        const usdResult = await usdResponse.json()
+        if (usdResult.status === 'success' && usdResult.data) {
+          setUsdBalance(usdResult.data.usdBalance || 0)
+        }
+      }
 
       if (result.status === 'success' && result.balances) {
         const formattedBalances: WalletBalance[] = result.balances.map((b: any) => {
@@ -234,6 +256,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         balances,
         totalValueUSD,
         totalValueFormatted: formatUSD(totalValueUSD),
+        usdBalance,
+        usdBalanceFormatted: formatUSD(usdBalance),
         loading,
         error,
         lastUpdated,

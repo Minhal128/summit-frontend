@@ -46,6 +46,7 @@ import SettingsPage from "@/components/SettingsPage"
 import LiveMarketPage from "@/components/LiveMarketPage"
 import HardwareWalletModal from "@/components/modals/HardwareWalletModal"
 import ReceiveModal from "@/components/modals/ReceiveModal"
+import DepositModal from "@/components/modals/DepositModal"
 import NfcManagement from "@/components/NfcManagement"
 import AdminDashboard from "@/components/AdminDashboard"
 import BuySellPage from "@/components/BuySellPage"
@@ -77,7 +78,7 @@ const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
 const DashboardPage: NextPage = () => {
   const router = useRouter()
   const { t } = useTranslation()
-  const { totalValueFormatted, balances, loading: walletLoading, refreshBalances, walletAddresses } = useWallet()
+  const { totalValueFormatted, balances, loading: walletLoading, refreshBalances, walletAddresses, usdBalance, usdBalanceFormatted } = useWallet()
   const [activeTab, setActiveTab] = useState("Swap")
   const [activePage, setActivePage] = useState("Dashboard")
   const [isTransactionsModalOpen, setIsTransactionsModalOpen] = useState(false)
@@ -91,6 +92,7 @@ const DashboardPage: NextPage = () => {
   const [isSellCoinModalOpen, setIsSellCoinModalOpen] = useState(false)
   const [isHardwareWalletModalOpen, setIsHardwareWalletModalOpen] = useState(false)
   const [isReceiveModalOpen, setIsReceiveModalOpen] = useState(false)
+  const [isDepositModalOpen, setIsDepositModalOpen] = useState(false)
   const [selectedToken, setSelectedToken] = useState<Token | null>(null)
   const [selectedNetwork, setSelectedNetwork] = useState<Network | null>(null)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -533,7 +535,7 @@ const DashboardPage: NextPage = () => {
                 {/* Portfolio Section */}
                 <section className="bg-[#1E293B] p-4 sm:p-6 rounded-2xl shadow-xl border border-slate-700/50">
                   <div className="flex flex-col lg:flex-row justify-between items-start mb-6 gap-4">
-                    <div>
+                    <div className="flex-1">
                       <h3 className="text-gray-400 text-base mb-2">Portfolio</h3>
                       <p className="text-3xl sm:text-4xl text-white font-bold flex flex-wrap items-center gap-2">
                         {walletLoading ? (
@@ -543,6 +545,26 @@ const DashboardPage: NextPage = () => {
                         )}
                         <span className="text-sm text-green-500 bg-green-500/10 px-3 py-1 rounded-full">↑ 3.56%</span>
                       </p>
+                      
+                      {/* USD Balance Display */}
+                      <div className="mt-3 flex items-center gap-3">
+                        <div className="bg-green-500/10 border border-green-500/30 rounded-xl px-4 py-2">
+                          <span className="text-xs text-gray-400">USD Balance</span>
+                          <p className="text-lg font-bold text-green-400">
+                            {walletLoading ? '...' : usdBalanceFormatted || '$0.00'}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => setIsDepositModalOpen(true)}
+                          className="bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-xl font-medium text-sm transition-colors flex items-center gap-2"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                          </svg>
+                          Add Funds
+                        </button>
+                      </div>
+
                       {ethWalletAddress && (
                         <div className="flex items-center gap-2 mt-2">
                           <span className="text-xs text-gray-400">ETH Wallet:</span>
@@ -1270,6 +1292,16 @@ const DashboardPage: NextPage = () => {
         onClose={handleReceiveClose}
         onBack={handleReceiveBack}
         selectedToken={selectedToken?.symbol}
+      />
+
+      {/* Deposit Modal */}
+      <DepositModal
+        isOpen={isDepositModalOpen}
+        onClose={() => setIsDepositModalOpen(false)}
+        onSuccess={(amount, newBalance) => {
+          refreshBalances()
+          setIsDepositModalOpen(false)
+        }}
       />
 
       {/* Transaction Authorized Modal */}
