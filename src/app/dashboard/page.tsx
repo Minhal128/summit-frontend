@@ -57,27 +57,16 @@ import PartnersMapPage from "@/components/PartnersMapPage"
 import type { Token, TooltipProps, Network } from "@/types"
 import { useTranslation } from "@/contexts/I18nContext"
 import { useWallet } from "@/contexts/WalletContext"
-
-// Data for the chart
-const chartData = [
-  { name: "Sun", value: 26.5 },
-  { name: "Mon", value: 26.8 },
-  { name: "Tue", value: 27.2 },
-  { name: "Wed", value: 27.55 },
-  { name: "Thu", value: 27.2 },
-  { name: "Fri", value: 27.4 },
-  { name: "Sat", value: 26.9 },
-]
+import { getTransactionHistory, formatTransactionDate, formatAmount, getExplorerUrl, Transaction } from "@/lib/transactionHistory"
 
 // Custom Tooltip for the chart
 const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
   if (active && payload && payload.length) {
-    const time = "11:33:58 AM"
     const value = typeof payload[0].value === 'number' ? payload[0].value : Number(payload[0].value) || 0
     return (
       <div className="bg-white text-black p-3 rounded-md shadow-lg text-center">
-        <p className="font-bold text-sm">{`${time}`}</p>
-        <p className="text-xs font-semibold">{`$${value.toFixed(3)}`}</p>
+        <p className="font-bold text-sm">{label}</p>
+        <p className="text-xs font-semibold">{`$${value.toLocaleString('en-US', { minimumFractionDigits: 2 })}`}</p>
       </div>
     )
   }
@@ -88,7 +77,7 @@ const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
 const DashboardPage: NextPage = () => {
   const router = useRouter()
   const { t } = useTranslation()
-  const { totalValueFormatted, loading: walletLoading } = useWallet()
+  const { totalValueFormatted, balances, loading: walletLoading, refreshBalances } = useWallet()
   const [activeTab, setActiveTab] = useState("Swap")
   const [activePage, setActivePage] = useState("Dashboard")
   const [isTransactionsModalOpen, setIsTransactionsModalOpen] = useState(false)
@@ -105,6 +94,76 @@ const DashboardPage: NextPage = () => {
   const [selectedToken, setSelectedToken] = useState<Token | null>(null)
   const [selectedNetwork, setSelectedNetwork] = useState<Network | null>(null)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  
+  // Real data states
+  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([])
+  const [btcPrice, setBtcPrice] = useState<number>(0)
+  const [chartData, setChartData] = useState<{name: string, value: number}[]>([])
+  const [swapFromAmount, setSwapFromAmount] = useState("")
+  const [swapToAmount, setSwapToAmount] = useState("")
+  const [swapFromToken, setSwapFromToken] = useState("BTC")
+  const [swapToToken, setSwapToToken] = useState("ETH")
+
+  // Fetch real data on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      // Fetch recent transactions
+      const txResult = await getTransactionHistory({ limit: 5 })
+      if (txResult.success) {
+        setRecentTransactions(txResult.transactions)
+      }
+
+      // Fetch market prices
+      try {
+        const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://king-prawn-app-nv72k.ondigitalocean.app'
+        const token = localStorage.getItem('auth_token') || localStorage.getItem('nfc_token')
+        const response = await fetch(`${API_BASE}/api/market/rates`, {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        })
+        const data = await response.json()
+        if (data.status === 'success' && data.data) {
+          const btc = data.data.find((r: any) => r.symbol === 'BTC')
+          if (btc) setBtcPrice(btc.marketRate || btc.msRate || 0)
+        }
+      } catch (err) {
+        console.error('Failed to fetch prices:', err)
+      }
+
+      // Fetch price history for chart
+      try {
+        const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://king-prawn-app-nv72k.ondigitalocean.app'
+        const response = await fetch(`${API_BASE}/api/market/history/BTC?period=7d`)
+        const data = await response.json()
+        if (data.status === 'success' && data.data) {
+          const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+          const chartPoints = data.data.slice(-7).map((point: any, i: number) => ({
+            name: days[new Date(point.timestamp || point.date).getDay()],
+            value: point.price || point.close || 0
+          }))
+          if (chartPoints.length > 0) setChartData(chartPoints)
+        }
+      } catch (err) {
+        console.error('Failed to fetch chart data:', err)
+        // Set default chart data if API fails
+        setChartData([
+          { name: "Sun", value: btcPrice * 0.98 || 26500 },
+          { name: "Mon", value: btcPrice * 0.99 || 26800 },
+          { name: "Tue", value: btcPrice * 1.00 || 27000 },
+          { name: "Wed", value: btcPrice * 1.01 || 27200 },
+          { name: "Thu", value: btcPrice * 0.99 || 27000 },
+          { name: "Fri", value: btcPrice * 1.00 || 27100 },
+          { name: "Sat", value: btcPrice || 27000 },
+        ])
+      }
+    }
+    
+    fetchData()
+  }, [])
+
+  // Get balances for swap section
+  const btcBalance = balances.find(b => b.symbol === 'BTC')
+  const ethBalance = balances.find(b => b.symbol === 'ETH')
+  const getBalance = (symbol: string) => balances.find(b => b.symbol === symbol)
 
   const handleLogout = () => {
     // Clear all authentication tokens
@@ -392,7 +451,9 @@ const DashboardPage: NextPage = () => {
                         </button>
                       ))}
                     </div>
-                    <span className="text-xs text-gray-400">1 BTC = $22,741.01</span>
+                    <span className="text-xs text-gray-400">
+                      1 BTC = ${btcPrice > 0 ? btcPrice.toLocaleString('en-US', { minimumFractionDigits: 2 }) : '---'}
+                    </span>
                   </div>
 
                   {/* Swap Form */}
@@ -400,7 +461,16 @@ const DashboardPage: NextPage = () => {
                     <div className="bg-[#0F172A] p-4 rounded-lg flex justify-between items-center">
                       <div>
                         <p className="text-gray-400 text-sm">From</p>
-                        <p className="text-white text-2xl font-bold">0.5433</p>
+                        <input
+                          type="number"
+                          value={swapFromAmount}
+                          onChange={(e) => setSwapFromAmount(e.target.value)}
+                          placeholder={btcBalance?.amount?.toFixed(4) || "0.00"}
+                          className="text-white text-2xl font-bold bg-transparent border-none outline-none w-32"
+                        />
+                        {btcBalance && (
+                          <p className="text-gray-500 text-xs">Balance: {btcBalance.amountFormatted}</p>
+                        )}
                       </div>
                       <div className="flex items-center gap-2 bg-[#1E293B] p-2 rounded-lg">
                         <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center font-bold text-white text-xs">
@@ -419,7 +489,16 @@ const DashboardPage: NextPage = () => {
                     <div className="bg-[#0F172A] p-4 rounded-lg flex justify-between items-center">
                       <div>
                         <p className="text-gray-400 text-sm">To</p>
-                        <p className="text-white text-2xl font-bold">0.5433</p>
+                        <input
+                          type="number"
+                          value={swapToAmount}
+                          onChange={(e) => setSwapToAmount(e.target.value)}
+                          placeholder={ethBalance?.amount?.toFixed(4) || "0.00"}
+                          className="text-white text-2xl font-bold bg-transparent border-none outline-none w-32"
+                        />
+                        {ethBalance && (
+                          <p className="text-gray-500 text-xs">Balance: {ethBalance.amountFormatted}</p>
+                        )}
                       </div>
                       <div className="flex items-center gap-2 bg-[#1E293B] p-2 rounded-lg">
                         <div className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center font-bold text-white text-xs">
@@ -440,38 +519,44 @@ const DashboardPage: NextPage = () => {
                 <div className="p-6">
                   <h3 className="text-xl text-white font-bold mb-6">Recent transactions</h3>
                   <div className="space-y-4">
-                    {/* Transaction Item */}
-                    <div className="flex items-center justify-between p-3 hover:bg-slate-700/20 rounded-xl transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center">
-                          <ArrowDownLeft className="w-4 h-4 text-green-400" />
-                        </div>
-                        <div>
-                          <p className="font-semibold text-white text-sm">BTC</p>
-                          <p className="text-xs text-gray-400">September 1, 2025 | 9:12AM</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold text-white text-sm">0.003644BTC</p>
-                        <span className="text-xs text-green-400 bg-green-500/10 px-2 py-1 rounded-full">Receive</span>
-                      </div>
-                    </div>
-                    {/* Transaction Item */}
-                    <div className="flex items-center justify-between p-3 hover:bg-slate-700/20 rounded-xl transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center">
-                          <ArrowUpRight className="w-4 h-4 text-red-400" />
-                        </div>
-                        <div>
-                          <p className="font-semibold text-white text-sm">ETH</p>
-                          <p className="text-xs text-gray-400">September 1, 2025 | 9:12AM</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold text-white text-sm">0.003644ETH</p>
-                        <span className="text-xs text-red-400 bg-red-500/10 px-2 py-1 rounded-full">Send</span>
-                      </div>
-                    </div>
+                    {recentTransactions.length === 0 ? (
+                      <p className="text-gray-500 text-sm text-center py-4">No transactions yet</p>
+                    ) : (
+                      recentTransactions.slice(0, 3).map((tx) => {
+                        const isReceive = tx.type === 'receive' || tx.type === 'buy'
+                        return (
+                          <div 
+                            key={tx.id}
+                            onClick={() => {
+                              if (tx.txHash) {
+                                window.open(getExplorerUrl(tx.txHash, tx.fromCurrency), '_blank')
+                              }
+                            }}
+                            className="flex items-center justify-between p-3 hover:bg-slate-700/20 rounded-xl transition-colors cursor-pointer"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className={`w-8 h-8 rounded-full ${isReceive ? 'bg-green-500/20' : 'bg-red-500/20'} flex items-center justify-center`}>
+                                {isReceive ? (
+                                  <ArrowDownLeft className="w-4 h-4 text-green-400" />
+                                ) : (
+                                  <ArrowUpRight className="w-4 h-4 text-red-400" />
+                                )}
+                              </div>
+                              <div>
+                                <p className="font-semibold text-white text-sm">{tx.fromCurrency}</p>
+                                <p className="text-xs text-gray-400">{formatTransactionDate(tx.createdAt)}</p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-semibold text-white text-sm">{formatAmount(tx.amount, tx.fromCurrency)}</p>
+                              <span className={`text-xs px-2 py-1 rounded-full ${isReceive ? 'text-green-400 bg-green-500/10' : 'text-red-400 bg-red-500/10'}`}>
+                                {tx.type.charAt(0).toUpperCase() + tx.type.slice(1)}
+                              </span>
+                            </div>
+                          </div>
+                        )
+                      })
+                    )}
                   </div>
                   <div className="mt-6">
                     <button
@@ -614,42 +699,24 @@ const DashboardPage: NextPage = () => {
               />
             </div>
             <div className="mt-6 space-y-4">
-              <div className="flex items-center justify-between p-3 hover:bg-slate-700/20 rounded-lg transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center font-bold text-white">
-                    B
+              {balances.length === 0 ? (
+                <p className="text-gray-500 text-sm text-center py-4">No tokens yet</p>
+              ) : (
+                balances.slice(0, 5).map((balance) => (
+                  <div key={balance.symbol} className="flex items-center justify-between p-3 hover:bg-slate-700/20 rounded-lg transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 ${balance.color} rounded-full flex items-center justify-center font-bold text-white`}>
+                        {balance.icon}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-white">{balance.symbol}</p>
+                        <p className="text-xs text-gray-400">{balance.amountFormatted}</p>
+                      </div>
+                    </div>
+                    <p className="font-semibold text-white">{balance.valueFormatted}</p>
                   </div>
-                  <div>
-                    <p className="font-semibold text-white">BTC</p>
-                    <p className="text-xs text-gray-400">0.003644BTC</p>
-                  </div>
-                </div>
-                <p className="font-semibold text-white">$680.67</p>
-              </div>
-              <div className="flex items-center justify-between p-3 hover:bg-slate-700/20 rounded-lg transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center font-bold text-white">
-                    E
-                  </div>
-                  <div>
-                    <p className="font-semibold text-white">ETH</p>
-                    <p className="text-xs text-gray-400">0.3644ETH</p>
-                  </div>
-                </div>
-                <p className="font-semibold text-white">$280.00</p>
-              </div>
-              <div className="flex items-center justify-between p-3 hover:bg-slate-700/20 rounded-lg transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center font-bold text-white">
-                    S
-                  </div>
-                  <div>
-                    <p className="font-semibold text-white">SOL</p>
-                    <p className="text-xs text-gray-400">456SOL</p>
-                  </div>
-                </div>
-                <p className="font-semibold text-white">$1,280.00</p>
-              </div>
+                ))
+              )}
             </div>
           </div>
         </aside>
@@ -810,57 +877,28 @@ const DashboardPage: NextPage = () => {
                     ASSETS
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-                    <div className="flex items-center justify-between p-4 hover:bg-slate-700/30 rounded-xl transition-all duration-200 cursor-pointer group">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center font-bold text-white text-sm shadow-lg">
-                          B
+                    {balances.length === 0 ? (
+                      <p className="text-gray-500 text-sm text-center py-4">No assets yet</p>
+                    ) : (
+                      balances.slice(0, 5).map((balance) => (
+                        <div key={balance.symbol} className="flex items-center justify-between p-4 hover:bg-slate-700/30 rounded-xl transition-all duration-200 cursor-pointer group">
+                          <div className="flex items-center gap-4">
+                            <div className={`w-10 h-10 ${balance.color} rounded-full flex items-center justify-center font-bold text-white text-sm shadow-lg`}>
+                              {balance.icon}
+                            </div>
+                            <div>
+                              <p className="font-semibold text-white text-base group-hover:text-blue-400 transition-colors">
+                                {balance.symbol}
+                              </p>
+                              <p className="text-sm text-gray-400">{balance.amountFormatted}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-semibold text-white text-base">{balance.valueFormatted}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-semibold text-white text-base group-hover:text-orange-400 transition-colors">
-                            BTC
-                          </p>
-                          <p className="text-sm text-gray-400">0.003644BTC</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold text-white text-base">$680.67</p>
-                        <p className="text-sm text-green-400">+2.4%</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between p-4 hover:bg-slate-700/30 rounded-xl transition-all duration-200 cursor-pointer group">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center font-bold text-white text-sm shadow-lg">
-                          E
-                        </div>
-                        <div>
-                          <p className="font-semibold text-white text-base group-hover:text-purple-400 transition-colors">
-                            ETH
-                          </p>
-                          <p className="text-sm text-gray-400">0.3644ETH</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold text-white text-base">$280.00</p>
-                        <p className="text-sm text-green-400">+1.8%</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between p-4 hover:bg-slate-700/30 rounded-xl transition-all duration-200 cursor-pointer group">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full flex items-center justify-center font-bold text-white text-sm shadow-lg">
-                          S
-                        </div>
-                        <div>
-                          <p className="font-semibold text-white text-base group-hover:text-teal-400 transition-colors">
-                            SOL
-                          </p>
-                          <p className="text-sm text-gray-400">456SOL</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold text-white text-base">$1,280.00</p>
-                        <p className="text-sm text-red-400">-0.5%</p>
-                      </div>
-                    </div>
+                      ))
+                    )}
                   </div>
                 </div>
               </div>

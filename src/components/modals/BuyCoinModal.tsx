@@ -4,8 +4,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select"
-import { ArrowLeft, X, CreditCard } from "lucide-react"
-import { useState } from "react"
+import { ArrowLeft, X, CreditCard, Shield, AlertCircle } from "lucide-react"
+import { useState, useEffect } from "react"
+import { useWallet } from "@/contexts/WalletContext"
+import NfcTransactionAuth from "./NfcTransactionAuth"
+import { getStoredCardId } from "@/lib/nfcApi"
 
 interface BuyCoinModalProps {
   isOpen: boolean
@@ -18,6 +21,18 @@ interface BuyCoinModalProps {
 export default function BuyCoinModal({ isOpen, onClose, onBack, selectedToken, onProceed }: BuyCoinModalProps) {
   const [amount, setAmount] = useState("")
   const [paymentMethod, setPaymentMethod] = useState("credit-debit")
+  const [showNfcAuth, setShowNfcAuth] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const { balances } = useWallet()
+  const cardId = getStoredCardId()
+
+  // Reset state when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setAmount("")
+      setError(null)
+    }
+  }, [isOpen])
 
   const getTokenIcon = (token?: string) => {
     switch (token) {
@@ -53,6 +68,37 @@ export default function BuyCoinModal({ isOpen, onClose, onBack, selectedToken, o
     }
   }
 
+  const getTokenName = (token?: string) => {
+    const names: Record<string, string> = {
+      BTC: "Bitcoin",
+      ETH: "Ethereum",
+      SOL: "Solana",
+      TON: "Toncoin",
+      USDT: "Tether USD"
+    }
+    return names[token || ''] || token
+  }
+
+  const handleProceed = () => {
+    setError(null)
+    
+    // Validate amount
+    const amountNum = parseFloat(amount)
+    if (!amount || isNaN(amountNum) || amountNum <= 0) {
+      setError("Please enter a valid amount")
+      return
+    }
+
+    // Check if NFC card is linked
+    if (!cardId) {
+      setError("No NFC card linked. Please link your card in settings.")
+      return
+    }
+
+    // Show NFC auth
+    setShowNfcAuth(true)
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="bg-[#1E293B] border-slate-700 text-white max-w-md">
@@ -68,16 +114,27 @@ export default function BuyCoinModal({ isOpen, onClose, onBack, selectedToken, o
           </Button>
         </DialogHeader>
 
-        <div className="space-y-8">
+        <div className="space-y-6">
           <div className="text-right">
-            <label className="text-sm text-gray-400 block mb-2">Amount</label>
+            <label className="text-sm text-gray-400 block mb-2">Amount (USD)</label>
             <Input
+              type="number"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={(e) => {
+                setAmount(e.target.value)
+                setError(null)
+              }}
               placeholder="0.00"
-              className="bg-transparent border-none text-right text-2xl font-bold text-white placeholder:text-gray-600 p-0 h-auto"
+              className="bg-transparent border-none text-right text-2xl font-bold text-green-400 placeholder:text-gray-600 p-0 h-auto focus-visible:ring-0"
             />
           </div>
+
+          {error && (
+            <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 rounded-lg p-3">
+              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+              <p className="text-red-400 text-sm">{error}</p>
+            </div>
+          )}
 
           <div className="space-y-4">
             <Select defaultValue={selectedToken?.toLowerCase()}>
@@ -90,9 +147,7 @@ export default function BuyCoinModal({ isOpen, onClose, onBack, selectedToken, o
                   </div>
                   <div className="text-left">
                     <p className="font-semibold text-base">{selectedToken}</p>
-                    <p className="text-sm text-gray-400">
-                      {selectedToken === "BTC" ? "Bitcoin" : selectedToken === "ETH" ? "Ethereum" : "Solana"}
-                    </p>
+                    <p className="text-sm text-gray-400">{getTokenName(selectedToken)}</p>
                   </div>
                 </div>
               </SelectTrigger>
@@ -121,14 +176,6 @@ export default function BuyCoinModal({ isOpen, onClose, onBack, selectedToken, o
                     <span>Solana</span>
                   </div>
                 </SelectItem>
-                <SelectItem value="ton">
-                  <div className="flex items-center gap-3">
-                    <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center font-bold text-white text-sm">
-                      💎
-                    </div>
-                    <span>Toncoin</span>
-                  </div>
-                </SelectItem>
                 <SelectItem value="usdt">
                   <div className="flex items-center gap-3">
                     <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center font-bold text-white text-sm">
@@ -146,7 +193,10 @@ export default function BuyCoinModal({ isOpen, onClose, onBack, selectedToken, o
                   <CreditCard className="w-6 h-6 text-yellow-500" />
                   <div className="text-left">
                     <p className="font-medium text-base">Pay with</p>
-                    <p className="text-sm text-gray-400">Credit card / Debit card</p>
+                    <p className="text-sm text-gray-400">
+                      {paymentMethod === "credit-debit" ? "Credit card / Debit card" : 
+                       paymentMethod === "bank-transfer" ? "Bank Transfer" : "PayPal"}
+                    </p>
                   </div>
                 </div>
               </SelectTrigger>
@@ -159,13 +209,45 @@ export default function BuyCoinModal({ isOpen, onClose, onBack, selectedToken, o
           </div>
 
           <Button
-            onClick={onProceed}
+            onClick={handleProceed}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 rounded-xl text-base"
           >
-            Proceed
+            <Shield className="mr-2 h-4 w-4" />
+            Proceed (NFC Required)
           </Button>
+
+          {!cardId && (
+            <p className="text-yellow-400 text-xs text-center">
+              ⚠️ No NFC card linked. Link your card to enable purchases.
+            </p>
+          )}
         </div>
       </DialogContent>
+
+      {/* NFC Authorization Modal */}
+      {cardId && (
+        <NfcTransactionAuth
+          isOpen={showNfcAuth}
+          onClose={() => setShowNfcAuth(false)}
+          cardId={cardId}
+          actionType="buy"
+          actionData={{
+            amount: parseFloat(amount) || 0,
+            token: selectedToken || 'ETH',
+            paymentMethod
+          }}
+          onAuthorized={(actionPayload) => {
+            console.log('Buy authorized:', actionPayload)
+            setShowNfcAuth(false)
+            onProceed()
+          }}
+          onError={(error) => {
+            console.error('NFC authorization error:', error)
+            setError(error)
+            setShowNfcAuth(false)
+          }}
+        />
+      )}
     </Dialog>
   )
 }
