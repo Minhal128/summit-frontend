@@ -10,8 +10,11 @@ import { Elements, CardElement, useStripe, useElements } from "@stripe/react-str
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://king-prawn-app-nv72k.ondigitalocean.app'
 
+// Stripe publishable key (safe for client-side)
+const STRIPE_PUBLISHABLE_KEY = 'pk_test_51QhxcRAtSFeuCmPAJW6zwkpg6sFPGFpU4i5W1RAijd7bUcKYoWAalsIx3xNn4WToyDxEYKmHNzSOsHb14PXH8k1U002Cj7ZQg3'
+
 // Load Stripe outside of component to avoid recreating on each render
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '')
+const stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY)
 
 interface DepositModalProps {
   isOpen: boolean
