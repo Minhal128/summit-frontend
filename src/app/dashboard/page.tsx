@@ -56,6 +56,7 @@ import NfcShopPage from "@/components/NfcShopPage"
 import PartnersMapPage from "@/components/PartnersMapPage"
 import type { Token, TooltipProps, Network } from "@/types"
 import { useTranslation } from "@/contexts/I18nContext"
+import { useWallet } from "@/contexts/WalletContext"
 
 // Data for the chart
 const chartData = [
@@ -87,6 +88,7 @@ const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
 const DashboardPage: NextPage = () => {
   const router = useRouter()
   const { t } = useTranslation()
+  const { totalValueFormatted, loading: walletLoading } = useWallet()
   const [activeTab, setActiveTab] = useState("Swap")
   const [activePage, setActivePage] = useState("Dashboard")
   const [isTransactionsModalOpen, setIsTransactionsModalOpen] = useState(false)
@@ -301,7 +303,11 @@ const DashboardPage: NextPage = () => {
                     <div>
                       <h3 className="text-gray-400 text-base mb-2">Portfolio</h3>
                       <p className="text-3xl sm:text-4xl text-white font-bold flex flex-wrap items-center gap-2">
-                        $40,974.35
+                        {walletLoading ? (
+                          <span className="animate-pulse bg-slate-600 rounded w-40 h-10 inline-block"></span>
+                        ) : (
+                          totalValueFormatted || '$0.00'
+                        )}
                         <span className="text-sm text-green-500 bg-green-500/10 px-3 py-1 rounded-full">↑ 3.56%</span>
                       </p>
                     </div>
