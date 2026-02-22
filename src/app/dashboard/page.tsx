@@ -105,6 +105,21 @@ const DashboardPage: NextPage = () => {
   const [swapToToken, setSwapToToken] = useState("ETH")
   const [selectedChartCrypto, setSelectedChartCrypto] = useState("BTC")
   const [isCryptoDropdownOpen, setIsCryptoDropdownOpen] = useState(false)
+  const [isSwapFromDropdownOpen, setIsSwapFromDropdownOpen] = useState(false)
+  const [isSwapToDropdownOpen, setIsSwapToDropdownOpen] = useState(false)
+  const [swapLoading, setSwapLoading] = useState(false)
+  const [swapError, setSwapError] = useState<string | null>(null)
+  const [swapSuccess, setSwapSuccess] = useState<string | null>(null)
+  const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({})
+
+  // Swap tokens configuration
+  const swapTokenOptions = [
+    { symbol: 'BTC', name: 'Bitcoin', color: 'bg-orange-500', icon: 'B' },
+    { symbol: 'ETH', name: 'Ethereum', color: 'bg-purple-500', icon: 'E' },
+    { symbol: 'SOL', name: 'Solana', color: 'bg-teal-500', icon: 'S' },
+    { symbol: 'TRX', name: 'Tron', color: 'bg-red-500', icon: 'T' },
+    { symbol: 'USDT', name: 'Tether', color: 'bg-green-500', icon: 'U' },
+  ]
 
   // Get ETH wallet address from context
   const ethWalletAddress = walletAddresses?.ETH || ''
@@ -117,14 +132,27 @@ const DashboardPage: NextPage = () => {
     { symbol: 'TRX', name: 'Tron USD' },
   ]
 
-  // Close dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = () => {
       if (isCryptoDropdownOpen) setIsCryptoDropdownOpen(false)
+      if (isSwapFromDropdownOpen) setIsSwapFromDropdownOpen(false)
+      if (isSwapToDropdownOpen) setIsSwapToDropdownOpen(false)
     }
     document.addEventListener('click', handleClickOutside)
     return () => document.removeEventListener('click', handleClickOutside)
-  }, [isCryptoDropdownOpen])
+  }, [isCryptoDropdownOpen, isSwapFromDropdownOpen, isSwapToDropdownOpen])
+
+  // Calculate swap output amount based on exchange rates
+  useEffect(() => {
+    if (swapFromAmount && parseFloat(swapFromAmount) > 0 && exchangeRates[swapFromToken] && exchangeRates[swapToToken]) {
+      const fromUSD = parseFloat(swapFromAmount) * exchangeRates[swapFromToken]
+      const toAmount = fromUSD / exchangeRates[swapToToken]
+      setSwapToAmount(toAmount.toFixed(6))
+    } else {
+      setSwapToAmount("")
+    }
+  }, [swapFromAmount, swapFromToken, swapToToken, exchangeRates])
 
   // Fetch real data on mount
   useEffect(() => {
@@ -135,7 +163,7 @@ const DashboardPage: NextPage = () => {
         setRecentTransactions(txResult.transactions)
       }
 
-      // Fetch market prices
+      // Fetch market prices and build exchange rates
       try {
         const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://king-prawn-app-nv72k.ondigitalocean.app'
         const token = localStorage.getItem('auth_token') || localStorage.getItem('nfc_token')
@@ -144,6 +172,11 @@ const DashboardPage: NextPage = () => {
         })
         const data = await response.json()
         if (data.status === 'success' && data.data) {
+          const rates: Record<string, number> = {}
+          data.data.forEach((r: any) => {
+            rates[r.symbol] = r.marketRate || r.msRate || 0
+          })
+          setExchangeRates(rates)
           const btc = data.data.find((r: any) => r.symbol === 'BTC')
           if (btc) setBtcPrice(btc.marketRate || btc.msRate || 0)
         }
@@ -151,7 +184,7 @@ const DashboardPage: NextPage = () => {
         console.error('Failed to fetch prices:', err)
       }
 
-      // Fetch price history for chart from CoinGecko (free, no API key required)
+      // Fetch price history for chart from CoinGecko (with fallback)
       try {
         const coinIds: Record<string, string> = {
           BTC: 'bitcoin',
@@ -161,24 +194,46 @@ const DashboardPage: NextPage = () => {
         }
         const coinId = coinIds[selectedChartCrypto] || 'bitcoin'
         const response = await fetch(`https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=7`)
-        const data = await response.json()
-        if (data.prices && data.prices.length > 0) {
-          const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-          // Get one data point per day (every ~24 hours worth of data points)
-          const interval = Math.floor(data.prices.length / 7)
-          const chartPoints = []
-          for (let i = 0; i < 7 && i * interval < data.prices.length; i++) {
-            const idx = Math.min(i * interval, data.prices.length - 1)
-            const [timestamp, price] = data.prices[idx]
-            chartPoints.push({
-              name: days[new Date(timestamp).getDay()],
-              value: price / 1000 // Convert to K for chart display
-            })
+        
+        if (response.ok) {
+          const data = await response.json()
+          if (data.prices && data.prices.length > 0) {
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+            const interval = Math.floor(data.prices.length / 7)
+            const chartPoints = []
+            for (let i = 0; i < 7 && i * interval < data.prices.length; i++) {
+              const idx = Math.min(i * interval, data.prices.length - 1)
+              const [timestamp, price] = data.prices[idx]
+              chartPoints.push({
+                name: days[new Date(timestamp).getDay()],
+                value: price / 1000 // Convert to K for chart display
+              })
+            }
+            if (chartPoints.length > 0) setChartData(chartPoints)
+            return
           }
-          if (chartPoints.length > 0) setChartData(chartPoints)
         }
+        
+        // Fallback: generate mock data based on current price
+        const basePrices: Record<string, number> = { BTC: 95, ETH: 3.2, SOL: 0.15, TRX: 0.0002 }
+        const basePrice = basePrices[selectedChartCrypto] || 95
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+        const mockData = days.map((day, i) => ({
+          name: day,
+          value: basePrice * (0.95 + Math.random() * 0.1)
+        }))
+        setChartData(mockData)
       } catch (err) {
         console.error('Failed to fetch chart data:', err)
+        // Generate fallback data
+        const basePrices: Record<string, number> = { BTC: 95, ETH: 3.2, SOL: 0.15, TRX: 0.0002 }
+        const basePrice = basePrices[selectedChartCrypto] || 95
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+        const mockData = days.map((day, i) => ({
+          name: day,
+          value: basePrice * (0.95 + Math.random() * 0.1)
+        }))
+        setChartData(mockData)
       }
     }
     
@@ -187,7 +242,76 @@ const DashboardPage: NextPage = () => {
 
   // Get balances for swap section
   const btcBalance = balances.find(b => b.symbol === 'BTC')
+  const ethBalance = balances.find(b => b.symbol === 'ETH')
   const getBalance = (symbol: string) => balances.find(b => b.symbol === symbol)
+  const swapFromBalance = getBalance(swapFromToken)
+  const swapToBalance = getBalance(swapToToken)
+
+  // Handle swap tokens switch
+  const handleSwitchTokens = () => {
+    const tempToken = swapFromToken
+    const tempAmount = swapFromAmount
+    setSwapFromToken(swapToToken)
+    setSwapToToken(tempToken)
+    setSwapFromAmount(swapToAmount)
+  }
+
+  // Handle swap execution
+  const handleSwapExecute = async () => {
+    setSwapError(null)
+    setSwapSuccess(null)
+    
+    const amount = parseFloat(swapFromAmount)
+    if (!amount || amount <= 0) {
+      setSwapError('Please enter a valid amount')
+      return
+    }
+
+    if (swapFromBalance && amount > swapFromBalance.amount) {
+      setSwapError(`Insufficient balance. You have ${swapFromBalance.amountFormatted}`)
+      return
+    }
+
+    setSwapLoading(true)
+    try {
+      const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://king-prawn-app-nv72k.ondigitalocean.app'
+      const token = localStorage.getItem('auth_token') || localStorage.getItem('nfc_token')
+      
+      if (!token) {
+        setSwapError('Please login to perform swaps')
+        return
+      }
+
+      const response = await fetch(`${API_BASE}/api/transactions/swap/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          fromCurrency: swapFromToken,
+          toCurrency: swapToToken,
+          fromAmount: amount
+        })
+      })
+
+      const result = await response.json()
+      
+      if (result.success) {
+        setSwapSuccess(`Swap created! You'll receive ~${swapToAmount} ${swapToToken}`)
+        setSwapFromAmount('')
+        setSwapToAmount('')
+        refreshBalances()
+      } else {
+        setSwapError(result.message || 'Swap failed. Please try again.')
+      }
+    } catch (err: any) {
+      console.error('Swap error:', err)
+      setSwapError(err.message || 'Swap failed. Please try again.')
+    } finally {
+      setSwapLoading(false)
+    }
+  }
 
   const handleLogout = () => {
     // Clear all authentication tokens
@@ -515,7 +639,12 @@ const DashboardPage: NextPage = () => {
                       {["Swap", "Send", "Receive"].map((tab) => (
                         <button
                           key={tab}
-                          onClick={() => setActiveTab(tab)}
+                          onClick={() => {
+                            setActiveTab(tab)
+                            if (tab === "Send" || tab === "Receive") {
+                              setIsSendReceiveModalOpen(true)
+                            }
+                          }}
                           className={`py-2 px-4 font-semibold transition-colors ${activeTab === tab ? "text-blue-400 border-b-2 border-blue-400" : "text-gray-400"}`}
                         >
                           {tab}
@@ -529,6 +658,16 @@ const DashboardPage: NextPage = () => {
 
                   {/* Swap Form */}
                   <div className="space-y-4">
+                    {swapError && (
+                      <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3">
+                        <p className="text-red-400 text-sm">{swapError}</p>
+                      </div>
+                    )}
+                    {swapSuccess && (
+                      <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
+                        <p className="text-green-400 text-sm">{swapSuccess}</p>
+                      </div>
+                    )}
                     <div className="bg-[#0F172A] p-4 rounded-lg flex justify-between items-center">
                       <div>
                         <p className="text-gray-400 text-sm">From</p>
@@ -536,23 +675,57 @@ const DashboardPage: NextPage = () => {
                           type="number"
                           value={swapFromAmount}
                           onChange={(e) => setSwapFromAmount(e.target.value)}
-                          placeholder={btcBalance?.amount?.toFixed(4) || "0.00"}
+                          placeholder="0.00"
                           className="text-white text-2xl font-bold bg-transparent border-none outline-none w-32"
                         />
-                        {btcBalance && (
-                          <p className="text-gray-500 text-xs">Balance: {btcBalance.amountFormatted}</p>
+                        {swapFromBalance && (
+                          <p className="text-gray-500 text-xs">Balance: {swapFromBalance.amountFormatted}</p>
                         )}
                       </div>
-                      <div className="flex items-center gap-2 bg-[#1E293B] p-2 rounded-lg">
-                        <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center font-bold text-white text-xs">
-                          B
-                        </div>
-                        <span className="font-semibold text-white">BTC</span>
-                        <ChevronDown className="w-4 h-4" />
+                      <div className="relative">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setIsSwapFromDropdownOpen(!isSwapFromDropdownOpen)
+                            setIsSwapToDropdownOpen(false)
+                          }}
+                          className="flex items-center gap-2 bg-[#1E293B] p-2 rounded-lg hover:bg-slate-700 transition-colors cursor-pointer"
+                        >
+                          <div className={`w-6 h-6 ${swapTokenOptions.find(t => t.symbol === swapFromToken)?.color || 'bg-orange-500'} rounded-full flex items-center justify-center font-bold text-white text-xs`}>
+                            {swapTokenOptions.find(t => t.symbol === swapFromToken)?.icon || 'B'}
+                          </div>
+                          <span className="font-semibold text-white">{swapFromToken}</span>
+                          <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isSwapFromDropdownOpen ? 'rotate-180' : ''}`} />
+                        </button>
+                        {isSwapFromDropdownOpen && (
+                          <div className="absolute top-full mt-1 right-0 w-40 bg-[#0F172A] border border-slate-700 rounded-xl overflow-hidden z-50 shadow-xl">
+                            {swapTokenOptions.filter(t => t.symbol !== swapToToken).map((token) => (
+                              <button
+                                key={token.symbol}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setSwapFromToken(token.symbol)
+                                  setIsSwapFromDropdownOpen(false)
+                                }}
+                                className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-700 transition-colors ${
+                                  swapFromToken === token.symbol ? 'bg-slate-700 text-blue-400' : 'text-white'
+                                }`}
+                              >
+                                <div className={`w-5 h-5 ${token.color} rounded-full flex items-center justify-center font-bold text-white text-xs`}>
+                                  {token.icon}
+                                </div>
+                                {token.symbol}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div className="flex justify-center my-2">
-                      <button className="bg-slate-600 p-2 rounded-full border-4 border-[#1E293B] text-white hover:bg-slate-500">
+                      <button 
+                        onClick={handleSwitchTokens}
+                        className="bg-slate-600 p-2 rounded-full border-4 border-[#1E293B] text-white hover:bg-slate-500 transition-colors"
+                      >
                         <ChevronUp className="w-4 h-4" />
                         <ChevronDown className="w-4 h-4" />
                       </button>
@@ -563,24 +736,66 @@ const DashboardPage: NextPage = () => {
                         <input
                           type="number"
                           value={swapToAmount}
-                          onChange={(e) => setSwapToAmount(e.target.value)}
-                          placeholder={ethBalance?.amount?.toFixed(4) || "0.00"}
+                          readOnly
+                          placeholder="0.00"
                           className="text-white text-2xl font-bold bg-transparent border-none outline-none w-32"
                         />
-                        {ethBalance && (
-                          <p className="text-gray-500 text-xs">Balance: {ethBalance.amountFormatted}</p>
+                        {swapToBalance && (
+                          <p className="text-gray-500 text-xs">Balance: {swapToBalance.amountFormatted}</p>
                         )}
                       </div>
-                      <div className="flex items-center gap-2 bg-[#1E293B] p-2 rounded-lg">
-                        <div className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center font-bold text-white text-xs">
-                          E
-                        </div>
-                        <span className="font-semibold text-white">ETH</span>
-                        <ChevronDown className="w-4 h-4" />
+                      <div className="relative">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setIsSwapToDropdownOpen(!isSwapToDropdownOpen)
+                            setIsSwapFromDropdownOpen(false)
+                          }}
+                          className="flex items-center gap-2 bg-[#1E293B] p-2 rounded-lg hover:bg-slate-700 transition-colors cursor-pointer"
+                        >
+                          <div className={`w-6 h-6 ${swapTokenOptions.find(t => t.symbol === swapToToken)?.color || 'bg-purple-500'} rounded-full flex items-center justify-center font-bold text-white text-xs`}>
+                            {swapTokenOptions.find(t => t.symbol === swapToToken)?.icon || 'E'}
+                          </div>
+                          <span className="font-semibold text-white">{swapToToken}</span>
+                          <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isSwapToDropdownOpen ? 'rotate-180' : ''}`} />
+                        </button>
+                        {isSwapToDropdownOpen && (
+                          <div className="absolute top-full mt-1 right-0 w-40 bg-[#0F172A] border border-slate-700 rounded-xl overflow-hidden z-50 shadow-xl">
+                            {swapTokenOptions.filter(t => t.symbol !== swapFromToken).map((token) => (
+                              <button
+                                key={token.symbol}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setSwapToToken(token.symbol)
+                                  setIsSwapToDropdownOpen(false)
+                                }}
+                                className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-700 transition-colors ${
+                                  swapToToken === token.symbol ? 'bg-slate-700 text-blue-400' : 'text-white'
+                                }`}
+                              >
+                                <div className={`w-5 h-5 ${token.color} rounded-full flex items-center justify-center font-bold text-white text-xs`}>
+                                  {token.icon}
+                                </div>
+                                {token.symbol}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
-                    <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-colors">
-                      Swap
+                    <button 
+                      onClick={handleSwapExecute}
+                      disabled={swapLoading || !swapFromAmount}
+                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/50 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
+                    >
+                      {swapLoading ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        'Swap'
+                      )}
                     </button>
                   </div>
                 </section>

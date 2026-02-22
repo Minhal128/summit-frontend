@@ -255,4 +255,3 @@ export default function SendCoinModal({ isOpen, onClose, onBack, selectedToken, 
     </Dialog>
   )
 }
-}
