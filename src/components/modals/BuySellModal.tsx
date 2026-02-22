@@ -37,6 +37,7 @@ const tokenIcons: Record<string, string> = {
 export default function BuySellModal({ isOpen, onClose, onBuyTokenSelect, onSellTokenSelect }: BuySellModalProps) {
   const [activeTab, setActiveTab] = useState<"Buy" | "Sell">("Buy")
   const [searchQuery, setSearchQuery] = useState("")
+  const [sellError, setSellError] = useState<string | null>(null)
   const { balances, loading } = useWallet()
 
   // Convert wallet balances to token format
@@ -103,6 +104,12 @@ export default function BuySellModal({ isOpen, onClose, onBuyTokenSelect, onSell
             />
           </div>
 
+          {sellError && (
+            <div className="mb-3 p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-400 text-sm">
+              {sellError}
+            </div>
+          )}
+
           <div className="space-y-2 max-h-80 overflow-y-auto">
             {loading ? (
               <div className="flex items-center justify-center py-8">
@@ -114,8 +121,27 @@ export default function BuySellModal({ isOpen, onClose, onBuyTokenSelect, onSell
               filteredTokens.map((token) => (
                 <div
                   key={token.symbol}
-                  className="flex items-center justify-between p-3 hover:bg-slate-700/20 rounded-xl transition-colors cursor-pointer"
-                  onClick={() => (activeTab === "Buy" ? onBuyTokenSelect(token) : onSellTokenSelect(token))}
+                  className={`flex items-center justify-between p-3 hover:bg-slate-700/20 rounded-xl transition-colors ${
+                    activeTab === "Sell" && parseFloat(token.balance || '0') === 0 
+                      ? 'opacity-50 cursor-not-allowed' 
+                      : 'cursor-pointer'
+                  }`}
+                  onClick={() => {
+                    if (activeTab === "Buy") {
+                      setSellError(null)
+                      onBuyTokenSelect(token)
+                    } else {
+                      // Check if user has balance to sell
+                      const balanceStr = token.balance?.split(' ')[0] || '0'
+                      const balance = parseFloat(balanceStr)
+                      if (balance <= 0) {
+                        setSellError(`You don't have any ${token.symbol} to sell`)
+                        return
+                      }
+                      setSellError(null)
+                      onSellTokenSelect(token)
+                    }
+                  }}
                 >
                   <div className="flex items-center gap-3">
                     <div

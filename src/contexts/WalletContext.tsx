@@ -85,8 +85,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const fetchWalletAddresses = async (token: string) => {
     try {
       const cardId = localStorage.getItem('nfc_card_id')
-      if (!cardId) return
+      if (!cardId) {
+        console.log('No nfc_card_id found in localStorage')
+        return
+      }
 
+      console.log('Fetching wallet addresses for cardId:', cardId)
       const response = await fetch(`${API_BASE}/api/nfc/transactions/receive/all`, {
         method: 'POST',
         headers: {
@@ -97,13 +101,19 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       })
 
       const result = await response.json()
-      if (result.status === 'success' && result.wallets) {
+      console.log('Wallet addresses response:', result)
+      
+      // Handle both response formats: {success: true} or {status: 'success'}
+      if ((result.success || result.status === 'success') && result.wallets) {
         const addresses: WalletAddresses = {}
         result.wallets.forEach((w: any) => {
           if (w.cryptocurrency && w.address) {
-            addresses[w.cryptocurrency] = w.address
+            // Map cryptocurrency to uppercase symbol
+            const symbol = w.cryptocurrency.toUpperCase()
+            addresses[symbol] = w.address
           }
         })
+        console.log('Parsed wallet addresses:', addresses)
         if (Object.keys(addresses).length > 0) {
           setWalletAddresses(addresses)
         }
@@ -166,14 +176,20 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         setLastUpdated(new Date())
         setError(null)
         
-        // Build wallet addresses map
+        // Build wallet addresses map from general balance endpoint
         const addresses: WalletAddresses = {}
         formattedBalances.forEach((b) => {
           if (b.addresses && b.addresses.length > 0) {
             addresses[b.symbol] = b.addresses[0]
           }
         })
-        setWalletAddresses(addresses)
+        
+        // If no addresses from balance endpoint, or if NFC card exists, fetch from NFC endpoint
+        if (Object.keys(addresses).length === 0 || localStorage.getItem('nfc_card_id')) {
+          await fetchWalletAddresses(token)
+        } else {
+          setWalletAddresses(addresses)
+        }
       } else {
         // No wallets yet or API error - try to fetch addresses from NFC endpoint
         setBalances([])

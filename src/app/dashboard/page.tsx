@@ -111,6 +111,8 @@ const DashboardPage: NextPage = () => {
   const [swapError, setSwapError] = useState<string | null>(null)
   const [swapSuccess, setSwapSuccess] = useState<string | null>(null)
   const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({})
+  const [chartPeriod, setChartPeriod] = useState("1W")
+  const [chartDays, setChartDays] = useState(7)
 
   // Swap tokens configuration
   const swapTokenOptions = [
@@ -193,19 +195,35 @@ const DashboardPage: NextPage = () => {
           TRX: 'tron'
         }
         const coinId = coinIds[selectedChartCrypto] || 'bitcoin'
-        const response = await fetch(`https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=7`)
+        const response = await fetch(`https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=${chartDays}`)
         
         if (response.ok) {
           const data = await response.json()
           if (data.prices && data.prices.length > 0) {
-            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-            const interval = Math.floor(data.prices.length / 7)
+            // Create labels based on period
+            const numPoints = Math.min(7, data.prices.length)
+            const interval = Math.floor(data.prices.length / numPoints)
             const chartPoints = []
-            for (let i = 0; i < 7 && i * interval < data.prices.length; i++) {
+            
+            for (let i = 0; i < numPoints && i * interval < data.prices.length; i++) {
               const idx = Math.min(i * interval, data.prices.length - 1)
               const [timestamp, price] = data.prices[idx]
+              const date = new Date(timestamp)
+              
+              // Format label based on period
+              let label: string
+              if (chartDays <= 1) {
+                label = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              } else if (chartDays <= 7) {
+                label = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()]
+              } else if (chartDays <= 30) {
+                label = `${date.getMonth() + 1}/${date.getDate()}`
+              } else {
+                label = date.toLocaleDateString([], { month: 'short' })
+              }
+              
               chartPoints.push({
-                name: days[new Date(timestamp).getDay()],
+                name: label,
                 value: price / 1000 // Convert to K for chart display
               })
             }
@@ -217,9 +235,13 @@ const DashboardPage: NextPage = () => {
         // Fallback: generate mock data based on current price
         const basePrices: Record<string, number> = { BTC: 95, ETH: 3.2, SOL: 0.15, TRX: 0.0002 }
         const basePrice = basePrices[selectedChartCrypto] || 95
-        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-        const mockData = days.map((day, i) => ({
-          name: day,
+        const labels = chartDays <= 1 
+          ? ['12am', '4am', '8am', '12pm', '4pm', '8pm', 'Now']
+          : chartDays <= 7 
+            ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+            : ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6', 'Week 7']
+        const mockData = labels.map((label, i) => ({
+          name: label,
           value: basePrice * (0.95 + Math.random() * 0.1)
         }))
         setChartData(mockData)
@@ -228,9 +250,13 @@ const DashboardPage: NextPage = () => {
         // Generate fallback data
         const basePrices: Record<string, number> = { BTC: 95, ETH: 3.2, SOL: 0.15, TRX: 0.0002 }
         const basePrice = basePrices[selectedChartCrypto] || 95
-        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-        const mockData = days.map((day, i) => ({
-          name: day,
+        const labels = chartDays <= 1 
+          ? ['12am', '4am', '8am', '12pm', '4pm', '8pm', 'Now']
+          : chartDays <= 7 
+            ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+            : ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6', 'Week 7']
+        const mockData = labels.map((label, i) => ({
+          name: label,
           value: basePrice * (0.95 + Math.random() * 0.1)
         }))
         setChartData(mockData)
@@ -238,7 +264,7 @@ const DashboardPage: NextPage = () => {
     }
     
     fetchData()
-  }, [selectedChartCrypto])
+  }, [selectedChartCrypto, chartDays])
 
   // Get balances for swap section
   const btcBalance = balances.find(b => b.symbol === 'BTC')
@@ -487,7 +513,7 @@ const DashboardPage: NextPage = () => {
                   <Download className="w-4 h-4" /> Buy & Sell
                 </Button>
                 <Button
-                  onClick={() => console.log('Swap clicked')}
+                  onClick={() => setActivePage("DEX")}
                   className="bg-white text-black font-semibold hover:bg-gray-200 flex items-center justify-center gap-2 px-4 lg:px-6 py-3 text-xs lg:text-sm rounded-xl shadow-lg"
                 >
                   <RefreshCw className="w-4 h-4" /> Swap
@@ -536,6 +562,15 @@ const DashboardPage: NextPage = () => {
                           </button>
                         </div>
                       )}
+                      <button
+                        onClick={() => setIsSendReceiveModalOpen(true)}
+                        className="mt-3 text-sm text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                        </svg>
+                        View Wallet Details
+                      </button>
                     </div>
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center w-full lg:w-auto gap-3">
                       <div className="relative">
@@ -578,22 +613,29 @@ const DashboardPage: NextPage = () => {
 
                   <div className="flex justify-center sm:justify-end mb-6">
                     <div className="flex bg-[#0F172A] rounded-xl border border-slate-700 p-1 gap-1">
-                      <button className="text-xs text-gray-300 hover:bg-slate-700 hover:text-white transition-colors px-3 py-2 rounded-lg">
-                        1D
-                      </button>
-                      <button className="text-xs bg-blue-600 text-white px-3 py-2 rounded-lg">1W</button>
-                      <button className="text-xs text-gray-300 hover:bg-slate-700 hover:text-white transition-colors px-3 py-2 rounded-lg">
-                        1M
-                      </button>
-                      <button className="text-xs text-gray-300 hover:bg-slate-700 hover:text-white transition-colors px-3 py-2 rounded-lg">
-                        3M
-                      </button>
-                      <button className="text-xs text-gray-300 hover:bg-slate-700 hover:text-white transition-colors px-3 py-2 rounded-lg">
-                        1Y
-                      </button>
-                      <button className="text-xs text-gray-300 hover:bg-slate-700 hover:text-white transition-colors px-3 py-2 rounded-lg">
-                        YTD
-                      </button>
+                      {[
+                        { label: '1D', days: 1 },
+                        { label: '1W', days: 7 },
+                        { label: '1M', days: 30 },
+                        { label: '3M', days: 90 },
+                        { label: '1Y', days: 365 },
+                        { label: 'YTD', days: Math.floor((new Date().getTime() - new Date(new Date().getFullYear(), 0, 1).getTime()) / (1000 * 60 * 60 * 24)) }
+                      ].map((period) => (
+                        <button
+                          key={period.label}
+                          onClick={() => {
+                            setChartPeriod(period.label)
+                            setChartDays(period.days)
+                          }}
+                          className={`text-xs px-3 py-2 rounded-lg transition-colors ${
+                            chartPeriod === period.label 
+                              ? 'bg-blue-600 text-white' 
+                              : 'text-gray-300 hover:bg-slate-700 hover:text-white'
+                          }`}
+                        >
+                          {period.label}
+                        </button>
+                      ))}
                     </div>
                   </div>
 
