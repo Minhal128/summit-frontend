@@ -77,7 +77,7 @@ const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
 const DashboardPage: NextPage = () => {
   const router = useRouter()
   const { t } = useTranslation()
-  const { totalValueFormatted, balances, loading: walletLoading, refreshBalances } = useWallet()
+  const { totalValueFormatted, balances, loading: walletLoading, refreshBalances, walletAddresses } = useWallet()
   const [activeTab, setActiveTab] = useState("Swap")
   const [activePage, setActivePage] = useState("Dashboard")
   const [isTransactionsModalOpen, setIsTransactionsModalOpen] = useState(false)
@@ -106,9 +106,8 @@ const DashboardPage: NextPage = () => {
   const [selectedChartCrypto, setSelectedChartCrypto] = useState("BTC")
   const [isCryptoDropdownOpen, setIsCryptoDropdownOpen] = useState(false)
 
-  // Get ETH wallet address
-  const ethBalance = balances.find(b => b.symbol === 'ETH')
-  const ethWalletAddress = ethBalance?.addresses?.[0] || ''
+  // Get ETH wallet address from context
+  const ethWalletAddress = walletAddresses?.ETH || ''
 
   // Crypto options for dropdown
   const cryptoOptions = [
@@ -152,36 +151,39 @@ const DashboardPage: NextPage = () => {
         console.error('Failed to fetch prices:', err)
       }
 
-      // Fetch price history for chart
+      // Fetch price history for chart from CoinGecko (free, no API key required)
       try {
-        const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://king-prawn-app-nv72k.ondigitalocean.app'
-        const response = await fetch(`${API_BASE}/api/market/history/BTC?period=7d`)
+        const coinIds: Record<string, string> = {
+          BTC: 'bitcoin',
+          ETH: 'ethereum',
+          SOL: 'solana',
+          TRX: 'tron'
+        }
+        const coinId = coinIds[selectedChartCrypto] || 'bitcoin'
+        const response = await fetch(`https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=7`)
         const data = await response.json()
-        if (data.status === 'success' && data.data) {
+        if (data.prices && data.prices.length > 0) {
           const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-          const chartPoints = data.data.slice(-7).map((point: any, i: number) => ({
-            name: days[new Date(point.timestamp || point.date).getDay()],
-            value: point.price || point.close || 0
-          }))
+          // Get one data point per day (every ~24 hours worth of data points)
+          const interval = Math.floor(data.prices.length / 7)
+          const chartPoints = []
+          for (let i = 0; i < 7 && i * interval < data.prices.length; i++) {
+            const idx = Math.min(i * interval, data.prices.length - 1)
+            const [timestamp, price] = data.prices[idx]
+            chartPoints.push({
+              name: days[new Date(timestamp).getDay()],
+              value: price / 1000 // Convert to K for chart display
+            })
+          }
           if (chartPoints.length > 0) setChartData(chartPoints)
         }
       } catch (err) {
         console.error('Failed to fetch chart data:', err)
-        // Set default chart data if API fails
-        setChartData([
-          { name: "Sun", value: btcPrice * 0.98 || 26500 },
-          { name: "Mon", value: btcPrice * 0.99 || 26800 },
-          { name: "Tue", value: btcPrice * 1.00 || 27000 },
-          { name: "Wed", value: btcPrice * 1.01 || 27200 },
-          { name: "Thu", value: btcPrice * 0.99 || 27000 },
-          { name: "Fri", value: btcPrice * 1.00 || 27100 },
-          { name: "Sat", value: btcPrice || 27000 },
-        ])
       }
     }
     
     fetchData()
-  }, [])
+  }, [selectedChartCrypto])
 
   // Get balances for swap section
   const btcBalance = balances.find(b => b.symbol === 'BTC')

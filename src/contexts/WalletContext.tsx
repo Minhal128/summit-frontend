@@ -16,6 +16,14 @@ interface WalletBalance {
   color: string
 }
 
+interface WalletAddresses {
+  ETH?: string
+  BTC?: string
+  SOL?: string
+  TRX?: string
+  [key: string]: string | undefined
+}
+
 interface WalletContextType {
   balances: WalletBalance[]
   totalValueUSD: number
@@ -25,6 +33,7 @@ interface WalletContextType {
   lastUpdated: Date | null
   refreshBalances: () => Promise<void>
   isAuthenticated: boolean
+  walletAddresses: WalletAddresses
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined)
@@ -70,6 +79,39 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [walletAddresses, setWalletAddresses] = useState<WalletAddresses>({})
+
+  // Helper to fetch wallet addresses from NFC endpoint
+  const fetchWalletAddresses = async (token: string) => {
+    try {
+      const cardId = localStorage.getItem('nfc_card_id')
+      if (!cardId) return
+
+      const response = await fetch(`${API_BASE}/api/nfc/transactions/receive/all`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ cardUid: cardId })
+      })
+
+      const result = await response.json()
+      if (result.status === 'success' && result.wallets) {
+        const addresses: WalletAddresses = {}
+        result.wallets.forEach((w: any) => {
+          if (w.cryptocurrency && w.address) {
+            addresses[w.cryptocurrency] = w.address
+          }
+        })
+        if (Object.keys(addresses).length > 0) {
+          setWalletAddresses(addresses)
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch wallet addresses:', err)
+    }
+  }
 
   const refreshBalances = useCallback(async () => {
     try {
@@ -123,10 +165,20 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         setTotalValueUSD(result.totalValueUSD || 0)
         setLastUpdated(new Date())
         setError(null)
+        
+        // Build wallet addresses map
+        const addresses: WalletAddresses = {}
+        formattedBalances.forEach((b) => {
+          if (b.addresses && b.addresses.length > 0) {
+            addresses[b.symbol] = b.addresses[0]
+          }
+        })
+        setWalletAddresses(addresses)
       } else {
-        // No wallets yet or API error
+        // No wallets yet or API error - try to fetch addresses from NFC endpoint
         setBalances([])
         setTotalValueUSD(0)
+        await fetchWalletAddresses(token)
       }
     } catch (err: any) {
       console.error('Wallet fetch error:', err)
@@ -171,6 +223,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         lastUpdated,
         refreshBalances,
         isAuthenticated,
+        walletAddresses,
       }}
     >
       {children}
