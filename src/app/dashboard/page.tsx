@@ -103,6 +103,29 @@ const DashboardPage: NextPage = () => {
   const [swapToAmount, setSwapToAmount] = useState("")
   const [swapFromToken, setSwapFromToken] = useState("BTC")
   const [swapToToken, setSwapToToken] = useState("ETH")
+  const [selectedChartCrypto, setSelectedChartCrypto] = useState("BTC")
+  const [isCryptoDropdownOpen, setIsCryptoDropdownOpen] = useState(false)
+
+  // Get ETH wallet address
+  const ethBalance = balances.find(b => b.symbol === 'ETH')
+  const ethWalletAddress = ethBalance?.addresses?.[0] || ''
+
+  // Crypto options for dropdown
+  const cryptoOptions = [
+    { symbol: 'BTC', name: 'Bitcoin USD' },
+    { symbol: 'ETH', name: 'Ethereum USD' },
+    { symbol: 'SOL', name: 'Solana USD' },
+    { symbol: 'TRX', name: 'Tron USD' },
+  ]
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      if (isCryptoDropdownOpen) setIsCryptoDropdownOpen(false)
+    }
+    document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
+  }, [isCryptoDropdownOpen])
 
   // Fetch real data on mount
   useEffect(() => {
@@ -162,7 +185,6 @@ const DashboardPage: NextPage = () => {
 
   // Get balances for swap section
   const btcBalance = balances.find(b => b.symbol === 'BTC')
-  const ethBalance = balances.find(b => b.symbol === 'ETH')
   const getBalance = (symbol: string) => balances.find(b => b.symbol === symbol)
 
   const handleLogout = () => {
@@ -369,11 +391,58 @@ const DashboardPage: NextPage = () => {
                         )}
                         <span className="text-sm text-green-500 bg-green-500/10 px-3 py-1 rounded-full">↑ 3.56%</span>
                       </p>
+                      {ethWalletAddress && (
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="text-xs text-gray-400">ETH Wallet:</span>
+                          <code className="text-xs text-blue-400 bg-slate-800 px-2 py-1 rounded font-mono">
+                            {ethWalletAddress.slice(0, 10)}...{ethWalletAddress.slice(-8)}
+                          </code>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(ethWalletAddress)
+                            }}
+                            className="text-gray-400 hover:text-white transition-colors"
+                            title="Copy address"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          </button>
+                        </div>
+                      )}
                     </div>
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center w-full lg:w-auto gap-3">
-                      <div className="flex items-center bg-[#0F172A] border border-slate-700 rounded-xl px-4 py-3 gap-2 min-w-[140px]">
-                        <span className="font-semibold text-sm text-white whitespace-nowrap">Bitcoin USD</span>
-                        <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                      <div className="relative">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setIsCryptoDropdownOpen(!isCryptoDropdownOpen)
+                          }}
+                          className="flex items-center bg-[#0F172A] border border-slate-700 rounded-xl px-4 py-3 gap-2 min-w-[160px] hover:bg-slate-800 transition-colors"
+                        >
+                          <span className="font-semibold text-sm text-white whitespace-nowrap">
+                            {cryptoOptions.find(c => c.symbol === selectedChartCrypto)?.name || 'Bitcoin USD'}
+                          </span>
+                          <ChevronDown className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform ${isCryptoDropdownOpen ? 'rotate-180' : ''}`} />
+                        </button>
+                        {isCryptoDropdownOpen && (
+                          <div className="absolute top-full mt-1 left-0 w-full bg-[#0F172A] border border-slate-700 rounded-xl overflow-hidden z-50 shadow-xl">
+                            {cryptoOptions.map((crypto) => (
+                              <button
+                                key={crypto.symbol}
+                                onClick={() => {
+                                  setSelectedChartCrypto(crypto.symbol)
+                                  setIsCryptoDropdownOpen(false)
+                                }}
+                                className={`w-full text-left px-4 py-3 text-sm hover:bg-slate-700 transition-colors ${
+                                  selectedChartCrypto === crypto.symbol ? 'bg-slate-700 text-blue-400' : 'text-white'
+                                }`}
+                              >
+                                {crypto.name}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
                       <button className="hover:bg-slate-700 transition-colors border border-slate-700 rounded-xl p-3 flex items-center justify-center">
                         <Settings2 className="w-5 h-5 text-gray-400" />
