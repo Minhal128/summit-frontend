@@ -1,11 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, X, Copy, Check } from "lucide-react"
+import { ArrowLeft, X, Copy, Check, Loader2, CreditCard } from "lucide-react"
 import { QRCodeSVG } from "qrcode.react"
 import { useWallet } from "@/contexts/WalletContext"
+
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://king-prawn-app-nv72k.ondigitalocean.app'
 
 interface ReceiveModalProps {
   isOpen: boolean
@@ -23,11 +25,24 @@ const networkInfo: Record<string, { name: string; testnet: string }> = {
 }
 
 export default function ReceiveModal({ isOpen, onClose, onBack, selectedToken }: ReceiveModalProps) {
-  const { walletAddresses } = useWallet()
+  const { walletAddresses, refreshBalances } = useWallet()
   const [copied, setCopied] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [fetchedAddress, setFetchedAddress] = useState<string | null>(null)
+
+  // Reset state when modal opens/closes or token changes
+  useEffect(() => {
+    if (isOpen) {
+      setFetchedAddress(null)
+      setError(null)
+      setIsLoading(false)
+    }
+  }, [isOpen, selectedToken])
 
   // Get wallet address based on selected token
   const getWalletAddress = () => {
+    if (fetchedAddress) return fetchedAddress
     if (!selectedToken) return walletAddresses.ETH || ""
     
     const token = selectedToken.toUpperCase()
@@ -45,6 +60,58 @@ export default function ReceiveModal({ isOpen, onClose, onBack, selectedToken }:
 
   const depositAddress = getWalletAddress()
   const network = getNetwork()
+
+  // Fetch wallet address via NFC tap
+  const handleTapCard = async () => {
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const token = localStorage.getItem('nfc_token') || localStorage.getItem('auth_token')
+      const cardId = localStorage.getItem('nfc_card_id')
+
+      if (!token || !cardId) {
+        setError('Please login with your NFC card first')
+        setIsLoading(false)
+        return
+      }
+
+      // Fetch wallet addresses from NFC endpoint
+      const response = await fetch(`${API_BASE}/api/nfc/transactions/receive/all`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ cardUid: cardId })
+      })
+
+      const result = await response.json()
+
+      if ((result.success || result.status === 'success') && result.wallets) {
+        // Find the wallet for the selected token
+        const tokenLower = (selectedToken || 'eth').toLowerCase()
+        const wallet = result.wallets.find((w: any) => 
+          w.cryptocurrency?.toLowerCase() === tokenLower
+        )
+
+        if (wallet?.address) {
+          setFetchedAddress(wallet.address)
+          // Also refresh the wallet context
+          refreshBalances()
+        } else {
+          setError(`No ${selectedToken?.toUpperCase() || 'ETH'} wallet found for this card`)
+        }
+      } else {
+        setError(result.message || 'Failed to fetch wallet address')
+      }
+    } catch (err: any) {
+      console.error('Tap card error:', err)
+      setError(err.message || 'Failed to connect. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const copyAddress = async () => {
     if (depositAddress) {
@@ -107,13 +174,47 @@ export default function ReceiveModal({ isOpen, onClose, onBack, selectedToken }:
               </div>
 
               <p className="text-yellow-500 text-xs mt-4">
-                ⚠️ Only send {selectedToken?.toUpperCase() || "tokens"} on the {network.name} network to this address
+                Only send {selectedToken?.toUpperCase() || "tokens"} on the {network.name} network to this address
               </p>
             </>
           ) : (
             <div className="py-8">
-              <p className="text-gray-400">No wallet address available</p>
-              <p className="text-sm text-gray-500 mt-2">Please connect your wallet first</p>
+              <div className="w-20 h-20 bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-6">
+                <CreditCard className="w-10 h-10 text-blue-400" />
+              </div>
+              
+              <h3 className="text-lg font-semibold mb-2">Tap Your NFC Card</h3>
+              <p className="text-gray-400 text-sm mb-6">
+                Tap your card to retrieve your {selectedToken?.toUpperCase() || "crypto"} wallet address
+              </p>
+
+              {error && (
+                <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-400 text-sm">
+                  {error}
+                </div>
+              )}
+
+              <Button
+                onClick={handleTapCard}
+                disabled={isLoading}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 rounded-xl"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Fetching Address...
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="w-5 h-5 mr-2" />
+                    Tap Card to Get Address
+                  </>
+                )}
+              </Button>
+
+              <p className="text-gray-500 text-xs mt-4">
+                Your wallet address will be displayed after tapping your NFC card
+              </p>
             </div>
           )}
         </div>
