@@ -24,6 +24,8 @@ import {
 } from "@/lib/exchangeApi"
 import { useWallet } from "@/contexts/WalletContext"
 
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://king-prawn-app-nv72k.ondigitalocean.app'
+
 const PROVIDERS = [
   { id: "mercuryo", name: "Mercuryo", icon: "💳", color: "from-blue-500 to-blue-600" },
   { id: "moonpay", name: "MoonPay", icon: "🌙", color: "from-purple-500 to-purple-600" },
@@ -101,14 +103,17 @@ const FIAT_CURRENCIES = [
 ]
 
 export default function BuySellPage({ className }: { className?: string }) {
-  const { balances, isAuthenticated, loading: walletLoading } = useWallet()
+  const { balances, isAuthenticated, loading: walletLoading, usdBalance, usdBalanceFormatted, refreshBalances } = useWallet()
   const [mode, setMode] = useState<"buy" | "sell">("buy")
+  const [payWith, setPayWith] = useState<"providers" | "balance">("providers")
   const [amount, setAmount] = useState("")
   const [selectedCrypto, setSelectedCrypto] = useState(CRYPTOS[0])
   const [quotes, setQuotes] = useState<ProviderQuote[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null)
   const [orderLoading, setOrderLoading] = useState(false)
+  const [balanceOrderLoading, setBalanceOrderLoading] = useState(false)
+  const [balanceSuccess, setBalanceSuccess] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [selectedFiat, setSelectedFiat] = useState(FIAT_CURRENCIES[0])
   const [showFiatDropdown, setShowFiatDropdown] = useState(false)
@@ -121,6 +126,50 @@ export default function BuySellPage({ className }: { className?: string }) {
 
   const userBalance = getUserBalance(selectedCrypto.symbol)
   const hasInsufficientBalance = mode === "sell" && parseFloat(amount || "0") > userBalance
+  const FEE_RATE = 0.01
+  const estimatedCrypto = amount && selectedCrypto
+    ? (parseFloat(amount) * (1 - FEE_RATE)) / (quotes[0]?.exchangeRate || 1)
+    : 0
+
+  const handleBalanceTrade = async () => {
+    setError(null)
+    setBalanceSuccess(null)
+    const token = localStorage.getItem('auth_token') || localStorage.getItem('nfc_token')
+    if (!token) { setError('Please login first'); return }
+    const amountNum = parseFloat(amount)
+    if (!amountNum || amountNum <= 0) { setError('Enter a valid amount'); return }
+
+    if (mode === 'buy' && amountNum > usdBalance) {
+      setError(`Insufficient USD balance. You have ${usdBalanceFormatted}`)
+      return
+    }
+
+    setBalanceOrderLoading(true)
+    try {
+      const endpoint = mode === 'buy' ? '/api/deposit/buy' : '/api/deposit/sell'
+      const body = mode === 'buy'
+        ? { symbol: selectedCrypto.symbol, usdAmount: amountNum }
+        : { symbol: selectedCrypto.symbol, cryptoAmount: amountNum }
+
+      const res = await fetch(`${API_BASE}${endpoint}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
+      const data = await res.json()
+      if (data.status === 'success') {
+        setBalanceSuccess(data.message)
+        setAmount('')
+        refreshBalances()
+      } else {
+        setError(data.message || 'Transaction failed')
+      }
+    } catch (err: any) {
+      setError(err.message || 'Transaction failed')
+    } finally {
+      setBalanceOrderLoading(false)
+    }
+  }
 
   const fetchQuotes = async () => {
     if (!amount || parseFloat(amount) <= 0) return
@@ -217,9 +266,9 @@ export default function BuySellPage({ className }: { className?: string }) {
         <div className="lg:col-span-1">
           <div className="bg-[#1E293B] rounded-2xl p-6 border border-slate-700/50">
             {/* Buy/Sell Toggle */}
-            <div className="flex p-1 bg-slate-800 rounded-xl mb-6">
+            <div className="flex p-1 bg-slate-800 rounded-xl mb-4">
               <button
-                onClick={() => setMode("buy")}
+                onClick={() => { setMode("buy"); setError(null); setBalanceSuccess(null) }}
                 className={`flex-1 py-3 rounded-lg font-medium transition-all ${
                   mode === "buy"
                     ? "bg-green-500 text-white"
@@ -229,7 +278,7 @@ export default function BuySellPage({ className }: { className?: string }) {
                 Buy
               </button>
               <button
-                onClick={() => setMode("sell")}
+                onClick={() => { setMode("sell"); setError(null); setBalanceSuccess(null) }}
                 className={`flex-1 py-3 rounded-lg font-medium transition-all ${
                   mode === "sell"
                     ? "bg-red-500 text-white"
@@ -240,10 +289,38 @@ export default function BuySellPage({ className }: { className?: string }) {
               </button>
             </div>
 
+            {/* Pay With Toggle */}
+            <div className="flex p-1 bg-slate-800 rounded-xl mb-6">
+              <button
+                onClick={() => { setPayWith("balance"); setError(null); setBalanceSuccess(null) }}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                  payWith === "balance"
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-400 hover:text-white"
+                }`}
+              >
+                <DollarSign className="w-3.5 h-3.5" />
+                USD Balance
+              </button>
+              <button
+                onClick={() => { setPayWith("providers"); setError(null); setBalanceSuccess(null) }}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                  payWith === "providers"
+                    ? "bg-slate-600 text-white"
+                    : "text-gray-400 hover:text-white"
+                }`}
+              >
+                <Globe className="w-3.5 h-3.5" />
+                Providers
+              </button>
+            </div>
+
             {/* Amount Input */}
             <div className="mb-6">
               <label className="block text-gray-400 text-sm mb-2">
-                {mode === "buy" ? "You pay" : "You sell"}
+                {mode === "buy"
+                  ? payWith === "balance" ? "You pay (USD)" : "You pay"
+                  : payWith === "balance" ? `${selectedCrypto.symbol} amount to sell` : "You sell"}
               </label>
               <div className="relative">
                 <Input
@@ -253,6 +330,7 @@ export default function BuySellPage({ className }: { className?: string }) {
                   placeholder="0.00"
                   className="bg-slate-800 border-slate-700 text-white text-2xl font-bold h-16 pr-24"
                 />
+                {payWith === "providers" && (
                 <div className="absolute right-2 top-1/2 -translate-y-1/2">
                   <button
                     onClick={() => setShowFiatDropdown(!showFiatDropdown)}
@@ -278,6 +356,7 @@ export default function BuySellPage({ className }: { className?: string }) {
                     </div>
                   )}
                 </div>
+                )}
               </div>
             </div>
 
@@ -344,8 +423,107 @@ export default function BuySellPage({ className }: { className?: string }) {
           </div>
         </div>
 
-        {/* Right: Provider Quotes */}
+        {/* Right: Provider Quotes or Balance Panel */}
         <div className="lg:col-span-2">
+          {payWith === "balance" ? (
+            /* ── USD Balance Panel ── */
+            <div className="bg-[#1E293B] rounded-2xl p-6 border border-slate-700/50 h-full">
+              <h3 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
+                <DollarSign className="w-5 h-5 text-blue-400" />
+                {mode === "buy" ? "Buy with USD Balance" : "Sell to USD Balance"}
+              </h3>
+
+              {/* Balance display */}
+              <div className="bg-slate-800 rounded-xl p-5 mb-6">
+                <p className="text-gray-400 text-sm mb-1">Available USD Balance</p>
+                <p className="text-3xl font-bold text-green-400">{usdBalanceFormatted}</p>
+              </div>
+
+              {/* Summary */}
+              {amount && parseFloat(amount) > 0 && (
+                <div className="bg-slate-800/60 rounded-xl p-4 mb-6 space-y-2 text-sm">
+                  {mode === "buy" ? (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">You spend</span>
+                        <span className="text-white font-medium">${parseFloat(amount).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Platform fee (1%)</span>
+                        <span className="text-red-400">-${(parseFloat(amount) * 0.01).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Remaining USD</span>
+                        <span className="text-white">${Math.max(0, usdBalance - parseFloat(amount)).toFixed(2)}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">You sell</span>
+                        <span className="text-white font-medium">{parseFloat(amount).toFixed(8)} {selectedCrypto.symbol}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Platform fee (1%)</span>
+                        <span className="text-red-400">-1%</span>
+                      </div>
+                    </>
+                  )}
+                  <div className="border-t border-slate-700 pt-2 flex justify-between font-semibold">
+                    <span className="text-gray-300">{mode === "buy" ? `You receive (~)` : `USD credited (~)`}</span>
+                    <span className="text-green-400">
+                      {mode === "buy"
+                        ? `${selectedCrypto.symbol} at live rate`
+                        : `$${(parseFloat(amount) * (quotes[0]?.exchangeRate || 0) * 0.99).toFixed(2) || 'live rate'}`
+                      }
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {error && (
+                <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-xl mb-4 text-red-400 text-sm">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  {error}
+                </div>
+              )}
+              {balanceSuccess && (
+                <div className="flex items-center gap-2 p-3 bg-green-500/10 border border-green-500/30 rounded-xl mb-4 text-green-400 text-sm">
+                  <Check className="w-4 h-4 flex-shrink-0" />
+                  {balanceSuccess}
+                </div>
+              )}
+
+              {!isAuthenticated ? (
+                <div className="flex items-center gap-2 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-xl text-yellow-400 text-sm">
+                  <Lock className="w-4 h-4" />
+                  Login with NFC card to trade
+                </div>
+              ) : (
+                <Button
+                  onClick={handleBalanceTrade}
+                  disabled={balanceOrderLoading || !amount || parseFloat(amount) <= 0}
+                  className={`w-full py-5 text-base font-semibold rounded-xl ${
+                    mode === "buy" ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"
+                  } text-white`}
+                >
+                  {balanceOrderLoading ? (
+                    <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+                  ) : mode === "buy" ? (
+                    <DollarSign className="w-4 h-4 mr-2" />
+                  ) : (
+                    <ArrowUpDown className="w-4 h-4 mr-2" />
+                  )}
+                  {balanceOrderLoading
+                    ? "Processing..."
+                    : mode === "buy"
+                    ? `Buy ${selectedCrypto.symbol} with Balance`
+                    : `Sell ${selectedCrypto.symbol} for USD`}
+                </Button>
+              )}
+            </div>
+          ) : (
+          /* ── Provider Quotes Panel ── */
           <div className="bg-[#1E293B] rounded-2xl p-6 border border-slate-700/50">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-semibold text-white">
@@ -459,6 +637,7 @@ export default function BuySellPage({ className }: { className?: string }) {
               </div>
             )}
           </div>
+          )}
         </div>
       </div>
     </div>
