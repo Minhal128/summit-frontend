@@ -254,8 +254,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     <WalletContext.Provider
       value={{
         balances,
-        totalValueUSD,
-        totalValueFormatted: formatUSD(totalValueUSD),
+        totalValueUSD: totalValueUSD + usdBalance,
+        totalValueFormatted: formatUSD(totalValueUSD + usdBalance),
         usdBalance,
         usdBalanceFormatted: formatUSD(usdBalance),
         loading,
