@@ -19,7 +19,7 @@ interface TestimonialsSectionProps {
  * A modern, professional testimonial card component
  */
 const TestimonialCard = ({ name, role, text, avatar }: Testimonial) => (
-  <div className="group relative flex-shrink-0 w-[320px] h-[180px] bg-white/8 backdrop-blur-xl border border-white/15 rounded-2xl p-5 shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-[1.02] hover:border-blue-500/30 overflow-hidden mobile-card">
+  <div className="group relative flex-shrink-0 bg-white/8 backdrop-blur-xl border border-white/15 rounded-2xl p-5 shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-[1.02] hover:border-blue-500/30 overflow-hidden mobile-card">
     {/* Subtle gradient overlay */}
     <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 pointer-events-none"></div>
     
@@ -131,11 +131,11 @@ const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({ testimonials 
         }
 
         .marquee-left {
-          animation: marquee-left 80s linear infinite;
+          animation: marquee-left 25s linear infinite;
         }
 
         .marquee-right {
-          animation: marquee-right 80s linear infinite;
+          animation: marquee-right 25s linear infinite;
         }
         
         .marquee-container {
@@ -148,6 +148,14 @@ const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({ testimonials 
           overflow: hidden;
         }
 
+        .marquee-track {
+          display: flex;
+          width: max-content;
+          align-items: stretch;
+          gap: 32px;
+          padding-right: 32px; /* Perfect loop offset */
+        }
+
         .section-badge {
           background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
           border: 1px solid rgba(59, 130, 246, 0.2);
@@ -156,13 +164,14 @@ const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({ testimonials 
 
         .mobile-card {
           box-sizing: border-box;
+          width: 320px;
+          height: 180px;
         }
 
         @media (max-width: 768px) {
           .testimonials-background {
             padding: 0;
             margin: 0;
-            min-height: 80vh;
           }
 
           .section-badge span {
@@ -170,105 +179,63 @@ const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({ testimonials 
           }
 
           h1 {
-            font-size: 32px !important;
-            margin-bottom: 16px !important;
+            font-size: 28px;
+            margin-bottom: 12px;
           }
 
           p {
-            font-size: 16px !important;
-            margin-bottom: 40px !important;
-            padding: 0 16px !important;
+            font-size: 15px;
+            margin-bottom: 32px;
+            padding: 0 16px;
           }
 
           section {
-            padding: 32px 16px 32px 16px;
+            padding: 24px 0;
           }
 
           .mobile-card {
-            width: 280px !important;
-            height: 160px !important;
-            padding: 16px !important;
-            border-radius: 16px !important;
-          }
-
-          .mobile-card h4 {
-            font-size: 14px !important;
-            margin-bottom: 4px !important;
-          }
-
-          .mobile-card p {
-            font-size: 12px !important;
-          }
-
-          .mobile-card img {
-            width: 36px !important;
-            height: 36px !important;
-          }
-
-          .mobile-card .text-sm {
-            font-size: 11px !important;
-          }
-
-          .mobile-card .text-4xl {
-            font-size: 24px !important;
+            width: 280px;
+            height: auto;
+            min-height: 160px;
+            padding: 16px;
           }
 
           .marquee-container {
-            margin-top: 32px;
+            margin-top: 24px;
+            -webkit-mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+            mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+          }
+          
+          .marquee-track {
+            gap: 16px;
+            padding-right: 16px;
           }
         }
 
         @media (max-width: 480px) {
-          .testimonials-background {
-            padding: 0;
-            margin: 0;
-            min-height: 70vh;
-          }
-
           h1 {
-            font-size: 28px !important;
-            margin-bottom: 12px !important;
+            font-size: 24px;
+            margin-bottom: 12px;
           }
 
           p {
-            font-size: 14px !important;
-            margin-bottom: 32px !important;
-            padding: 0 12px !important;
+            font-size: 14px;
+            margin-bottom: 24px;
           }
 
           .section-badge {
-            padding: 6px 12px;
-          }
-
-          .section-badge span {
-            font-size: 10px;
-          }
-
-          section {
-            padding: 24px 12px 24px 12px;
+            padding: 4px 10px;
           }
 
           .mobile-card {
-            width: 240px !important;
-            height: 140px !important;
-            padding: 12px !important;
+            width: 260px;
+            min-height: 150px;
+            padding: 12px;
           }
-
-          .mobile-card h4 {
-            font-size: 12px !important;
-          }
-
-          .mobile-card p {
-            font-size: 10px !important;
-          }
-
-          .mobile-card img {
-            width: 32px !important;
-            height: 32px !important;
-          }
-
-          .mobile-card .text-sm {
-            font-size: 9px !important;
+          
+          .marquee-track {
+            gap: 12px;
+            padding-right: 12px;
           }
         }
       `}</style>
@@ -299,7 +266,7 @@ const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({ testimonials 
           <div className="relative w-full flex flex-col gap-8 marquee-container">
             {/* First Row - Scrolls Left */}
             <div className="marquee-row">
-              <div className="flex w-max items-stretch gap-8 marquee-left">
+              <div className="marquee-track marquee-left">
                 {[...row1Testimonials, ...row1Testimonials].map((testimonial, index) => (
                   <TestimonialCard key={`r1-${index}`} {...testimonial} />
                 ))}
@@ -308,7 +275,7 @@ const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({ testimonials 
             
             {/* Second Row - Scrolls Right */}
             <div className="marquee-row">
-              <div className="flex w-max items-stretch gap-8 marquee-right">
+              <div className="marquee-track marquee-right">
                 {[...row2Testimonials, ...row2Testimonials].map((testimonial, index) => (
                   <TestimonialCard key={`r2-${index}`} {...testimonial} />
                 ))}

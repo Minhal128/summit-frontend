@@ -178,6 +178,23 @@ export default function AboutPage() {
           line-height: 1.5;
         }
 
+        .values-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 30px;
+          max-width: 1200px;
+          margin: 60px auto 0;
+          position: relative;
+        }
+
+        .value-card {
+          background: rgba(235, 226, 255, 0.05);
+          border: 1px solid rgba(235, 226, 255, 0.1);
+          border-radius: 16px;
+          padding: 50px 40px;
+          position: relative;
+        }
+
         .faq-list {
           max-width: 800px;
           margin: 60px auto 0;
@@ -238,6 +255,17 @@ export default function AboutPage() {
           .steps-grid {
             grid-template-columns: 1fr;
             gap: 20px;
+          }
+
+          .values-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+            padding: 0 15px;
+            margin-top: 40px;
+          }
+
+          .value-card {
+            padding: 30px 20px;
           }
           
           .step-item {
@@ -405,6 +433,17 @@ export default function AboutPage() {
             grid-template-columns: 1fr;
           }
 
+          .values-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+            padding: 0 15px;
+            margin-top: 40px;
+          }
+
+          .value-card {
+            padding: 30px 20px;
+          }
+
           .main-title {
             font-size: 36px;
           }
@@ -470,22 +509,9 @@ export default function AboutPage() {
           <h2 className="main-title">Driven by Purpose, Built on Trust</h2>
           <p className="subtitle">We combine innovation, security, and customer-first values to redefine how you interact with your digital assets.</p>
 
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: '30px',
-            maxWidth: '1200px',
-            margin: '60px auto 0',
-            position: 'relative'
-          }}>
+          <div className="values-grid">
             {/* Step 1 */}
-            <div style={{
-              background: 'rgba(235, 226, 255, 0.05)',
-              border: '1px solid rgba(235, 226, 255, 0.1)',
-              borderRadius: '16px',
-              padding: '50px 40px',
-              position: 'relative'
-            }}>
+            <div className="value-card">
               <div style={{
                 position: 'absolute',
                 top: '20px',
@@ -532,13 +558,7 @@ export default function AboutPage() {
             </div>
 
             {/* Step 2 */}
-            <div style={{
-              background: 'rgba(235, 226, 255, 0.05)',
-              border: '1px solid rgba(235, 226, 255, 0.1)',
-              borderRadius: '16px',
-              padding: '50px 40px',
-              position: 'relative'
-            }}>
+            <div className="value-card">
               <div style={{
                 position: 'absolute',
                 top: '20px',

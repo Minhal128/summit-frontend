@@ -105,18 +105,42 @@ const CheckoutPage = () => {
         </div>
       </section>
 
-      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '60px 20px' }}>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-          gap: '32px'
-        }}>
+      <style jsx>{`
+        .checkout-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+          gap: 32px;
+        }
+        .cart-item {
+          display: flex;
+          align-items: center;
+          gap: 20px;
+          padding: 24px;
+        }
+        .order-summary-box, .checkout-form-box {
+          padding: 40px;
+        }
+        @media (max-width: 768px) {
+          .checkout-grid {
+            grid-template-columns: 1fr;
+          }
+          .cart-item {
+            gap: 12px;
+            padding: 16px;
+          }
+          .order-summary-box, .checkout-form-box {
+            padding: 20px;
+          }
+        }
+      `}</style>
+
+      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '60px 20px' }} className="main-container">
+        <div className="checkout-grid">
           {/* Left Column - Order Summary */}
-          <div style={{
+          <div className="order-summary-box" style={{
             background: 'rgba(255, 255, 255, 0.05)',
             border: '1px solid rgba(235, 226, 255, 0.1)',
-            borderRadius: '16px',
-            padding: '40px'
+            borderRadius: '16px'
           }}>
             <h2 style={{
               fontSize: '28px',
@@ -133,18 +157,14 @@ const CheckoutPage = () => {
             {/* Cart Items */}
             <div style={{ marginBottom: '32px' }}>
               {cartItems.map((item, idx) => (
-                <div key={item.productId} style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '20px',
-                  padding: '24px',
+                <div key={item.productId} className="cart-item" style={{
                   marginBottom: '16px',
                   background: 'rgba(255, 255, 255, 0.03)',
                   border: '1px solid rgba(235, 226, 255, 0.1)',
                   borderRadius: '12px',
                   transition: 'all 0.3s ease'
                 }}>
-                  <div style={{
+                  <div className="cart-item-icon" style={{
                     width: '80px',
                     height: '80px',
                     background: 'linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(0, 212, 255, 0.1))',
@@ -157,11 +177,11 @@ const CheckoutPage = () => {
                   }}>
                     💳
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {item.product.name}
                     </h3>
-                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
                       <span style={{
                         padding: '4px 12px',
                         background: 'rgba(76, 175, 80, 0.2)',

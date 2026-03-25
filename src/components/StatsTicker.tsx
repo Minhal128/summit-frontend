@@ -40,9 +40,11 @@ const StatsTicker: React.FC<StatsTickerProps> = ({ stats }) => {
         }
 
         .stats-ticker {
-          display: inline-flex;
-          animation: scroll-left 120s linear infinite;
+          display: flex;
+          width: max-content;
+          animation: scroll-left 50s linear infinite;
           gap: 80px;
+          padding-right: 80px; /* match the gap so the end of the second set matches the start of the first */
         }
 
         .stat-item {
@@ -54,10 +56,10 @@ const StatsTicker: React.FC<StatsTickerProps> = ({ stats }) => {
 
         @keyframes scroll-left {
           0% {
-            transform: translateX(100%);
+            transform: translateX(0%);
           }
           100% {
-            transform: translateX(-100%);
+            transform: translateX(-50%);
           }
         }
 

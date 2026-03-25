@@ -7,7 +7,7 @@ import {
   DollarSign,
   RefreshCw,
   Check,
-  ExternalLink,
+  ExternalLink, 
   Shield,
   Zap,
   Globe,

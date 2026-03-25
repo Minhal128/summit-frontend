@@ -14,6 +14,7 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ onSecureWallet }) => 
           padding: 80px 0;
           text-align: center;
           position: relative;
+          overflow: hidden;
         }
 
         .features-section::before {
@@ -135,7 +136,8 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ onSecureWallet }) => 
 
           .container {
             padding: 0 16px;
-            max-width: 100vw;
+            width: 100%;
+            box-sizing: border-box;
           }
 
           .features-grid {
