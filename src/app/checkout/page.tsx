@@ -84,7 +84,7 @@ const CheckoutPage = () => {
             </button>
           </Link>
 
-          <h1 style={{
+          <h1 className="checkout-hero-title" style={{
             fontSize: '42px',
             fontWeight: '700',
             marginBottom: '16px',
@@ -95,7 +95,7 @@ const CheckoutPage = () => {
           }}>
             Secure Checkout
           </h1>
-          <p style={{
+          <p className="checkout-hero-subtitle" style={{
             fontSize: '18px',
             color: 'rgba(235, 226, 255, 0.7)',
             marginBottom: '0'
@@ -108,8 +108,10 @@ const CheckoutPage = () => {
       <style jsx>{`
         .checkout-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+          grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr));
           gap: 32px;
+          width: 100%;
+          box-sizing: border-box;
         }
         .cart-item {
           display: flex;
@@ -119,29 +121,50 @@ const CheckoutPage = () => {
         }
         .order-summary-box, .checkout-form-box {
           padding: 40px;
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(235, 226, 255, 0.1);
+          border-radius: 16px;
+          box-sizing: border-box;
+          width: 100%;
         }
         @media (max-width: 768px) {
           .checkout-grid {
             grid-template-columns: 1fr;
+            gap: 24px;
           }
           .cart-item {
-            gap: 12px;
+            gap: 16px;
             padding: 16px;
+            flex-direction: column;
+            align-items: flex-start;
+          }
+          .cart-item > div {
+            width: 100%;
+            text-align: left !important;
+          }
+          .cart-item > div:first-child {
+            width: auto; /* for the icon */
+          }
+          .cart-item-icon {
+            width: 60px !important;
+            height: 60px !important;
           }
           .order-summary-box, .checkout-form-box {
             padding: 20px;
           }
+          .checkout-hero-title {
+            font-size: 32px !important;
+          }
+          .checkout-hero-subtitle {
+            font-size: 16px !important;
+          }
         }
       `}</style>
 
-      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '60px 20px' }} className="main-container">
+      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '60px 20px', width: '100%', boxSizing: 'border-box' }} className="main-container">
         <div className="checkout-grid">
           {/* Left Column - Order Summary */}
-          <div className="order-summary-box" style={{
-            background: 'rgba(255, 255, 255, 0.05)',
-            border: '1px solid rgba(235, 226, 255, 0.1)',
-            borderRadius: '16px'
-          }}>
+          <div className="order-summary-box">
             <h2 style={{
               fontSize: '28px',
               fontWeight: '700',
@@ -244,12 +267,7 @@ const CheckoutPage = () => {
           </div>
 
           {/* Right Column - Checkout Info */}
-          <div style={{
-            background: 'rgba(255, 255, 255, 0.05)',
-            border: '1px solid rgba(235, 226, 255, 0.1)',
-            borderRadius: '16px',
-            padding: '40px'
-          }}>
+          <div className="checkout-form-box">
             <h2 style={{
               fontSize: '28px',
               fontWeight: '700',
