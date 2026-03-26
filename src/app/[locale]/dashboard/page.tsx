@@ -32,6 +32,7 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "rec
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
+import { useLocale } from "next-intl"
 import RecentTransactionsModal from "@/components/modals/RecentTransactionsModal"
 import SendReceiveModal from "@/components/modals/SendReceiveModal"
 import SendCoinModal from "@/components/modals/SendCoinModal"
@@ -77,7 +78,8 @@ const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
 // Main Dashboard Component
 const DashboardPage: NextPage = () => {
   const router = useRouter()
-  const { t } = useTranslation()
+  const locale = useLocale()
+  const { t, language } = useTranslation()
   const { totalValueFormatted, balances, loading: walletLoading, refreshBalances, walletAddresses, usdBalance, usdBalanceFormatted } = useWallet()
   const [activeTab, setActiveTab] = useState("Swap")
   const [activePage, setActivePage] = useState("Dashboard")
@@ -115,6 +117,43 @@ const DashboardPage: NextPage = () => {
   const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({})
   const [chartPeriod, setChartPeriod] = useState("1W")
   const [chartDays, setChartDays] = useState(7)
+
+  const uiByLanguage = {
+    en: {
+      dashboard: 'Dashboard',
+      activity: 'Activity',
+      recentTransactions: 'Recent transactions',
+      noTransactions: 'No transactions yet',
+      seeMore: 'See More',
+      portfolio: 'Portfolio',
+      usdBalance: 'USD Balance',
+      addFunds: 'Add Funds',
+      viewWalletDetails: 'View Wallet Details',
+      from: 'From',
+      to: 'To',
+      swap: 'Swap',
+      processing: 'Processing...',
+      searchTokens: 'Search Tokens',
+      noTokens: 'No tokens yet',
+      navigation: 'NAVIGATION',
+      search: 'SEARCH',
+      assets: 'ASSETS',
+      enterValidAmount: 'Please enter a valid amount',
+      insufficientBalance: 'Insufficient balance. You have',
+      loginToSwap: 'Please login to perform swaps',
+      swapCreated: "Swap created! You'll receive",
+      swapFailed: 'Swap failed. Please try again.'
+    },
+    zh: { dashboard: '控制面板', activity: '活动', recentTransactions: '最近交易', noTransactions: '暂无交易', seeMore: '查看更多', portfolio: '资产组合', usdBalance: '美元余额', addFunds: '充值', viewWalletDetails: '查看钱包详情', from: '从', to: '到', swap: '兑换', processing: '处理中...', searchTokens: '搜索代币', noTokens: '暂无代币', navigation: '导航', search: '搜索', assets: '资产', enterValidAmount: '请输入有效金额', insufficientBalance: '余额不足。你当前有', loginToSwap: '请先登录再进行兑换', swapCreated: '兑换已创建！你将收到约', swapFailed: '兑换失败，请重试。' },
+    ar: { dashboard: 'لوحة التحكم', activity: 'النشاط', recentTransactions: 'المعاملات الأخيرة', noTransactions: 'لا توجد معاملات بعد', seeMore: 'عرض المزيد', portfolio: 'المحفظة', usdBalance: 'رصيد الدولار', addFunds: 'إضافة رصيد', viewWalletDetails: 'عرض تفاصيل المحفظة', from: 'من', to: 'إلى', swap: 'تبديل', processing: 'جارٍ المعالجة...', searchTokens: 'ابحث عن العملات', noTokens: 'لا توجد أصول بعد', navigation: 'التنقل', search: 'بحث', assets: 'الأصول', enterValidAmount: 'يرجى إدخال مبلغ صحيح', insufficientBalance: 'الرصيد غير كافٍ. لديك', loginToSwap: 'يرجى تسجيل الدخول لإجراء التبديل', swapCreated: 'تم إنشاء التبديل! ستتلقى تقريبًا', swapFailed: 'فشل التبديل. حاول مرة أخرى.' },
+    ru: { dashboard: 'Дашборд', activity: 'Активность', recentTransactions: 'Последние транзакции', noTransactions: 'Пока нет транзакций', seeMore: 'Показать больше', portfolio: 'Портфель', usdBalance: 'Баланс USD', addFunds: 'Пополнить', viewWalletDetails: 'Детали кошелька', from: 'От', to: 'К', swap: 'Обмен', processing: 'Обработка...', searchTokens: 'Поиск токенов', noTokens: 'Пока нет токенов', navigation: 'НАВИГАЦИЯ', search: 'ПОИСК', assets: 'АКТИВЫ', enterValidAmount: 'Введите корректную сумму', insufficientBalance: 'Недостаточно средств. У вас', loginToSwap: 'Войдите, чтобы выполнить обмен', swapCreated: 'Обмен создан! Вы получите примерно', swapFailed: 'Обмен не удался. Попробуйте снова.' },
+    th: { dashboard: 'แดชบอร์ด', activity: 'กิจกรรม', recentTransactions: 'ธุรกรรมล่าสุด', noTransactions: 'ยังไม่มีธุรกรรม', seeMore: 'ดูเพิ่มเติม', portfolio: 'พอร์ต', usdBalance: 'ยอดคงเหลือ USD', addFunds: 'เติมเงิน', viewWalletDetails: 'ดูรายละเอียดวอลเล็ต', from: 'จาก', to: 'ถึง', swap: 'สลับ', processing: 'กำลังดำเนินการ...', searchTokens: 'ค้นหาโทเคน', noTokens: 'ยังไม่มีโทเคน', navigation: 'เมนูนำทาง', search: 'ค้นหา', assets: 'สินทรัพย์', enterValidAmount: 'กรุณากรอกจำนวนที่ถูกต้อง', insufficientBalance: 'ยอดเงินไม่เพียงพอ คุณมี', loginToSwap: 'กรุณาเข้าสู่ระบบเพื่อทำการสลับ', swapCreated: 'สร้างรายการสลับแล้ว! คุณจะได้รับประมาณ', swapFailed: 'สลับไม่สำเร็จ กรุณาลองใหม่' },
+    es: { dashboard: 'Panel', activity: 'Actividad', recentTransactions: 'Transacciones recientes', noTransactions: 'Aún no hay transacciones', seeMore: 'Ver más', portfolio: 'Portafolio', usdBalance: 'Saldo USD', addFunds: 'Agregar fondos', viewWalletDetails: 'Ver detalles de wallet', from: 'Desde', to: 'Hacia', swap: 'Swap', processing: 'Procesando...', searchTokens: 'Buscar tokens', noTokens: 'Aún no hay tokens', navigation: 'NAVEGACIÓN', search: 'BUSCAR', assets: 'ACTIVOS', enterValidAmount: 'Ingresa un monto válido', insufficientBalance: 'Saldo insuficiente. Tienes', loginToSwap: 'Inicia sesión para realizar swaps', swapCreated: '¡Swap creado! Recibirás aprox.', swapFailed: 'El swap falló. Intenta de nuevo.' },
+    fr: { dashboard: 'Tableau de bord', activity: 'Activité', recentTransactions: 'Transactions récentes', noTransactions: 'Aucune transaction', seeMore: 'Voir plus', portfolio: 'Portefeuille', usdBalance: 'Solde USD', addFunds: 'Ajouter des fonds', viewWalletDetails: 'Voir détails du wallet', from: 'De', to: 'Vers', swap: 'Swap', processing: 'Traitement...', searchTokens: 'Rechercher des tokens', noTokens: 'Aucun token', navigation: 'NAVIGATION', search: 'RECHERCHE', assets: 'ACTIFS', enterValidAmount: 'Veuillez entrer un montant valide', insufficientBalance: 'Solde insuffisant. Vous avez', loginToSwap: 'Veuillez vous connecter pour swapper', swapCreated: 'Swap créé ! Vous recevrez environ', swapFailed: 'Échec du swap. Veuillez réessayer.' },
+    de: { dashboard: 'Dashboard', activity: 'Aktivität', recentTransactions: 'Letzte Transaktionen', noTransactions: 'Noch keine Transaktionen', seeMore: 'Mehr anzeigen', portfolio: 'Portfolio', usdBalance: 'USD-Guthaben', addFunds: 'Guthaben hinzufügen', viewWalletDetails: 'Wallet-Details anzeigen', from: 'Von', to: 'Nach', swap: 'Tauschen', processing: 'Wird verarbeitet...', searchTokens: 'Token suchen', noTokens: 'Noch keine Token', navigation: 'NAVIGATION', search: 'SUCHE', assets: 'ASSETS', enterValidAmount: 'Bitte gib einen gültigen Betrag ein', insufficientBalance: 'Unzureichendes Guthaben. Du hast', loginToSwap: 'Bitte einloggen, um zu tauschen', swapCreated: 'Tausch erstellt! Du erhältst ca.', swapFailed: 'Tausch fehlgeschlagen. Bitte erneut versuchen.' }
+  } as const
+
+  const ui = uiByLanguage[(language as keyof typeof uiByLanguage)] ?? uiByLanguage.en
 
   // Swap tokens configuration
   const swapTokenOptions = [
@@ -291,12 +330,12 @@ const DashboardPage: NextPage = () => {
     
     const amount = parseFloat(swapFromAmount)
     if (!amount || amount <= 0) {
-      setSwapError('Please enter a valid amount')
+      setSwapError(ui.enterValidAmount)
       return
     }
 
     if (swapFromBalance && amount > swapFromBalance.amount) {
-      setSwapError(`Insufficient balance. You have ${swapFromBalance.amountFormatted}`)
+      setSwapError(`${ui.insufficientBalance} ${swapFromBalance.amountFormatted}`)
       return
     }
 
@@ -306,7 +345,7 @@ const DashboardPage: NextPage = () => {
       const token = localStorage.getItem('auth_token') || localStorage.getItem('nfc_token')
       
       if (!token) {
-        setSwapError('Please login to perform swaps')
+        setSwapError(ui.loginToSwap)
         return
       }
 
@@ -326,16 +365,16 @@ const DashboardPage: NextPage = () => {
       const result = await response.json()
       
       if (result.success) {
-        setSwapSuccess(`Swap created! You'll receive ~${swapToAmount} ${swapToToken}`)
+        setSwapSuccess(`${ui.swapCreated} ~${swapToAmount} ${swapToToken}`)
         setSwapFromAmount('')
         setSwapToAmount('')
         refreshBalances()
       } else {
-        setSwapError(result.message || 'Swap failed. Please try again.')
+        setSwapError(result.message || ui.swapFailed)
       }
     } catch (err: any) {
       console.error('Swap error:', err)
-      setSwapError(err.message || 'Swap failed. Please try again.')
+      setSwapError(err.message || ui.swapFailed)
     } finally {
       setSwapLoading(false)
     }
@@ -348,16 +387,16 @@ const DashboardPage: NextPage = () => {
     localStorage.removeItem('user')
     localStorage.removeItem('nfc_card_id')
     // Redirect to login page
-    router.push('/login')
+    router.push(locale === 'en' ? '/login' : `/${locale}/login`)
   }
 
   // Auth guard: redirect to login if no token
   useEffect(() => {
     const token = localStorage.getItem('auth_token') || localStorage.getItem('nfc_token')
     if (!token) {
-      router.push('/login')
+      router.push(locale === 'en' ? '/login' : `/${locale}/login`)
     }
-  }, [router])
+  }, [router, locale])
 
   useEffect(() => {
     const handleHardwareWalletConfirmed = () => {
@@ -500,7 +539,7 @@ const DashboardPage: NextPage = () => {
         return (
           <>
             <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
-              <h2 className="text-2xl sm:text-3xl text-white font-bold">Dashboard</h2>
+              <h2 className="text-2xl sm:text-3xl text-white font-bold">{ui.dashboard}</h2>
               <div className="grid grid-cols-2 lg:flex lg:flex-row items-stretch lg:items-center gap-3 w-full lg:w-auto">
                 <Button
                   onClick={() => setIsSendReceiveModalOpen(true)}
@@ -536,7 +575,7 @@ const DashboardPage: NextPage = () => {
                 <section className="bg-[#1E293B] p-4 sm:p-6 rounded-2xl shadow-xl border border-slate-700/50">
                   <div className="flex flex-col lg:flex-row justify-between items-start mb-6 gap-4">
                     <div className="flex-1">
-                      <h3 className="text-gray-400 text-base mb-2">Portfolio</h3>
+                      <h3 className="text-gray-400 text-base mb-2">{ui.portfolio}</h3>
                       <p className="text-3xl sm:text-4xl text-white font-bold flex flex-wrap items-center gap-2">
                         {walletLoading ? (
                           <span className="animate-pulse bg-slate-600 rounded w-40 h-10 inline-block"></span>
@@ -549,7 +588,7 @@ const DashboardPage: NextPage = () => {
                       {/* USD Balance Display */}
                       <div className="mt-3 flex items-center gap-3">
                         <div className="bg-green-500/10 border border-green-500/30 rounded-xl px-4 py-2">
-                          <span className="text-xs text-gray-400">USD Balance</span>
+                          <span className="text-xs text-gray-400">{ui.usdBalance}</span>
                           <p className="text-lg font-bold text-green-400">
                             {walletLoading ? '...' : usdBalanceFormatted || '$0.00'}
                           </p>
@@ -561,7 +600,7 @@ const DashboardPage: NextPage = () => {
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                           </svg>
-                          Add Funds
+                          {ui.addFunds}
                         </button>
                       </div>
 
@@ -591,7 +630,7 @@ const DashboardPage: NextPage = () => {
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                         </svg>
-                        View Wallet Details
+                        {ui.viewWalletDetails}
                       </button>
                     </div>
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center w-full lg:w-auto gap-3">
@@ -734,7 +773,7 @@ const DashboardPage: NextPage = () => {
                     )}
                     <div className="bg-[#0F172A] p-4 rounded-lg flex justify-between items-center">
                       <div>
-                        <p className="text-gray-400 text-sm">From</p>
+                        <p className="text-gray-400 text-sm">{ui.from}</p>
                         <input
                           type="number"
                           value={swapFromAmount}
@@ -796,7 +835,7 @@ const DashboardPage: NextPage = () => {
                     </div>
                     <div className="bg-[#0F172A] p-4 rounded-lg flex justify-between items-center">
                       <div>
-                        <p className="text-gray-400 text-sm">To</p>
+                        <p className="text-gray-400 text-sm">{ui.to}</p>
                         <input
                           type="number"
                           value={swapToAmount}
@@ -855,10 +894,10 @@ const DashboardPage: NextPage = () => {
                       {swapLoading ? (
                         <>
                           <RefreshCw className="w-4 h-4 animate-spin" />
-                          Processing...
+                          {ui.processing}
                         </>
                       ) : (
-                        'Swap'
+                        ui.swap
                       )}
                     </button>
                   </div>
@@ -867,10 +906,10 @@ const DashboardPage: NextPage = () => {
 
               <aside className="lg:col-span-1 bg-[#1E293B] rounded-2xl h-fit shadow-xl border border-slate-700/50">
                 <div className="p-6">
-                  <h3 className="text-xl text-white font-bold mb-6">Recent transactions</h3>
+                  <h3 className="text-xl text-white font-bold mb-6">{ui.recentTransactions}</h3>
                   <div className="space-y-4">
                     {recentTransactions.length === 0 ? (
-                      <p className="text-gray-500 text-sm text-center py-4">No transactions yet</p>
+                      <p className="text-gray-500 text-sm text-center py-4">{ui.noTransactions}</p>
                     ) : (
                       recentTransactions.slice(0, 3).map((tx) => {
                         const isReceive = tx.type === 'receive' || tx.type === 'buy'
@@ -913,7 +952,7 @@ const DashboardPage: NextPage = () => {
                       onClick={() => setIsTransactionsModalOpen(true)}
                       className="w-full text-blue-400 font-medium hover:text-blue-300 transition-colors text-sm"
                     >
-                      See More
+                      {ui.seeMore}
                     </button>
                   </div>
                 </div>
@@ -972,7 +1011,7 @@ const DashboardPage: NextPage = () => {
                 onClick={() => setActivePage("Activity")}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors w-full text-left ${activePage === "Activity" ? "bg-blue-500 text-white" : "hover:bg-slate-700/50 text-gray-300"}`}
               >
-                <Clock className="w-5 h-5" /> Activity
+                      <Clock className="w-5 h-5" /> {ui.activity}
               </button>
               <button
                 onClick={() => setActivePage("Buy & Sell")}
@@ -1044,13 +1083,13 @@ const DashboardPage: NextPage = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search Tokens"
+                placeholder={ui.searchTokens}
                 className="bg-[#0F172A] border border-slate-700 rounded-lg pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
               />
             </div>
             <div className="mt-6 space-y-4">
               {balances.length === 0 ? (
-                <p className="text-gray-500 text-sm text-center py-4">No tokens yet</p>
+                <p className="text-gray-500 text-sm text-center py-4">{ui.noTokens}</p>
               ) : (
                 balances.slice(0, 5).map((balance) => (
                   <div key={balance.symbol} className="flex items-center justify-between p-3 hover:bg-slate-700/20 rounded-lg transition-colors">
@@ -1088,7 +1127,7 @@ const DashboardPage: NextPage = () => {
                     className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-2"
                     style={{ marginBottom: "30px" }}
                   >
-                    NAVIGATION
+                    {ui.navigation}
                   </div>
                   <nav style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
                     <button
@@ -1208,11 +1247,11 @@ const DashboardPage: NextPage = () => {
                     className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-2"
                     style={{ marginBottom: "30px" }}
                   >
-                    SEARCH
+                    {ui.search}
                   </div>
                   <input
                     type="text"
-                    placeholder="Search Tokens"
+                    placeholder={ui.searchTokens}
                     className="bg-[#0F172A] border border-slate-600 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white placeholder:text-gray-500 transition-all duration-200"
                     style={{ width: "100%", minWidth: "280px" }}
                   />
@@ -1224,11 +1263,11 @@ const DashboardPage: NextPage = () => {
                     className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-2"
                     style={{ marginBottom: "30px" }}
                   >
-                    ASSETS
+                    {ui.assets}
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
                     {balances.length === 0 ? (
-                      <p className="text-gray-500 text-sm text-center py-4">No assets yet</p>
+                      <p className="text-gray-500 text-sm text-center py-4">{ui.noTokens}</p>
                     ) : (
                       balances.slice(0, 5).map((balance) => (
                         <div key={balance.symbol} className="flex items-center justify-between p-4 hover:bg-slate-700/30 rounded-xl transition-all duration-200 cursor-pointer group">

@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useLocale } from 'next-intl';
 
 interface HeaderProps {
   onScrollToFeatures?: () => void;
@@ -13,26 +14,47 @@ const Header: React.FC<HeaderProps> = ({ onScrollToFeatures }) => {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState({ code: 'Eng', name: 'English' });
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const desktopLanguageDropdownRef = useRef<HTMLDivElement>(null);
   const mobileLanguageDropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const pathname = usePathname();
+  const locale = useLocale();
 
   const languages = [
-    { code: 'Eng', name: 'English' },
-    { code: '中文', name: 'Mandarin' },
-    { code: 'عرب', name: 'Arabic' },
-    { code: 'Рус', name: 'Russian' },
-    { code: 'ไทย', name: 'Thai' },
-    { code: 'Esp', name: 'Spanish' },
-    { code: 'Fra', name: 'French' },
-    { code: 'Deu', name: 'German' }
+    { locale: 'en', code: 'Eng', name: 'English' },
+    { locale: 'zh', code: '中文', name: 'Mandarin' },
+    { locale: 'ar', code: 'عرب', name: 'Arabic' },
+    { locale: 'ru', code: 'Рус', name: 'Russian' },
+    { locale: 'th', code: 'ไทย', name: 'Thai' },
+    { locale: 'es', code: 'Esp', name: 'Spanish' },
+    { locale: 'fr', code: 'Fra', name: 'French' },
+    { locale: 'de', code: 'Deu', name: 'German' }
   ];
 
-  const handleLanguageSelect = (language: { code: string; name: string }) => {
-    setSelectedLanguage(language);
+  const selectedLanguage = languages.find((language) => language.locale === locale) ?? languages[0];
+
+  const withLocalePath = (path: string) => {
+    if (locale === 'en') return path;
+    return `/${locale}${path === '/' ? '' : path}`;
+  };
+
+  const handleLanguageSelect = (language: { locale: string; code: string; name: string }) => {
     setIsLanguageDropdownOpen(false);
+
+    if (language.locale === locale) return;
+
+    let pathWithoutLocale = pathname;
+    if (pathname === `/${locale}` || pathname.startsWith(`/${locale}/`)) {
+      pathWithoutLocale = pathname.replace(`/${locale}`, '') || '/';
+    }
+
+    const nextPath = language.locale === 'en'
+      ? pathWithoutLocale
+      : `/${language.locale}${pathWithoutLocale === '/' ? '' : pathWithoutLocale}`;
+
+    router.push(nextPath);
+    router.refresh();
   };
 
   // Check auth state on mount and listen for changes
@@ -59,8 +81,133 @@ const Header: React.FC<HeaderProps> = ({ onScrollToFeatures }) => {
     localStorage.removeItem('user');
     localStorage.removeItem('nfc_card_id');
     setIsLoggedIn(false);
-    router.push('/login');
+    router.push(withLocalePath('/login'));
   };
+
+  const labelsByLocale = {
+    en: {
+      features: 'Features',
+      products: 'Products',
+      learnSupport: 'Learn & Support',
+      about: 'About Us',
+      blog: 'Blog',
+      contact: 'Contact',
+      academy: 'Academy',
+      getCard: '🔐 Get NFC Card',
+      nfcSetup: '⬇ NFC Setup',
+      nfcSetupDownload: '⬇ NFC Setup & Download',
+      login: 'Login',
+      dashboard: 'Dashboard',
+      logout: 'Logout'
+    },
+    zh: {
+      features: '功能',
+      products: '产品',
+      learnSupport: '学习与支持',
+      about: '关于我们',
+      blog: '博客',
+      contact: '联系我们',
+      academy: '学院',
+      getCard: '🔐 获取 NFC 卡',
+      nfcSetup: '⬇ NFC 设置',
+      nfcSetupDownload: '⬇ NFC 设置与下载',
+      login: '登录',
+      dashboard: '控制台',
+      logout: '退出登录'
+    },
+    ar: {
+      features: 'الميزات',
+      products: 'المنتجات',
+      learnSupport: 'التعلّم والدعم',
+      about: 'من نحن',
+      blog: 'المدونة',
+      contact: 'اتصل بنا',
+      academy: 'الأكاديمية',
+      getCard: '🔐 احصل على بطاقة NFC',
+      nfcSetup: '⬇ إعداد NFC',
+      nfcSetupDownload: '⬇ إعداد NFC والتنزيل',
+      login: 'تسجيل الدخول',
+      dashboard: 'لوحة التحكم',
+      logout: 'تسجيل الخروج'
+    },
+    ru: {
+      features: 'Функции',
+      products: 'Продукты',
+      learnSupport: 'Обучение и поддержка',
+      about: 'О нас',
+      blog: 'Блог',
+      contact: 'Контакты',
+      academy: 'Академия',
+      getCard: '🔐 Получить NFC-карту',
+      nfcSetup: '⬇ Настройка NFC',
+      nfcSetupDownload: '⬇ NFC настройка и загрузка',
+      login: 'Войти',
+      dashboard: 'Панель',
+      logout: 'Выйти'
+    },
+    th: {
+      features: 'ฟีเจอร์',
+      products: 'ผลิตภัณฑ์',
+      learnSupport: 'เรียนรู้และช่วยเหลือ',
+      about: 'เกี่ยวกับเรา',
+      blog: 'บล็อก',
+      contact: 'ติดต่อ',
+      academy: 'อะคาเดมี',
+      getCard: '🔐 รับบัตร NFC',
+      nfcSetup: '⬇ ตั้งค่า NFC',
+      nfcSetupDownload: '⬇ ตั้งค่าและดาวน์โหลด NFC',
+      login: 'เข้าสู่ระบบ',
+      dashboard: 'แดชบอร์ด',
+      logout: 'ออกจากระบบ'
+    },
+    es: {
+      features: 'Funciones',
+      products: 'Productos',
+      learnSupport: 'Aprender y Soporte',
+      about: 'Sobre nosotros',
+      blog: 'Blog',
+      contact: 'Contacto',
+      academy: 'Academia',
+      getCard: '🔐 Obtener tarjeta NFC',
+      nfcSetup: '⬇ Configuración NFC',
+      nfcSetupDownload: '⬇ Configuración y descarga NFC',
+      login: 'Iniciar sesión',
+      dashboard: 'Panel',
+      logout: 'Cerrar sesión'
+    },
+    fr: {
+      features: 'Fonctionnalités',
+      products: 'Produits',
+      learnSupport: 'Apprendre & Support',
+      about: 'À propos',
+      blog: 'Blog',
+      contact: 'Contact',
+      academy: 'Académie',
+      getCard: '🔐 Obtenir une carte NFC',
+      nfcSetup: '⬇ Configuration NFC',
+      nfcSetupDownload: '⬇ Configuration et téléchargement NFC',
+      login: 'Connexion',
+      dashboard: 'Tableau de bord',
+      logout: 'Déconnexion'
+    },
+    de: {
+      features: 'Funktionen',
+      products: 'Produkte',
+      learnSupport: 'Lernen & Support',
+      about: 'Über uns',
+      blog: 'Blog',
+      contact: 'Kontakt',
+      academy: 'Akademie',
+      getCard: '🔐 NFC-Karte erhalten',
+      nfcSetup: '⬇ NFC-Einrichtung',
+      nfcSetupDownload: '⬇ NFC-Einrichtung & Download',
+      login: 'Anmelden',
+      dashboard: 'Dashboard',
+      logout: 'Abmelden'
+    }
+  } as const;
+
+  const label = labelsByLocale[locale as keyof typeof labelsByLocale] ?? labelsByLocale.en;
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -649,9 +796,9 @@ const Header: React.FC<HeaderProps> = ({ onScrollToFeatures }) => {
         </div>
         
         <nav className="nav">
-          <span className="nav-item" onClick={onScrollToFeatures} style={{ cursor: 'pointer' }}>Features</span>
+          <span className="nav-item" onClick={onScrollToFeatures} style={{ cursor: 'pointer' }}>{label.features}</span>
           <span className="nav-item">
-            Products
+            {label.products}
           </span>
           <span 
             className="nav-item"
@@ -664,7 +811,7 @@ const Header: React.FC<HeaderProps> = ({ onScrollToFeatures }) => {
               gap: '12px' 
             }}
           >
-            Learn & Support
+            {label.learnSupport}
             <svg 
               width="18" 
               height="18" 
@@ -694,7 +841,7 @@ const Header: React.FC<HeaderProps> = ({ onScrollToFeatures }) => {
                 animation: 'fadeInDown 0.3s ease-out'
               }}>
                 <a 
-                  href="/about" 
+                  href={withLocalePath('/about')} 
                   style={{
                     display: 'block',
                     padding: '16px 24px',
@@ -714,10 +861,10 @@ const Header: React.FC<HeaderProps> = ({ onScrollToFeatures }) => {
                     (e.target as HTMLElement).style.color = '#EBE2FF';
                   }}
                 >
-                  About Us
+                  {label.about}
                 </a>
                 <Link 
-                  href="/blog" 
+                  href={withLocalePath('/blog')} 
                   style={{
                     display: 'block',
                     padding: '16px 24px',
@@ -738,10 +885,10 @@ const Header: React.FC<HeaderProps> = ({ onScrollToFeatures }) => {
                     (e.target as HTMLElement).style.color = '#EBE2FF';
                   }}
                 >
-                  Blog
+                  {label.blog}
                 </Link>
                 <a 
-                  href="/contact" 
+                  href={withLocalePath('/contact')} 
                   style={{
                     display: 'block',
                     padding: '16px 24px',
@@ -761,10 +908,10 @@ const Header: React.FC<HeaderProps> = ({ onScrollToFeatures }) => {
                     (e.target as HTMLElement).style.color = '#EBE2FF';
                   }}
                 >
-                  Contact
+                  {label.contact}
                 </a>
                 <a 
-                  href="/academy" 
+                  href={withLocalePath('/academy')} 
                   style={{
                     display: 'block',
                     padding: '16px 24px',
@@ -784,7 +931,7 @@ const Header: React.FC<HeaderProps> = ({ onScrollToFeatures }) => {
                     (e.target as HTMLElement).style.color = '#EBE2FF';
                   }}
                 >
-                  Academy
+                  {label.academy}
                 </a>
               </div>
             )}
@@ -828,7 +975,7 @@ const Header: React.FC<HeaderProps> = ({ onScrollToFeatures }) => {
               </div>
             )}
           </div>
-          <Link href="/nfc-access">
+          <Link href={withLocalePath('/nfc-access')}>
             <button style={{
               padding: '10px 20px',
               background: 'linear-gradient(45deg, #4CAF50, #003BFC)',
@@ -853,10 +1000,10 @@ const Header: React.FC<HeaderProps> = ({ onScrollToFeatures }) => {
               e.currentTarget.style.boxShadow = '0 2px 10px rgba(76, 175, 80, 0.3)';
             }}
             >
-              🔐 Get NFC Card
+              {label.getCard}
             </button>
           </Link>
-          <Link href="/nfc-setup">
+          <Link href={withLocalePath('/nfc-setup')}>
             <button style={{
               padding: '10px 20px',
               background: 'rgba(59, 130, 246, 0.15)',
@@ -880,14 +1027,14 @@ const Header: React.FC<HeaderProps> = ({ onScrollToFeatures }) => {
               e.currentTarget.style.background = 'rgba(59, 130, 246, 0.15)';
             }}
             >
-              ⬇ NFC Setup
+              {label.nfcSetup}
             </button>
           </Link>
 
           {/* Auth Buttons */}
           {isLoggedIn ? (
             <>
-              <Link href="/dashboard">
+              <Link href={withLocalePath('/dashboard')}>
                 <button style={{
                   padding: '10px 20px',
                   background: 'rgba(59, 130, 246, 0.15)',
@@ -911,7 +1058,7 @@ const Header: React.FC<HeaderProps> = ({ onScrollToFeatures }) => {
                   e.currentTarget.style.transform = 'translateY(0)';
                 }}
                 >
-                  Dashboard
+                  {label.dashboard}
                 </button>
               </Link>
               <button
@@ -934,11 +1081,11 @@ const Header: React.FC<HeaderProps> = ({ onScrollToFeatures }) => {
                   e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)';
                 }}
               >
-                Logout
+                {label.logout}
               </button>
             </>
           ) : (
-            <Link href="/login">
+            <Link href={withLocalePath('/login')}>
               <button style={{
                 padding: '10px 24px',
                 background: 'linear-gradient(135deg, #3B82F6, #6366F1)',
@@ -960,11 +1107,11 @@ const Header: React.FC<HeaderProps> = ({ onScrollToFeatures }) => {
                 e.currentTarget.style.boxShadow = '0 2px 10px rgba(59, 130, 246, 0.3)';
               }}
               >
-                Login
+                {label.login}
               </button>
             </Link>
           )}
-          <Link href="/cart">
+          <Link href={withLocalePath('/cart')}>
             <div className="cart">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M7 18c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12L8.1 13h7.45c.75 0 1.41-.41 1.75-1.03L21.7 4H5.21l-.94-2H1zm16 16c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
@@ -993,7 +1140,7 @@ const Header: React.FC<HeaderProps> = ({ onScrollToFeatures }) => {
               background: 'transparent'
             }}
           >
-            Features
+            {label.features}
           </div>
           <div 
             className="mobile-nav-item mobile-nav-uniform"
@@ -1012,10 +1159,10 @@ const Header: React.FC<HeaderProps> = ({ onScrollToFeatures }) => {
               background: 'transparent'
             }}
           >
-            Products
+            {label.products}
           </div>
           <Link 
-            href="/about" 
+            href={withLocalePath('/about')} 
             className="mobile-nav-item mobile-nav-uniform"
             style={{
               display: 'block',
@@ -1032,10 +1179,10 @@ const Header: React.FC<HeaderProps> = ({ onScrollToFeatures }) => {
               background: 'transparent'
             }}
           >
-            About Us
+            {label.about}
           </Link>
           <Link 
-            href="/blog" 
+            href={withLocalePath('/blog')} 
             className="mobile-nav-item mobile-nav-uniform"
             style={{
               display: 'block',
@@ -1052,10 +1199,10 @@ const Header: React.FC<HeaderProps> = ({ onScrollToFeatures }) => {
               background: 'transparent'
             }}
           >
-            Blog
+            {label.blog}
           </Link>
           <Link 
-            href="/contact" 
+            href={withLocalePath('/contact')} 
             className="mobile-nav-item mobile-nav-uniform"
             style={{
               display: 'block',
@@ -1072,10 +1219,10 @@ const Header: React.FC<HeaderProps> = ({ onScrollToFeatures }) => {
               background: 'transparent'
             }}
           >
-            Contact
+            {label.contact}
           </Link>
           <Link 
-            href="/nfc-access"
+            href={withLocalePath('/nfc-access')}
             className="mobile-nav-item mobile-nav-uniform"
             style={{
               display: 'block',
@@ -1092,10 +1239,10 @@ const Header: React.FC<HeaderProps> = ({ onScrollToFeatures }) => {
               background: 'linear-gradient(90deg, rgba(76, 175, 80, 0.15), rgba(0, 59, 252, 0.15))'
             }}
           >
-            🔐 Get NFC Card
+            {label.getCard}
           </Link>
           <Link 
-            href="/nfc-setup"
+            href={withLocalePath('/nfc-setup')}
             className="mobile-nav-item mobile-nav-uniform"
             style={{
               display: 'block',
@@ -1112,10 +1259,10 @@ const Header: React.FC<HeaderProps> = ({ onScrollToFeatures }) => {
               background: 'transparent'
             }}
           >
-            ⬇ NFC Setup & Download
+            {label.nfcSetupDownload}
           </Link>
           <Link 
-            href="/academy" 
+            href={withLocalePath('/academy')} 
             className="mobile-nav-item mobile-nav-uniform"
             style={{
               display: 'block',
@@ -1132,13 +1279,13 @@ const Header: React.FC<HeaderProps> = ({ onScrollToFeatures }) => {
               background: 'transparent'
             }}
           >
-            Academy
+            {label.academy}
           </Link>
           {/* Auth buttons in mobile nav */}
           {isLoggedIn ? (
             <>
               <Link 
-                href="/dashboard"
+                href={withLocalePath('/dashboard')}
                 className="mobile-nav-item mobile-nav-uniform"
                 style={{
                   display: 'block',
@@ -1155,7 +1302,7 @@ const Header: React.FC<HeaderProps> = ({ onScrollToFeatures }) => {
                   background: 'rgba(59, 130, 246, 0.1)'
                 }}
               >
-                📊 Dashboard
+                📊 {label.dashboard}
               </Link>
               <div
                 className="mobile-nav-item mobile-nav-uniform"
@@ -1175,12 +1322,12 @@ const Header: React.FC<HeaderProps> = ({ onScrollToFeatures }) => {
                   background: 'rgba(239, 68, 68, 0.1)'
                 }}
               >
-                🚪 Logout
+                🚪 {label.logout}
               </div>
             </>
           ) : (
             <Link 
-              href="/login"
+              href={withLocalePath('/login')}
               className="mobile-nav-item mobile-nav-uniform"
               style={{
                 display: 'block',
@@ -1197,7 +1344,7 @@ const Header: React.FC<HeaderProps> = ({ onScrollToFeatures }) => {
                 background: 'linear-gradient(90deg, rgba(59, 130, 246, 0.15), rgba(99, 102, 241, 0.15))'
               }}
             >
-              🔑 Login
+              🔑 {label.login}
             </Link>
           )}
         </div>

@@ -1,12 +1,26 @@
 'use client';
 
 import React from 'react';
+import { useLocale } from 'next-intl';
 
 interface CTASectionProps {
   onDownloadApp?: () => void;
 }
 
 const CTASection: React.FC<CTASectionProps> = ({ onDownloadApp }) => {
+  const locale = useLocale();
+  const copyByLocale = {
+    en: { label: 'DOWNLOAD APP', title: 'Take Control of Your Crypto Security Today', description: 'Start protecting your assets with the safest and simplest cold wallet solution — secure, private, and built for peace of mind.', button: 'Download App' },
+    de: { label: 'APP HERUNTERLADEN', title: 'Übernimm heute die Kontrolle über deine Krypto-Sicherheit', description: 'Schütze deine Assets mit einer sicheren und einfachen Cold-Wallet-Lösung – privat, zuverlässig und beruhigend.', button: 'App herunterladen' },
+    zh: { label: '下载应用', title: '立即掌控你的加密资产安全', description: '使用安全且易用的冷钱包方案保护你的资产——安全、私密、安心。', button: '下载应用' },
+    ar: { label: 'تحميل التطبيق', title: 'تحكّم في أمان أصولك الرقمية اليوم', description: 'ابدأ حماية أصولك بأبسط وأكثر حلول المحافظ الباردة أمانًا — خاصة وآمنة ومصممة لراحة البال.', button: 'تحميل التطبيق' },
+    ru: { label: 'СКАЧАТЬ ПРИЛОЖЕНИЕ', title: 'Возьмите безопасность криптоактивов под контроль уже сегодня', description: 'Защитите активы с самым безопасным и простым cold wallet решением — приватно и надежно.', button: 'Скачать приложение' },
+    th: { label: 'ดาวน์โหลดแอป', title: 'ควบคุมความปลอดภัยคริปโตของคุณได้แล้ววันนี้', description: 'เริ่มปกป้องสินทรัพย์ของคุณด้วยโซลูชัน Cold Wallet ที่ปลอดภัยและใช้งานง่ายที่สุด', button: 'ดาวน์โหลดแอป' },
+    es: { label: 'DESCARGAR APP', title: 'Toma el control de tu seguridad cripto hoy', description: 'Protege tus activos con la solución de cold wallet más segura y simple: privada, segura y confiable.', button: 'Descargar App' },
+    fr: { label: 'TÉLÉCHARGER L’APP', title: 'Prenez le contrôle de votre sécurité crypto dès aujourd’hui', description: 'Protégez vos actifs avec une solution de cold wallet sûre et simple — privée et conçue pour la tranquillité.', button: 'Télécharger l’app' }
+  } as const;
+
+  const copy = copyByLocale[locale as keyof typeof copyByLocale] ?? copyByLocale.en;
   return (
     <>
       <style jsx>{`
@@ -171,16 +185,16 @@ const CTASection: React.FC<CTASectionProps> = ({ onDownloadApp }) => {
             <div className="cta-card">
               <div className="cta-content">
                 <h3 className="cta-label">
-                  DOWNLOAD APP
+                  {copy.label}
                 </h3>
                 <h2 className="cta-title">
-                  Take Control of Your Crypto Security Today
+                  {copy.title}
                 </h2>
                 <p className="cta-description">
-                  Start protecting your assets with the safest and simplest cold wallet solution — secure, private, and built for peace of mind.
+                  {copy.description}
                 </p>
                 <button className="cta-button" onClick={onDownloadApp}>
-                  Download App
+                  {copy.button}
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M12 17V3" />
                     <path d="m6 11 6 6 6-6" />

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useLocale } from 'next-intl';
 
 interface Step {
   icon: string;
@@ -14,24 +15,97 @@ interface HowItWorksSectionProps {
 }
 
 const HowItWorksSection: React.FC<HowItWorksSectionProps> = ({ steps }) => {
+  const locale = useLocale();
+
+  const copyByLocale = {
+    en: {
+      label: 'HOW IT WORKS',
+      title: 'How Our Summit Cold Wallet Works',
+      subtitle: 'From setup to secure storage, every step is designed to make protecting and accessing your crypto effortless and worry-free.',
+      steps: [
+        { icon: '💼', number: '01', title: 'Set Up Your Wallet', description: 'Download, create your vault, and secure it with a recovery phrase—ready in minutes.' },
+        { icon: '🔒', number: '02', title: 'Store Safely', description: 'Move your crypto into ultra-secure cold storage, protected from online threats.' },
+        { icon: '💳', number: '03', title: 'Access and Manage Anytime', description: 'Easily check balances, track assets, and make transactions when needed.' }
+      ]
+    },
+    zh: {
+      label: '工作原理', title: 'Summit 冷钱包如何工作', subtitle: '从设置到安全存储，每一步都让保护和访问加密资产更轻松。',
+      steps: [
+        { icon: '💼', number: '01', title: '设置您的钱包', description: '下载应用、创建保险库并设置助记词，几分钟即可完成。' },
+        { icon: '🔒', number: '02', title: '安全存储', description: '将加密资产转入超安全冷存储，远离在线威胁。' },
+        { icon: '💳', number: '03', title: '随时访问与管理', description: '轻松查看余额、跟踪资产并在需要时完成交易。' }
+      ]
+    },
+    ar: {
+      label: 'آلية العمل', title: 'كيف تعمل محفظة Summit الباردة', subtitle: 'من الإعداد إلى التخزين الآمن، كل خطوة مصممة لحماية أصولك والوصول إليها بسهولة.',
+      steps: [
+        { icon: '💼', number: '01', title: 'إعداد المحفظة', description: 'حمّل التطبيق وأنشئ الخزنة وأمّنها بعبارة الاسترداد خلال دقائق.' },
+        { icon: '🔒', number: '02', title: 'تخزين آمن', description: 'انقل عملاتك إلى تخزين بارد فائق الأمان ومحمي من تهديدات الإنترنت.' },
+        { icon: '💳', number: '03', title: 'الوصول والإدارة في أي وقت', description: 'تحقق من الأرصدة وتابع الأصول ونفذ المعاملات بسهولة عند الحاجة.' }
+      ]
+    },
+    ru: {
+      label: 'КАК ЭТО РАБОТАЕТ', title: 'Как работает холодный кошелек Summit', subtitle: 'От настройки до безопасного хранения — каждый шаг делает защиту и доступ к крипте простыми.',
+      steps: [
+        { icon: '💼', number: '01', title: 'Настройте кошелек', description: 'Скачайте приложение, создайте хранилище и защитите его фразой восстановления.' },
+        { icon: '🔒', number: '02', title: 'Храните безопасно', description: 'Переведите криптоактивы в холодное хранение, защищенное от онлайн-угроз.' },
+        { icon: '💳', number: '03', title: 'Доступ и управление в любое время', description: 'Легко проверяйте баланс, отслеживайте активы и совершайте операции.' }
+      ]
+    },
+    th: {
+      label: 'วิธีการทำงาน', title: 'Cold Wallet ของ Summit ทำงานอย่างไร', subtitle: 'ตั้งแต่การตั้งค่าไปจนถึงการเก็บอย่างปลอดภัย ทุกขั้นตอนออกแบบมาให้ใช้งานง่ายและไร้กังวล',
+      steps: [
+        { icon: '💼', number: '01', title: 'ตั้งค่าวอลเล็ตของคุณ', description: 'ดาวน์โหลด สร้าง vault และป้องกันด้วย recovery phrase ได้ในไม่กี่นาที' },
+        { icon: '🔒', number: '02', title: 'เก็บอย่างปลอดภัย', description: 'ย้ายคริปโตไปยัง cold storage ที่ปลอดภัยสูง ป้องกันภัยออนไลน์' },
+        { icon: '💳', number: '03', title: 'เข้าถึงและจัดการได้ทุกเวลา', description: 'ตรวจสอบยอด ติดตามสินทรัพย์ และทำธุรกรรมได้ง่ายเมื่อจำเป็น' }
+      ]
+    },
+    es: {
+      label: 'CÓMO FUNCIONA', title: 'Cómo funciona la cold wallet de Summit', subtitle: 'Desde la configuración hasta el almacenamiento seguro, cada paso está diseñado para facilitar tu experiencia.',
+      steps: [
+        { icon: '💼', number: '01', title: 'Configura tu wallet', description: 'Descarga, crea tu bóveda y protégela con frase de recuperación en minutos.' },
+        { icon: '🔒', number: '02', title: 'Almacena con seguridad', description: 'Mueve tu cripto a almacenamiento en frío protegido contra amenazas online.' },
+        { icon: '💳', number: '03', title: 'Accede y gestiona en cualquier momento', description: 'Consulta balances, sigue tus activos y realiza transacciones cuando lo necesites.' }
+      ]
+    },
+    fr: {
+      label: 'COMMENT ÇA MARCHE', title: 'Comment fonctionne le cold wallet Summit', subtitle: 'De la configuration au stockage sécurisé, chaque étape est pensée pour une protection simple.',
+      steps: [
+        { icon: '💼', number: '01', title: 'Configurez votre wallet', description: 'Téléchargez, créez votre coffre et sécurisez-le avec une phrase de récupération.' },
+        { icon: '🔒', number: '02', title: 'Stockez en sécurité', description: 'Déplacez vos cryptos vers un stockage à froid ultra-sécurisé.' },
+        { icon: '💳', number: '03', title: 'Accédez et gérez à tout moment', description: 'Consultez vos soldes, suivez vos actifs et effectuez des transactions facilement.' }
+      ]
+    },
+    de: {
+      label: 'SO FUNKTIONIERT ES', title: 'So funktioniert die Summit Cold Wallet', subtitle: 'Von der Einrichtung bis zur sicheren Verwahrung ist jeder Schritt auf einfache Nutzung ausgelegt.',
+      steps: [
+        { icon: '💼', number: '01', title: 'Wallet einrichten', description: 'App herunterladen, Tresor erstellen und mit Recovery Phrase absichern.' },
+        { icon: '🔒', number: '02', title: 'Sicher speichern', description: 'Übertrage deine Krypto in hochsicheres Cold Storage.' },
+        { icon: '💳', number: '03', title: 'Jederzeit zugreifen & verwalten', description: 'Prüfe Guthaben, verfolge Assets und führe Transaktionen aus.' }
+      ]
+    }
+  } as const;
+
+  const t = copyByLocale[locale as keyof typeof copyByLocale] ?? copyByLocale.en;
+
   const defaultSteps = [
     {
-      icon: '💼',
-      number: '01',
-      title: 'Set Up Your Wallet',
-      description: 'Download, create your vault, and secure it with a recovery phrase—ready in minutes.'
+      icon: t.steps[0].icon,
+      number: t.steps[0].number,
+      title: t.steps[0].title,
+      description: t.steps[0].description
     },
     {
-      icon: '🔒',
-      number: '02',
-      title: 'Store Safely',
-      description: 'Move your crypto into ultra-secure cold storage, protected from online threats.'
+      icon: t.steps[1].icon,
+      number: t.steps[1].number,
+      title: t.steps[1].title,
+      description: t.steps[1].description
     },
     {
-      icon: '💳',
-      number: '03',
-      title: 'Access and Manage Anytime',
-      description: 'Easily check balances, track assets, and make transactions when needed.'
+      icon: t.steps[2].icon,
+      number: t.steps[2].number,
+      title: t.steps[2].title,
+      description: t.steps[2].description
     }
   ];
 
@@ -239,9 +313,9 @@ const HowItWorksSection: React.FC<HowItWorksSectionProps> = ({ steps }) => {
 
       <section className="how-it-works-section">
         <div className="container">
-          <div className="section-label">HOW IT WORKS</div>
-          <h2 className="main-title">How Our Summit Cold Wallet Works</h2>
-          <p className="subtitle">From setup to secure storage, every step is designed to make protecting and accessing your crypto effortless and worry-free.</p>
+          <div className="section-label">{t.label}</div>
+          <h2 className="main-title">{t.title}</h2>
+          <p className="subtitle">{t.subtitle}</p>
           
           <div className="steps-grid">
             {displaySteps.map((step, index) => (

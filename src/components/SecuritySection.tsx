@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useLocale } from 'next-intl';
 
 interface SecurityFeature {
   icon: string;
@@ -14,28 +15,109 @@ interface SecuritySectionProps {
 }
 
 const SecuritySection: React.FC<SecuritySectionProps> = ({ features }) => {
+  const locale = useLocale();
+
+  const copyByLocale = {
+    en: {
+      label: 'SECURITY ASSURANCE',
+      title: 'Built for Your Peace of Mind',
+      subtitle: 'Your assets deserve the highest level of security. Our cold wallet combines offline storage, military-grade encryption.',
+      features: [
+        { icon: '🔐', title: 'End-to-End Encryption', description: 'Every transaction and key is fully encrypted, ensuring only you have access.', visual: '🔒' },
+        { icon: '🌐', title: 'Never Connected to the Internet', description: 'Offline by design—immune to online hacks, phishing, and malware attacks.', visual: 'internet' },
+        { icon: '📂', title: 'Open-Source', description: 'Transparent and independently verified for trust, reliability, and accountability.' },
+        { icon: '🏆', title: 'Unmatched protection', description: 'Unlike hot wallets, cold storage eliminates online exposure, giving you unmatched protection.' }
+      ]
+    },
+    zh: {
+      label: '安全保障', title: '为您的安心而打造', subtitle: '您的资产值得最高级别的安全。我们的冷钱包结合离线存储与军工级加密。',
+      features: [
+        { icon: '🔐', title: '端到端加密', description: '每一笔交易与密钥都被完整加密，确保仅您可访问。', visual: '🔒' },
+        { icon: '🌐', title: '永不联网', description: '离线设计，天然免疫网络黑客、钓鱼和恶意软件攻击。', visual: 'internet' },
+        { icon: '📂', title: '开源透明', description: '透明可审计，经过独立验证，值得信赖。' },
+        { icon: '🏆', title: '无可比拟的防护', description: '不同于热钱包，冷存储可消除在线暴露风险。' }
+      ]
+    },
+    ar: {
+      label: 'ضمان الأمان', title: 'مصمم لطمأنينتك', subtitle: 'أصولك تستحق أعلى مستويات الأمان. تجمع محفظتنا بين التخزين دون اتصال وتشفير بمعايير عسكرية.',
+      features: [
+        { icon: '🔐', title: 'تشفير شامل من طرف إلى طرف', description: 'كل معاملة ومفتاح مشفر بالكامل لضمان وصولك أنت فقط.', visual: '🔒' },
+        { icon: '🌐', title: 'غير متصل بالإنترنت أبدًا', description: 'مصمم للعمل دون اتصال ومحصّن ضد الاختراق والتصيد والبرمجيات الخبيثة.', visual: 'internet' },
+        { icon: '📂', title: 'مفتوح المصدر', description: 'شفاف ومُراجع بشكل مستقل لضمان الثقة والاعتمادية.', },
+        { icon: '🏆', title: 'حماية لا مثيل لها', description: 'بعكس المحافظ الساخنة، التخزين البارد يقلل التعرض للهجمات عبر الإنترنت.' }
+      ]
+    },
+    ru: {
+      label: 'ГАРАНТИЯ БЕЗОПАСНОСТИ', title: 'Создано для вашего спокойствия', subtitle: 'Ваши активы заслуживают максимальной защиты. Cold wallet сочетает офлайн-хранение и военное шифрование.',
+      features: [
+        { icon: '🔐', title: 'Сквозное шифрование', description: 'Каждая транзакция и ключ полностью зашифрованы.', visual: '🔒' },
+        { icon: '🌐', title: 'Никогда не подключается к интернету', description: 'Офлайн по архитектуре — защита от хакеров, фишинга и вредоносного ПО.', visual: 'internet' },
+        { icon: '📂', title: 'Открытый исходный код', description: 'Прозрачно и независимо проверено на надежность.' },
+        { icon: '🏆', title: 'Максимальная защита', description: 'В отличие от горячих кошельков, cold storage исключает онлайн-экспозицию.' }
+      ]
+    },
+    th: {
+      label: 'ความมั่นใจด้านความปลอดภัย', title: 'สร้างมาเพื่อความสบายใจของคุณ', subtitle: 'สินทรัพย์ของคุณสมควรได้รับความปลอดภัยระดับสูงสุด ด้วยการเก็บแบบออฟไลน์และการเข้ารหัสระดับทหาร',
+      features: [
+        { icon: '🔐', title: 'การเข้ารหัสแบบ End-to-End', description: 'ทุกธุรกรรมและกุญแจถูกเข้ารหัสทั้งหมด มีเพียงคุณที่เข้าถึงได้', visual: '🔒' },
+        { icon: '🌐', title: 'ไม่เชื่อมต่ออินเทอร์เน็ต', description: 'ออกแบบให้ออฟไลน์ ป้องกันแฮก ฟิชชิง และมัลแวร์', visual: 'internet' },
+        { icon: '📂', title: 'โอเพนซอร์ส', description: 'โปร่งใสและผ่านการตรวจสอบอิสระ เพื่อความเชื่อมั่น', },
+        { icon: '🏆', title: 'การปกป้องที่เหนือกว่า', description: 'Cold storage ลดความเสี่ยงออนไลน์ได้มากกว่ากระเป๋าแบบ hot wallet' }
+      ]
+    },
+    es: {
+      label: 'GARANTÍA DE SEGURIDAD', title: 'Diseñado para tu tranquilidad', subtitle: 'Tus activos merecen el máximo nivel de seguridad con almacenamiento offline y cifrado de grado militar.',
+      features: [
+        { icon: '🔐', title: 'Cifrado de extremo a extremo', description: 'Cada transacción y clave está completamente cifrada.', visual: '🔒' },
+        { icon: '🌐', title: 'Nunca conectado a internet', description: 'Diseño offline inmune a hacks, phishing y malware.', visual: 'internet' },
+        { icon: '📂', title: 'Código abierto', description: 'Transparente y verificado de forma independiente.' },
+        { icon: '🏆', title: 'Protección incomparable', description: 'El cold storage elimina la exposición online de las hot wallets.' }
+      ]
+    },
+    fr: {
+      label: 'ASSURANCE SÉCURITÉ', title: 'Conçu pour votre tranquillité', subtitle: 'Vos actifs méritent le plus haut niveau de sécurité avec stockage hors ligne et chiffrement avancé.',
+      features: [
+        { icon: '🔐', title: 'Chiffrement de bout en bout', description: 'Chaque transaction et clé est entièrement chiffrée.', visual: '🔒' },
+        { icon: '🌐', title: 'Jamais connecté à internet', description: 'Conception hors ligne, immunisée contre hacks, phishing et malwares.', visual: 'internet' },
+        { icon: '📂', title: 'Open source', description: 'Transparent et vérifié indépendamment pour la fiabilité.' },
+        { icon: '🏆', title: 'Protection inégalée', description: 'Le cold storage élimine l’exposition en ligne des hot wallets.' }
+      ]
+    },
+    de: {
+      label: 'SICHERHEITSGARANTIE', title: 'Für deine Sicherheit entwickelt', subtitle: 'Deine Assets verdienen höchste Sicherheit mit Offline-Speicher und starker Verschlüsselung.',
+      features: [
+        { icon: '🔐', title: 'Ende-zu-Ende-Verschlüsselung', description: 'Jede Transaktion und jeder Schlüssel ist vollständig verschlüsselt.', visual: '🔒' },
+        { icon: '🌐', title: 'Niemals mit dem Internet verbunden', description: 'Offline-Design schützt vor Hacks, Phishing und Malware.', visual: 'internet' },
+        { icon: '📂', title: 'Open Source', description: 'Transparent und unabhängig geprüft für maximale Vertrauenswürdigkeit.' },
+        { icon: '🏆', title: 'Unübertroffener Schutz', description: 'Cold Storage eliminiert Online-Exposition im Gegensatz zu Hot Wallets.' }
+      ]
+    }
+  } as const;
+
+  const t = copyByLocale[locale as keyof typeof copyByLocale] ?? copyByLocale.en;
+
   const defaultFeatures = [
     {
-      icon: '🔐',
-      title: 'End-to-End Encryption',
-      description: 'Every transaction and key is fully encrypted, ensuring only you have access.',
-      visual: '🔒'
+      icon: t.features[0].icon,
+      title: t.features[0].title,
+      description: t.features[0].description,
+      visual: t.features[0].visual
     },
     {
-      icon: '🌐',
-      title: 'Never Connected to the Internet',
-      description: 'Offline by design—immune to online hacks, phishing, and malware attacks.',
-      visual: 'internet'
+      icon: t.features[1].icon,
+      title: t.features[1].title,
+      description: t.features[1].description,
+      visual: t.features[1].visual
     },
     {
-      icon: '📂',
-      title: 'Open-Source',
-      description: 'Transparent and independently verified for trust, reliability, and accountability.'
+      icon: t.features[2].icon,
+      title: t.features[2].title,
+      description: t.features[2].description
     },
     {
-      icon: '🏆',
-      title: 'Unmatched protection',
-      description: 'Unlike hot wallets, cold storage eliminates online exposure, giving you unmatched protection.'
+      icon: t.features[3].icon,
+      title: t.features[3].title,
+      description: t.features[3].description
     }
   ];
 
@@ -289,9 +371,9 @@ const SecuritySection: React.FC<SecuritySectionProps> = ({ features }) => {
 
       <section className="security-section">
         <div className="container">
-          <div className="section-label">SECURITY ASSURANCE</div>
-          <h2 className="main-title">Built for Your Peace of Mind</h2>
-          <p className="subtitle">Your assets deserve the highest level of security. Our cold wallet combines offline storage, military-grade encryption.</p>
+          <div className="section-label">{t.label}</div>
+          <h2 className="main-title">{t.title}</h2>
+          <p className="subtitle">{t.subtitle}</p>
           
           <div className="security-grid">
             {displayFeatures.map((feature, index) => (

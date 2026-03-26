@@ -2,8 +2,101 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useLocale } from 'next-intl';
 
 const Footer: React.FC = () => {
+  const locale = useLocale();
+
+  const withLocalePath = (path: string) => {
+    if (locale === 'en') return path;
+    return `/${locale}${path === '/' ? '' : path}`;
+  };
+
+  const footerByLocale = {
+    en: {
+      description: 'Securely Protecting Your Digital Wealth, Today And Tomorrow.',
+      business: 'BUSINESS',
+      about: 'ABOUT',
+      feature: 'FEATURE',
+      blogs: 'BLOGS',
+      copyright: 'COPYRIGHT 2025, ALL RIGHT RESERVED',
+      privacy: 'PRIVACY',
+      terms: 'TERMS'
+    },
+    zh: {
+      description: '今天与未来，安全守护您的数字财富。',
+      business: '业务',
+      about: '关于',
+      feature: '功能',
+      blogs: '博客',
+      copyright: '版权所有 2025，保留所有权利',
+      privacy: '隐私',
+      terms: '条款'
+    },
+    ar: {
+      description: 'نحمي ثروتك الرقمية بأمان، اليوم وغدًا.',
+      business: 'الأعمال',
+      about: 'من نحن',
+      feature: 'الميزات',
+      blogs: 'المدونة',
+      copyright: 'حقوق النشر 2025، جميع الحقوق محفوظة',
+      privacy: 'الخصوصية',
+      terms: 'الشروط'
+    },
+    ru: {
+      description: 'Надёжная защита вашего цифрового капитала сегодня и завтра.',
+      business: 'БИЗНЕС',
+      about: 'О НАС',
+      feature: 'ФУНКЦИИ',
+      blogs: 'БЛОГ',
+      copyright: '© 2025, ВСЕ ПРАВА ЗАЩИЩЕНЫ',
+      privacy: 'КОНФИДЕНЦИАЛЬНОСТЬ',
+      terms: 'УСЛОВИЯ'
+    },
+    th: {
+      description: 'ปกป้องความมั่งคั่งดิจิทัลของคุณอย่างปลอดภัย วันนี้และวันข้างหน้า',
+      business: 'ธุรกิจ',
+      about: 'เกี่ยวกับ',
+      feature: 'ฟีเจอร์',
+      blogs: 'บล็อก',
+      copyright: 'ลิขสิทธิ์ 2025 สงวนลิขสิทธิ์ทั้งหมด',
+      privacy: 'ความเป็นส่วนตัว',
+      terms: 'ข้อกำหนด'
+    },
+    es: {
+      description: 'Protegiendo tu riqueza digital de forma segura, hoy y mañana.',
+      business: 'NEGOCIO',
+      about: 'ACERCA DE',
+      feature: 'FUNCIONES',
+      blogs: 'BLOGS',
+      copyright: 'COPYRIGHT 2025, TODOS LOS DERECHOS RESERVADOS',
+      privacy: 'PRIVACIDAD',
+      terms: 'TÉRMINOS'
+    },
+    fr: {
+      description: 'Nous protégeons votre patrimoine numérique, aujourd’hui et demain.',
+      business: 'BUSINESS',
+      about: 'À PROPOS',
+      feature: 'FONCTIONNALITÉS',
+      blogs: 'BLOGS',
+      copyright: 'COPYRIGHT 2025, TOUS DROITS RÉSERVÉS',
+      privacy: 'CONFIDENTIALITÉ',
+      terms: 'CONDITIONS'
+    },
+    de: {
+      description: 'Sicherer Schutz Ihres digitalen Vermögens – heute und morgen.',
+      business: 'BUSINESS',
+      about: 'ÜBER UNS',
+      feature: 'FUNKTIONEN',
+      blogs: 'BLOG',
+      copyright: 'COPYRIGHT 2025, ALLE RECHTE VORBEHALTEN',
+      privacy: 'DATENSCHUTZ',
+      terms: 'BEDINGUNGEN'
+    }
+  } as const;
+
+  const t = footerByLocale[locale as keyof typeof footerByLocale] ?? footerByLocale.en;
+
   return (
     <>
       <style jsx>{`
@@ -221,22 +314,22 @@ const Footer: React.FC = () => {
                 <span className="brand-name">SUMMIT</span>
               </div>
               <p className="brand-description">
-                Securely Protecting Your Digital Wealth, Today And Tomorrow.
+                {t.description}
               </p>
             </div>
             <nav className="footer-nav">
-              <a href="#">BUSINESS</a>
-              <a href="#">ABOUT</a>
-              <a href="#">FEATURE</a>
-              <Link href="/blog">BLOGS</Link>
+              <a href="#">{t.business}</a>
+              <a href="#">{t.about}</a>
+              <a href="#">{t.feature}</a>
+              <Link href={withLocalePath('/blog')}>{t.blogs}</Link>
             </nav>
           </div>
           
           <div className="footer-bottom">
-            <p className="copyright">COPYRIGHT 2025, ALL RIGHT RESERVED</p>
+            <p className="copyright">{t.copyright}</p>
             <div className="footer-links">
-              <a href="#">PRIVACY</a>
-              <a href="#">TERMS</a>
+              <a href="#">{t.privacy}</a>
+              <a href="#">{t.terms}</a>
             </div>
             <div className="social-links">
               <a href="#" className="social-link">

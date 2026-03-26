@@ -1,84 +1,203 @@
 'use client';
 
 import { useState } from 'react';
+import { useLocale } from 'next-intl';
 import Link from 'next/link';
 // import StatsTicker from '@/components/StatsTicker';
 import Header from '@/components/Header';
 import StatsTicker from '@/components/StatsTicker';
 export default function AboutPage() {
+  const locale = useLocale();
   const [activeFaq, setActiveFaq] = useState<number | null>(0);
-  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
   const toggleFaq = (index: number) => {
     setActiveFaq(activeFaq === index ? null : index);
   };
 
+  const copyByLocale = {
+    en: {
+      aboutLabel: 'ABOUT US',
+      heroTitleLine1: 'Your Trusted Partner in',
+      heroTitleLine2: 'Secure Digital Finance',
+      heroSubtitle:
+        "We're dedicated to providing the most secure and user-friendly cold storage solution for your digital assets. Our mission is to make crypto security accessible to everyone.",
+      getStarted: 'Get Started',
+      backHome: 'Back to Home',
+      visionLabel: 'Our Vision',
+      visionTitle: 'Driven by Purpose, Built on Trust',
+      visionSubtitle: 'We combine innovation, security, and customer-first values to redefine how you interact with your digital assets.',
+      values: [
+        { title: 'Innovation at Core', description: 'We leverage cutting-edge technology to deliver simple yet powerful solutions.' },
+        { title: 'Security First', description: 'Protecting your assets is our top priority, with industry-grade safeguards.' },
+        { title: 'Customer-Centered', description: 'Every feature is designed to make your journey seamless and stress-free.' }
+      ],
+      faqLabel: 'FAQ',
+      faqTitle: "Got Questions? We've Got Answers.",
+      faqSubtitle: 'Everything you need to know about keeping your assets safe, simple, and secure with our cold wallet',
+      faqs: [
+        {
+          question: 'What is a cold wallet and why should I use it?',
+          answer:
+            'A cold wallet is a secure offline storage solution for your digital assets. Unlike hot wallets connected to the internet, a cold wallet keeps your funds offline for maximum protection.'
+        },
+        { question: 'How do I set up my cold wallet?', answer: 'Download the app, create your secure vault, and follow the setup flow. It only takes a few minutes.' },
+        { question: 'Can I recover my funds if I lose my device?', answer: 'Yes. Your recovery phrase lets you restore access on any compatible device. Keep it safe and private.' },
+        { question: 'What types of assets are supported?', answer: 'Our cold wallet supports a wide range of cryptocurrencies and digital assets.' },
+        { question: 'How is a cold wallet different from an exchange wallet?', answer: 'Cold wallets keep assets offline and give you direct control of private keys, unlike exchange wallets.' }
+      ],
+      downloadLabel: 'DOWNLOAD APP',
+      downloadTitle: 'Take Control of Your Crypto Security Today',
+      downloadSubtitle: 'Start protecting your assets with the safest and simplest cold wallet solution — secure, private, and built for peace of mind.',
+      downloadCta: 'Download App',
+      footerTagline: 'Securely Protecting Your Digital Wealth, Today And Tomorrow.',
+      footerBusiness: 'BUSINESS',
+      footerAbout: 'ABOUT',
+      footerFeature: 'FEATURE',
+      footerBlogs: 'BLOGS',
+      copyright: 'COPYRIGHT 2025, ALL RIGHT RESERVED'
+    },
+    zh: {
+      aboutLabel: '关于我们', heroTitleLine1: '您值得信赖的伙伴', heroTitleLine2: '安全数字金融', heroSubtitle: '我们致力于提供最安全、最易用的冷存储方案，让每个人都能轻松实现加密安全。', getStarted: '立即开始', backHome: '返回首页',
+      visionLabel: '我们的愿景', visionTitle: '以使命驱动，以信任为基石', visionSubtitle: '我们融合创新、安全与以用户为先的价值观，重塑您与数字资产的互动方式。',
+      values: [
+        { title: '创新为核', description: '我们采用前沿技术，打造简洁而强大的解决方案。' },
+        { title: '安全优先', description: '以行业级防护能力守护您的资产安全。' },
+        { title: '用户至上', description: '每个功能都旨在让您的体验更顺畅、无压力。' }
+      ],
+      faqLabel: '常见问题', faqTitle: '有疑问？我们为您解答。', faqSubtitle: '关于如何通过冷钱包安全、简单地管理资产，您需要了解的一切。',
+      faqs: [
+        { question: '什么是冷钱包，为什么要使用它？', answer: '冷钱包是一种离线存储方案，可最大化降低网络攻击风险。' },
+        { question: '如何设置冷钱包？', answer: '下载应用，创建保险库，按引导完成设置，仅需几分钟。' },
+        { question: '设备丢失后还能找回资金吗？', answer: '可以。通过助记词可在兼容设备上恢复访问。' },
+        { question: '支持哪些资产？', answer: '支持多种主流加密货币和数字资产。' },
+        { question: '冷钱包与交易所钱包有何不同？', answer: '冷钱包离线保存资产并由您掌握私钥，安全性更高。' }
+      ],
+      downloadLabel: '下载应用', downloadTitle: '立即掌控您的加密资产安全', downloadSubtitle: '采用安全、私密、易用的冷钱包方案，安心守护您的资产。', downloadCta: '下载应用',
+      footerTagline: '今天与未来，持续守护您的数字财富。', footerBusiness: '业务', footerAbout: '关于', footerFeature: '功能', footerBlogs: '博客', copyright: '版权所有 2025，保留所有权利'
+    },
+    ar: {
+      aboutLabel: 'من نحن', heroTitleLine1: 'شريكك الموثوق في', heroTitleLine2: 'التمويل الرقمي الآمن', heroSubtitle: 'نحن ملتزمون بتقديم أكثر حلول التخزين البارد أمانًا وسهولة لحماية أصولك الرقمية.', getStarted: 'ابدأ الآن', backHome: 'العودة للرئيسية',
+      visionLabel: 'رؤيتنا', visionTitle: 'مدفوعون بالهدف ومبنيون على الثقة', visionSubtitle: 'نجمع بين الابتكار والأمان ونهج العميل أولاً لإعادة تعريف تجربة الأصول الرقمية.',
+      values: [
+        { title: 'الابتكار في الجوهر', description: 'نوظف أحدث التقنيات لتقديم حلول بسيطة وقوية.' },
+        { title: 'الأمان أولاً', description: 'حماية أصولك هي أولويتنا القصوى بمعايير احترافية.' },
+        { title: 'العميل في المركز', description: 'كل ميزة صُممت لتجعل رحلتك سلسة وخالية من التعقيد.' }
+      ],
+      faqLabel: 'الأسئلة الشائعة', faqTitle: 'لديك أسئلة؟ لدينا الإجابات.', faqSubtitle: 'كل ما تحتاج معرفته للحفاظ على أصولك آمنة وبسيطة عبر محفظتنا الباردة.',
+      faqs: [
+        { question: 'ما هي المحفظة الباردة ولماذا أستخدمها؟', answer: 'المحفظة الباردة حل تخزين غير متصل بالإنترنت يوفر أعلى درجات الحماية.' },
+        { question: 'كيف أُعد محفظتي الباردة؟', answer: 'حمّل التطبيق، أنشئ خزنتك، واتبع خطوات الإعداد الإرشادية.' },
+        { question: 'هل يمكنني استعادة أموالي إذا فقدت جهازي؟', answer: 'نعم، يمكنك الاستعادة باستخدام عبارة الاسترداد على جهاز متوافق.' },
+        { question: 'ما أنواع الأصول المدعومة؟', answer: 'ندعم مجموعة واسعة من العملات الرقمية والأصول الرقمية.' },
+        { question: 'ما الفرق بين المحفظة الباردة ومحفظة المنصة؟', answer: 'المحفظة الباردة تحفظ الأصول دون اتصال وتمنحك تحكمًا كاملاً بالمفاتيح.' }
+      ],
+      downloadLabel: 'تحميل التطبيق', downloadTitle: 'تحكم اليوم في أمان أصولك الرقمية', downloadSubtitle: 'ابدأ بحماية أصولك عبر حل تخزين بارد آمن وخاص وسهل الاستخدام.', downloadCta: 'تحميل التطبيق',
+      footerTagline: 'نحمي ثروتك الرقمية بأمان اليوم وغدًا.', footerBusiness: 'الأعمال', footerAbout: 'حول', footerFeature: 'المزايا', footerBlogs: 'المدونة', copyright: 'حقوق النشر 2025، جميع الحقوق محفوظة'
+    },
+    ru: {
+      aboutLabel: 'О НАС', heroTitleLine1: 'Ваш надежный партнер в', heroTitleLine2: 'безопасных цифровых финансах', heroSubtitle: 'Мы создаем максимально безопасное и удобное решение холодного хранения для ваших активов.', getStarted: 'Начать', backHome: 'На главную',
+      visionLabel: 'Наша миссия', visionTitle: 'Цель, доверие и технология', visionSubtitle: 'Мы объединяем инновации, безопасность и клиентоориентированность.',
+      values: [
+        { title: 'Инновации в основе', description: 'Используем передовые технологии для простых и мощных решений.' },
+        { title: 'Безопасность прежде всего', description: 'Защита активов — наш главный приоритет.' },
+        { title: 'Ориентация на клиента', description: 'Каждая функция создана для удобного и спокойного опыта.' }
+      ],
+      faqLabel: 'FAQ', faqTitle: 'Есть вопросы? У нас есть ответы.', faqSubtitle: 'Всё о том, как хранить активы безопасно и просто с холодным кошельком.',
+      faqs: [
+        { question: 'Что такое холодный кошелек и зачем он нужен?', answer: 'Это офлайн-хранилище для активов с максимальной защитой от сетевых угроз.' },
+        { question: 'Как настроить холодный кошелек?', answer: 'Скачайте приложение, создайте хранилище и пройдите пошаговую настройку.' },
+        { question: 'Можно ли восстановить доступ при потере устройства?', answer: 'Да, восстановление доступно через seed-фразу.' },
+        { question: 'Какие активы поддерживаются?', answer: 'Поддерживается широкий список криптовалют и цифровых активов.' },
+        { question: 'Чем отличается от биржевого кошелька?', answer: 'Холодный кошелек хранит активы офлайн и дает полный контроль над ключами.' }
+      ],
+      downloadLabel: 'СКАЧАТЬ ПРИЛОЖЕНИЕ', downloadTitle: 'Возьмите безопасность криптоактивов под контроль', downloadSubtitle: 'Начните защищать активы с самым безопасным и простым cold wallet решением.', downloadCta: 'Скачать приложение',
+      footerTagline: 'Надежная защита вашего цифрового капитала сегодня и завтра.', footerBusiness: 'БИЗНЕС', footerAbout: 'О НАС', footerFeature: 'ФУНКЦИИ', footerBlogs: 'БЛОГ', copyright: '© 2025, ВСЕ ПРАВА ЗАЩИЩЕНЫ'
+    },
+    th: {
+      aboutLabel: 'เกี่ยวกับเรา', heroTitleLine1: 'พาร์ตเนอร์ที่คุณไว้วางใจใน', heroTitleLine2: 'การเงินดิจิทัลที่ปลอดภัย', heroSubtitle: 'เรามุ่งมั่นมอบโซลูชัน cold storage ที่ปลอดภัยและใช้งานง่ายที่สุดสำหรับสินทรัพย์ดิจิทัลของคุณ', getStarted: 'เริ่มต้น', backHome: 'กลับหน้าแรก',
+      visionLabel: 'วิสัยทัศน์ของเรา', visionTitle: 'ขับเคลื่อนด้วยเป้าหมาย สร้างบนความไว้วางใจ', visionSubtitle: 'เราผสานนวัตกรรม ความปลอดภัย และแนวคิดลูกค้ามาก่อน เพื่อยกระดับประสบการณ์สินทรัพย์ดิจิทัล',
+      values: [
+        { title: 'นวัตกรรมเป็นหัวใจ', description: 'เราใช้เทคโนโลยีล้ำสมัยเพื่อโซลูชันที่เรียบง่ายแต่ทรงพลัง' },
+        { title: 'ความปลอดภัยมาก่อน', description: 'การปกป้องสินทรัพย์ของคุณคือสิ่งสำคัญที่สุดของเรา' },
+        { title: 'ยึดลูกค้าเป็นศูนย์กลาง', description: 'ทุกฟีเจอร์ถูกออกแบบให้ใช้งานได้ลื่นไหลและไร้ความกังวล' }
+      ],
+      faqLabel: 'คำถามที่พบบ่อย', faqTitle: 'มีคำถาม? เรามีคำตอบ', faqSubtitle: 'ทุกสิ่งที่คุณต้องรู้ในการดูแลสินทรัพย์ให้ปลอดภัยด้วย cold wallet',
+      faqs: [
+        { question: 'Cold wallet คืออะไร และทำไมต้องใช้?', answer: 'Cold wallet คือการเก็บสินทรัพย์แบบออฟไลน์ ช่วยลดความเสี่ยงจากการโจมตีออนไลน์' },
+        { question: 'ตั้งค่า cold wallet อย่างไร?', answer: 'ดาวน์โหลดแอป สร้าง vault และทำตามขั้นตอนแนะนำ ใช้เวลาไม่นาน' },
+        { question: 'หากทำอุปกรณ์หายจะกู้คืนได้ไหม?', answer: 'ได้ คุณสามารถกู้คืนด้วย recovery phrase บนอุปกรณ์ที่รองรับ' },
+        { question: 'รองรับสินทรัพย์ประเภทใดบ้าง?', answer: 'รองรับคริปโตและสินทรัพย์ดิจิทัลหลายประเภท' },
+        { question: 'ต่างจากกระเป๋าใน Exchange อย่างไร?', answer: 'Cold wallet เก็บแบบออฟไลน์และให้คุณควบคุม private key เอง' }
+      ],
+      downloadLabel: 'ดาวน์โหลดแอป', downloadTitle: 'ควบคุมความปลอดภัยคริปโตของคุณตั้งแต่วันนี้', downloadSubtitle: 'เริ่มปกป้องสินทรัพย์ของคุณด้วยโซลูชัน cold wallet ที่ปลอดภัย เรียบง่าย และเป็นส่วนตัว', downloadCta: 'ดาวน์โหลดแอป',
+      footerTagline: 'ปกป้องความมั่งคั่งดิจิทัลของคุณอย่างมั่นคง วันนี้และวันหน้า', footerBusiness: 'ธุรกิจ', footerAbout: 'เกี่ยวกับ', footerFeature: 'ฟีเจอร์', footerBlogs: 'บล็อก', copyright: 'ลิขสิทธิ์ 2025 สงวนลิขสิทธิ์'
+    },
+    es: {
+      aboutLabel: 'SOBRE NOSOTROS', heroTitleLine1: 'Tu socio de confianza en', heroTitleLine2: 'finanzas digitales seguras', heroSubtitle: 'Ofrecemos la solución de almacenamiento en frío más segura y fácil de usar para tus activos.', getStarted: 'Comenzar', backHome: 'Volver al inicio',
+      visionLabel: 'Nuestra visión', visionTitle: 'Impulsados por propósito, construidos con confianza', visionSubtitle: 'Combinamos innovación, seguridad y enfoque en el cliente para redefinir tu experiencia digital.',
+      values: [
+        { title: 'Innovación en el núcleo', description: 'Aprovechamos tecnología de vanguardia para soluciones simples y potentes.' },
+        { title: 'Seguridad primero', description: 'Proteger tus activos es nuestra máxima prioridad.' },
+        { title: 'Enfoque en el cliente', description: 'Cada función está diseñada para una experiencia fluida y sin estrés.' }
+      ],
+      faqLabel: 'FAQ', faqTitle: '¿Preguntas? Tenemos respuestas.', faqSubtitle: 'Todo lo que necesitas saber para mantener tus activos seguros con nuestra cold wallet.',
+      faqs: [
+        { question: '¿Qué es una cold wallet y por qué usarla?', answer: 'Una cold wallet almacena activos offline y reduce riesgos de ataques en línea.' },
+        { question: '¿Cómo configuro mi cold wallet?', answer: 'Descarga la app, crea tu bóveda y sigue la guía de configuración.' },
+        { question: '¿Puedo recuperar fondos si pierdo el dispositivo?', answer: 'Sí, con tu frase de recuperación puedes restaurar el acceso.' },
+        { question: '¿Qué activos son compatibles?', answer: 'Soportamos una amplia variedad de criptomonedas y activos digitales.' },
+        { question: '¿En qué se diferencia de una wallet de exchange?', answer: 'La cold wallet mantiene tus activos offline y bajo tu control.' }
+      ],
+      downloadLabel: 'DESCARGAR APP', downloadTitle: 'Toma el control de tu seguridad cripto hoy', downloadSubtitle: 'Protege tus activos con una solución de cold wallet segura, privada y simple.', downloadCta: 'Descargar app',
+      footerTagline: 'Protegiendo tu riqueza digital, hoy y mañana.', footerBusiness: 'NEGOCIOS', footerAbout: 'NOSOTROS', footerFeature: 'FUNCIONES', footerBlogs: 'BLOGS', copyright: 'COPYRIGHT 2025, TODOS LOS DERECHOS RESERVADOS'
+    },
+    fr: {
+      aboutLabel: 'À PROPOS', heroTitleLine1: 'Votre partenaire de confiance en', heroTitleLine2: 'finance numérique sécurisée', heroSubtitle: 'Nous proposons une solution de stockage à froid sûre et simple pour vos actifs numériques.', getStarted: 'Commencer', backHome: 'Retour à l’accueil',
+      visionLabel: 'Notre vision', visionTitle: 'Portés par une mission, fondés sur la confiance', visionSubtitle: 'Nous combinons innovation, sécurité et approche client pour transformer votre expérience.',
+      values: [
+        { title: 'Innovation au cœur', description: 'Nous exploitons des technologies de pointe pour des solutions simples et puissantes.' },
+        { title: 'La sécurité avant tout', description: 'La protection de vos actifs est notre priorité absolue.' },
+        { title: 'Centré client', description: 'Chaque fonctionnalité est conçue pour une expérience fluide.' }
+      ],
+      faqLabel: 'FAQ', faqTitle: 'Des questions ? Nous avons les réponses.', faqSubtitle: 'Tout ce qu’il faut savoir pour sécuriser vos actifs avec notre cold wallet.',
+      faqs: [
+        { question: 'Qu’est-ce qu’un cold wallet et pourquoi l’utiliser ?', answer: 'Un cold wallet stocke vos actifs hors ligne pour une sécurité maximale.' },
+        { question: 'Comment configurer mon cold wallet ?', answer: 'Téléchargez l’app, créez votre coffre, puis suivez la configuration guidée.' },
+        { question: 'Puis-je récupérer mes fonds si je perds mon appareil ?', answer: 'Oui, grâce à votre phrase de récupération.' },
+        { question: 'Quels actifs sont pris en charge ?', answer: 'Nous prenons en charge un large éventail d’actifs numériques.' },
+        { question: 'Différence avec un wallet d’exchange ?', answer: 'Le cold wallet conserve vos actifs hors ligne et vous donne le contrôle des clés.' }
+      ],
+      downloadLabel: 'TÉLÉCHARGER L’APP', downloadTitle: 'Prenez le contrôle de votre sécurité crypto dès aujourd’hui', downloadSubtitle: 'Protégez vos actifs avec une solution cold wallet sûre, privée et simple.', downloadCta: 'Télécharger l’app',
+      footerTagline: 'Protéger votre richesse numérique, aujourd’hui et demain.', footerBusiness: 'BUSINESS', footerAbout: 'À PROPOS', footerFeature: 'FONCTIONNALITÉS', footerBlogs: 'BLOGS', copyright: 'COPYRIGHT 2025, TOUS DROITS RÉSERVÉS'
+    },
+    de: {
+      aboutLabel: 'ÜBER UNS', heroTitleLine1: 'Dein vertrauenswürdiger Partner für', heroTitleLine2: 'sichere digitale Finanzen', heroSubtitle: 'Wir bieten die sicherste und benutzerfreundlichste Cold-Storage-Lösung für deine digitalen Assets.', getStarted: 'Loslegen', backHome: 'Zurück zur Startseite',
+      visionLabel: 'Unsere Vision', visionTitle: 'Von Zweck getrieben, auf Vertrauen gebaut', visionSubtitle: 'Wir verbinden Innovation, Sicherheit und Kundenfokus für ein besseres Asset-Erlebnis.',
+      values: [
+        { title: 'Innovation im Kern', description: 'Wir nutzen modernste Technologie für einfache, starke Lösungen.' },
+        { title: 'Sicherheit zuerst', description: 'Der Schutz deiner Assets hat höchste Priorität.' },
+        { title: 'Kundenzentriert', description: 'Jede Funktion ist für eine nahtlose, stressfreie Nutzung entwickelt.' }
+      ],
+      faqLabel: 'FAQ', faqTitle: 'Fragen? Wir haben Antworten.', faqSubtitle: 'Alles, was du über sichere Asset-Verwahrung mit unserer Cold Wallet wissen musst.',
+      faqs: [
+        { question: 'Was ist eine Cold Wallet und warum nutzen?', answer: 'Eine Cold Wallet speichert Assets offline und schützt vor Online-Angriffen.' },
+        { question: 'Wie richte ich meine Cold Wallet ein?', answer: 'App herunterladen, Tresor erstellen und den Einrichtungsschritten folgen.' },
+        { question: 'Kann ich Funds bei Geräteverlust wiederherstellen?', answer: 'Ja, mit deiner Recovery Phrase kannst du den Zugriff wiederherstellen.' },
+        { question: 'Welche Assets werden unterstützt?', answer: 'Unterstützt werden zahlreiche Kryptowährungen und digitale Assets.' },
+        { question: 'Unterschied zur Exchange Wallet?', answer: 'Cold Wallets halten Assets offline und geben dir volle Schlüsselhoheit.' }
+      ],
+      downloadLabel: 'APP HERUNTERLADEN', downloadTitle: 'Übernimm heute die Kontrolle über deine Krypto-Sicherheit', downloadSubtitle: 'Schütze deine Assets mit einer sicheren, privaten und einfachen Cold-Wallet-Lösung.', downloadCta: 'App herunterladen',
+      footerTagline: 'Sicherer Schutz deines digitalen Vermögens, heute und morgen.', footerBusiness: 'BUSINESS', footerAbout: 'ÜBER UNS', footerFeature: 'FEATURES', footerBlogs: 'BLOG', copyright: 'COPYRIGHT 2025, ALLE RECHTE VORBEHALTEN'
+    }
+  } as const;
+
+  const t = copyByLocale[locale as keyof typeof copyByLocale] ?? copyByLocale.en;
+
   const handleSecureWallet = () => {
-    console.log('Secure wallet clicked');
+    // placeholder action
   };
 
-  const handleDownloadApp = () => {
-    console.log('Download app clicked');
-  };
-
-  const steps = [
-    {
-      icon: '💼',
-      number: '01',
-      title: 'Set Up Your Wallet',
-      description: 'Download, create your vault, and secure it with a recovery phrase—ready in minutes.'
-    },
-    {
-      icon: '🔒',
-      number: '02',
-      title: 'Store Safely',
-      description: 'Move your crypto into ultra-secure cold storage, protected from online threats.'
-    },
-    {
-      icon: '💳',
-      number: '03',
-      title: 'Access and Manage Anytime',
-      description: 'Easily check balances, track assets, and make transactions when needed.'
-    }
-  ];
-
-  const faqs = [
-    {
-      question: 'What is a cold wallet and why should I use it?',
-      answer: 'A cold wallet is a secure offline storage solution for your digital assets. Unlike hot wallets that are connected to the internet and vulnerable to hacks, a cold wallet keeps your funds completely offline, giving you maximum protection against cyber threats.'
-    },
-    {
-      question: 'How do I set up my cold wallet?',
-      answer: 'Setting up your cold wallet is simple and takes just a few minutes. Download the app, create your secure vault, and follow the guided setup process.'
-    },
-    {
-      question: 'Can I recover my funds if I lose my device?',
-      answer: 'Yes, with your recovery phrase you can restore access to your funds on any device. Keep your recovery phrase safe and secure.'
-    },
-    {
-      question: 'What types of assets are supported?',
-      answer: 'Our cold wallet supports a wide range of cryptocurrencies and digital assets. Check our supported assets list for the most current information.'
-    },
-    {
-      question: 'How is a cold wallet different from an exchange wallet?',
-      answer: 'Unlike exchange wallets, cold wallets give you complete control over your private keys and keep your assets offline for maximum security.'
-    }
-  ];
-
-  const stats = [
-    'Trusted by thousands of crypto investors worldwide',
-    '99.9% uptime and zero hack record',
-    'Backed by military-grade encryption and offline security',
-    '99.9% uptime guaranteed',
-    'Over 50,000 wallets secured globally',
-    'Zero security breaches since launch',
-    'Military-grade AES-256 encryption',
-    'Cold storage technology leader',
-    'Trusted by Fortune 500 companies',
-    'ISO 27001 certified security',
-    'Multi-signature protection enabled',
-    '24/7 customer support available'
-  ];
+  const faqs = t.faqs;
 
   return (
     <div style={{
@@ -472,16 +591,15 @@ export default function AboutPage() {
 
       {/* Hero Section */}
       <main className="main">
-        <div className="section-label" style={{ color: 'white' }}>ABOUT US</div>
+        <div className="section-label" style={{ color: 'white' }}>{t.aboutLabel}</div>
 
         <h1 className="hero-title">
-          Your Trusted Partner in<br />
-          <span className="confidence">Secure Digital Finance</span>
+          {t.heroTitleLine1}<br />
+          <span className="confidence">{t.heroTitleLine2}</span>
         </h1>
 
         <p className="hero-subtitle">
-          We&apos;re dedicated to providing the most secure and user-friendly cold storage solution
-          for your digital assets. Our mission is to make crypto security accessible to everyone.
+          {t.heroSubtitle}
         </p>
 
         <div className="cta-buttons">
@@ -489,13 +607,13 @@ export default function AboutPage() {
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z" />
             </svg>
-            Get Started
+            {t.getStarted}
           </button>
           <Link href="/" className="btn-secondary" style={{ textDecoration: 'none' }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
             </svg>
-            Back to Home
+            {t.backHome}
           </Link>
         </div>
       </main>
@@ -505,9 +623,9 @@ export default function AboutPage() {
       {/* How It Works Section */}
       <section style={{ padding: '80px 0', textAlign: 'center' }}>
         <div className="container">
-          <div className="section-label">Our Vision</div>
-          <h2 className="main-title">Driven by Purpose, Built on Trust</h2>
-          <p className="subtitle">We combine innovation, security, and customer-first values to redefine how you interact with your digital assets.</p>
+          <div className="section-label">{t.visionLabel}</div>
+          <h2 className="main-title">{t.visionTitle}</h2>
+          <p className="subtitle">{t.visionSubtitle}</p>
 
           <div className="values-grid">
             {/* Step 1 */}
@@ -545,7 +663,7 @@ export default function AboutPage() {
                 color: '#EBE2FF',
                 lineHeight: '1.3'
               }}>
-                Innovation at Core
+                {t.values[0].title}
               </h3>
               <p style={{
                 fontSize: '14px',
@@ -553,7 +671,7 @@ export default function AboutPage() {
                 lineHeight: '1.5',
                 color: '#EBE2FF'
               }}>
-                We leverage cutting-edge technology to deliver simple yet powerful solutions.
+                {t.values[0].description}
               </p>
             </div>
 
@@ -592,7 +710,7 @@ export default function AboutPage() {
                 color: '#EBE2FF',
                 lineHeight: '1.3'
               }}>
-                Security First
+                {t.values[1].title}
               </h3>
               <p style={{
                 fontSize: '14px',
@@ -600,7 +718,7 @@ export default function AboutPage() {
                 lineHeight: '1.5',
                 color: '#EBE2FF'
               }}>
-                Protecting your assets is our top priority, with industry-grade safeguards.
+                {t.values[1].description}
               </p>
             </div>
 
@@ -645,7 +763,7 @@ export default function AboutPage() {
                 color: '#EBE2FF',
                 lineHeight: '1.3'
               }}>
-                Customer-Centered
+                {t.values[2].title}
               </h3>
               <p style={{
                 fontSize: '14px',
@@ -653,7 +771,7 @@ export default function AboutPage() {
                 lineHeight: '1.5',
                 color: '#EBE2FF'
               }}>
-                Every feature is designed to make your journey seamless and stress-free.
+                {t.values[2].description}
               </p>
             </div>
           </div>
@@ -663,9 +781,9 @@ export default function AboutPage() {
       {/* FAQ Section */}
       <section style={{ padding: '80px 0', textAlign: 'center' }}>
         <div className="container">
-          <div className="section-label">FAQ</div>
-          <h2 className="main-title">Got Questions? We&apos;ve Got Answers.</h2>
-          <p className="subtitle">Everything you need to know about keeping your assets safe, simple, and secure with our cold wallet</p>
+          <div className="section-label">{t.faqLabel}</div>
+          <h2 className="main-title">{t.faqTitle}</h2>
+          <p className="subtitle">{t.faqSubtitle}</p>
 
           <div className="faq-list">
             {faqs.map((faq, index) => (
@@ -727,7 +845,7 @@ export default function AboutPage() {
                   color: 'rgb(148, 163, 184)',
                   textTransform: 'uppercase'
                 }}>
-                  DOWNLOAD APP
+                  {t.downloadLabel}
                 </h3>
                 <h2 style={{
                   marginTop: '16px',
@@ -737,7 +855,7 @@ export default function AboutPage() {
                   letterSpacing: '-0.025em',
                   lineHeight: '1.1'
                 }}>
-                  Take Control of Your Crypto Security Today
+                  {t.downloadTitle}
                 </h2>
                 <p style={{
                   marginTop: '24px',
@@ -747,7 +865,7 @@ export default function AboutPage() {
                   lineHeight: '1.75',
                   color: 'rgb(148, 163, 184)'
                 }}>
-                  Start protecting your assets with the safest and simplest cold wallet solution — secure, private, and built for peace of mind.
+                  {t.downloadSubtitle}
                 </p>
                 <div style={{ marginTop: '40px' }}>
                   <a
@@ -774,7 +892,7 @@ export default function AboutPage() {
                       (e.target as HTMLElement).style.background = 'linear-gradient(to bottom, rgb(59, 130, 246), rgb(37, 99, 235))';
                     }}
                   >
-                    Download App
+                    {t.downloadCta}
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M12 17V3" />
                       <path d="m6 11 6 6 6-6" />
@@ -804,14 +922,14 @@ export default function AboutPage() {
                   <span style={{ color: 'white', fontWeight: '600', fontSize: '20px' }}>SUMMIT</span>
                 </div>
                 <p style={{ marginTop: '16px', lineHeight: '1.6' }}>
-                  Securely Protecting Your Digital Wealth, Today And Tomorrow.
+                  {t.footerTagline}
                 </p>
               </div>
               <nav style={{ display: 'flex', gap: '32px', fontWeight: '500' }}>
-                <a href="#" style={{ color: 'inherit', textDecoration: 'none' }} onMouseOver={(e) => (e.target as HTMLElement).style.color = 'white'} onMouseOut={(e) => (e.target as HTMLElement).style.color = 'inherit'}>BUSINESS</a>
-                <a href="#" style={{ color: 'inherit', textDecoration: 'none' }} onMouseOver={(e) => (e.target as HTMLElement).style.color = 'white'} onMouseOut={(e) => (e.target as HTMLElement).style.color = 'inherit'}>ABOUT</a>
-                <a href="#" style={{ color: 'inherit', textDecoration: 'none' }} onMouseOver={(e) => (e.target as HTMLElement).style.color = 'white'} onMouseOut={(e) => (e.target as HTMLElement).style.color = 'inherit'}>FEATURE</a>
-                <a href="#" style={{ color: 'inherit', textDecoration: 'none' }} onMouseOver={(e) => (e.target as HTMLElement).style.color = 'white'} onMouseOut={(e) => (e.target as HTMLElement).style.color = 'inherit'}>BLOGS</a>
+                <a href="#" style={{ color: 'inherit', textDecoration: 'none' }} onMouseOver={(e) => (e.target as HTMLElement).style.color = 'white'} onMouseOut={(e) => (e.target as HTMLElement).style.color = 'inherit'}>{t.footerBusiness}</a>
+                <a href="#" style={{ color: 'inherit', textDecoration: 'none' }} onMouseOver={(e) => (e.target as HTMLElement).style.color = 'white'} onMouseOut={(e) => (e.target as HTMLElement).style.color = 'inherit'}>{t.footerAbout}</a>
+                <a href="#" style={{ color: 'inherit', textDecoration: 'none' }} onMouseOver={(e) => (e.target as HTMLElement).style.color = 'white'} onMouseOut={(e) => (e.target as HTMLElement).style.color = 'inherit'}>{t.footerFeature}</a>
+                <a href="#" style={{ color: 'inherit', textDecoration: 'none' }} onMouseOver={(e) => (e.target as HTMLElement).style.color = 'white'} onMouseOut={(e) => (e.target as HTMLElement).style.color = 'inherit'}>{t.footerBlogs}</a>
               </nav>
             </div>
 
@@ -824,7 +942,7 @@ export default function AboutPage() {
               alignItems: 'center',
               gap: '24px'
             }}>
-              <p style={{ color: 'rgb(100, 116, 139)' }}>COPYRIGHT 2025, ALL RIGHT RESERVED</p>
+              <p style={{ color: 'rgb(100, 116, 139)' }}>{t.copyright}</p>
             </div>
 
             <div style={{ textAlign: 'center', marginTop: '48px', width: '100%' }}>

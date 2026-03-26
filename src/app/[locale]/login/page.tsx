@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale } from "next-intl";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { PhoneInput } from "react-international-phone";
@@ -71,6 +72,7 @@ const EyeSlashIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 // --- MAIN LOGIN PAGE COMPONENT ---
 export default function LoginPage() {
+  const locale = useLocale();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [loginMethod, setLoginMethod] = useState<"email" | "phone">("email");
@@ -89,6 +91,76 @@ export default function LoginPage() {
   const [linkEmail, setLinkEmail] = useState("");
   const [linkPassword, setLinkPassword] = useState("");
   const [isLinking, setIsLinking] = useState(false);
+
+  const copyByLocale = {
+    en: {
+      title: 'Login to your account',
+      noAccount: "Don't have an account?",
+      signUp: 'Sign up',
+      nfcQuickLogin: 'NFC Quick Login',
+      readerReady: 'Reader ready — tap your card to login instantly',
+      readerConnectedText: 'Reader connected — tap your card to login instantly',
+      tapNoPassword: 'Tap your card — no password needed',
+      nfcActiveTap: 'NFC reader active — tap your card anytime to login',
+      tapNow: 'Tap Your NFC Card Now',
+      connectReaderLogin: 'Connect NFC Reader & Login',
+      webhidNotSupported: 'WebHID not supported — use Chrome or Edge browser',
+      connecting: 'Connecting to NFC reader...',
+      selectReaderPopup: 'Select your reader in the browser popup',
+      waitingTap: 'Tap your NFC card on the reader...',
+      waitingReady: 'Reader is ready — waiting for card',
+      waitingKeyboard: 'Keyboard capture active — just tap your card',
+      cancel: 'Cancel',
+      cardDetectedVerifying: 'Card detected! Verifying...',
+      loginSuccessful: 'Login Successful!',
+      redirecting: 'Redirecting to dashboard...',
+      cardNotLinked: 'Card Not Linked Yet',
+      cardNotLinkedHelp: 'Enter your account credentials to link this card for instant login.',
+      emailAddress: 'Email address',
+      password: 'Password',
+      linking: 'Linking...',
+      linkCardLogin: 'Link Card & Login',
+      cancelTryAnother: 'Cancel / Try Another Card',
+      tryAgain: 'Try Again',
+      orPassword: 'Or login with password',
+      email: 'Email',
+      phone: 'Phone',
+      enterEmail: 'Enter your email address',
+      enterPhone: 'Enter phone number',
+      enterPassword: 'Enter your password',
+      loggingIn: 'Logging in...',
+      login: 'Login',
+      forgotPassword: 'Forgot your password?',
+      toastEmailRequired: 'Email is required',
+      toastEmailInvalid: 'Please enter a valid email address',
+      toastPhoneInvalid: 'Please enter a valid phone number',
+      toastPasswordRequired: 'Password is required',
+      toastPasswordLength: 'Password must be at least 8 characters long',
+      toastLoginSuccess: 'Login successful! Redirecting...'
+    },
+    de: {
+      title: 'In dein Konto einloggen', noAccount: 'Noch kein Konto?', signUp: 'Registrieren', nfcQuickLogin: 'NFC Schnell-Login',
+      readerReady: 'Leser bereit — Karte antippen zum sofortigen Login', readerConnectedText: 'Leser verbunden — Karte antippen zum Login', tapNoPassword: 'Karte antippen — kein Passwort nötig',
+      nfcActiveTap: 'NFC-Leser aktiv — Karte jederzeit antippen', tapNow: 'NFC-Karte jetzt antippen', connectReaderLogin: 'NFC-Leser verbinden & einloggen',
+      webhidNotSupported: 'WebHID nicht unterstützt — Chrome oder Edge verwenden', connecting: 'Verbinde mit NFC-Leser...', selectReaderPopup: 'Wähle den Leser im Browser-Popup',
+      waitingTap: 'NFC-Karte auf den Leser legen...', waitingReady: 'Leser bereit — warte auf Karte', waitingKeyboard: 'Tastatur-Erfassung aktiv — Karte antippen',
+      cancel: 'Abbrechen', cardDetectedVerifying: 'Karte erkannt! Wird geprüft...', loginSuccessful: 'Login erfolgreich!', redirecting: 'Weiterleitung zum Dashboard...',
+      cardNotLinked: 'Karte noch nicht verknüpft', cardNotLinkedHelp: 'Kontodaten eingeben, um diese Karte zu verknüpfen.', emailAddress: 'E-Mail-Adresse', password: 'Passwort',
+      linking: 'Verknüpfen...', linkCardLogin: 'Karte verknüpfen & einloggen', cancelTryAnother: 'Abbrechen / andere Karte', tryAgain: 'Erneut versuchen',
+      orPassword: 'Oder mit Passwort einloggen', email: 'E-Mail', phone: 'Telefon', enterEmail: 'E-Mail-Adresse eingeben', enterPhone: 'Telefonnummer eingeben',
+      enterPassword: 'Passwort eingeben', loggingIn: 'Anmeldung läuft...', login: 'Einloggen', forgotPassword: 'Passwort vergessen?',
+      toastEmailRequired: 'E-Mail ist erforderlich', toastEmailInvalid: 'Bitte gib eine gültige E-Mail ein', toastPhoneInvalid: 'Bitte gib eine gültige Telefonnummer ein',
+      toastPasswordRequired: 'Passwort ist erforderlich', toastPasswordLength: 'Passwort muss mindestens 8 Zeichen lang sein', toastLoginSuccess: 'Login erfolgreich! Weiterleitung...'
+    },
+    zh: { title: '登录您的账户', noAccount: '还没有账户？', signUp: '注册', nfcQuickLogin: 'NFC 快速登录', readerReady: '读卡器已就绪 — 轻触卡片即可登录', readerConnectedText: '读卡器已连接 — 轻触卡片即可登录', tapNoPassword: '轻触卡片 — 无需密码', nfcActiveTap: 'NFC 读卡器已激活 — 可随时轻触登录', tapNow: '立即轻触 NFC 卡', connectReaderLogin: '连接 NFC 读卡器并登录', webhidNotSupported: '浏览器不支持 WebHID — 请使用 Chrome 或 Edge', connecting: '正在连接 NFC 读卡器...', selectReaderPopup: '请在浏览器弹窗中选择读卡器', waitingTap: '请将 NFC 卡贴近读卡器...', waitingReady: '读卡器已就绪，等待卡片', waitingKeyboard: '键盘采集已激活，直接轻触卡片', cancel: '取消', cardDetectedVerifying: '已检测到卡片，正在验证...', loginSuccessful: '登录成功！', redirecting: '正在跳转到仪表盘...', cardNotLinked: '该卡尚未绑定', cardNotLinkedHelp: '请输入账户凭据以绑定该卡并快速登录。', emailAddress: '邮箱地址', password: '密码', linking: '绑定中...', linkCardLogin: '绑定卡并登录', cancelTryAnother: '取消 / 更换卡片', tryAgain: '重试', orPassword: '或使用密码登录', email: '邮箱', phone: '手机', enterEmail: '请输入邮箱地址', enterPhone: '请输入手机号', enterPassword: '请输入密码', loggingIn: '登录中...', login: '登录', forgotPassword: '忘记密码？', toastEmailRequired: '邮箱为必填项', toastEmailInvalid: '请输入有效邮箱地址', toastPhoneInvalid: '请输入有效手机号', toastPasswordRequired: '密码为必填项', toastPasswordLength: '密码至少需要 8 位', toastLoginSuccess: '登录成功，正在跳转...' },
+    ar: { title: 'تسجيل الدخول إلى حسابك', noAccount: 'ليس لديك حساب؟', signUp: 'إنشاء حساب', nfcQuickLogin: 'تسجيل دخول NFC سريع', readerReady: 'القارئ جاهز — المس البطاقة لتسجيل الدخول فورًا', readerConnectedText: 'القارئ متصل — المس البطاقة لتسجيل الدخول', tapNoPassword: 'المس البطاقة — بدون كلمة مرور', nfcActiveTap: 'قارئ NFC نشط — المس البطاقة في أي وقت', tapNow: 'المس بطاقة NFC الآن', connectReaderLogin: 'اتصل بقارئ NFC وسجّل الدخول', webhidNotSupported: 'WebHID غير مدعوم — استخدم Chrome أو Edge', connecting: 'جارٍ الاتصال بقارئ NFC...', selectReaderPopup: 'اختر القارئ من نافذة المتصفح', waitingTap: 'المس بطاقة NFC على القارئ...', waitingReady: 'القارئ جاهز — بانتظار البطاقة', waitingKeyboard: 'التقاط لوحة المفاتيح نشط — المس البطاقة', cancel: 'إلغاء', cardDetectedVerifying: 'تم اكتشاف البطاقة! جارٍ التحقق...', loginSuccessful: 'تم تسجيل الدخول بنجاح!', redirecting: 'جارٍ التحويل إلى لوحة التحكم...', cardNotLinked: 'البطاقة غير مرتبطة بعد', cardNotLinkedHelp: 'أدخل بيانات حسابك لربط هذه البطاقة وتسجيل الدخول الفوري.', emailAddress: 'البريد الإلكتروني', password: 'كلمة المرور', linking: 'جارٍ الربط...', linkCardLogin: 'ربط البطاقة وتسجيل الدخول', cancelTryAnother: 'إلغاء / جرب بطاقة أخرى', tryAgain: 'حاول مرة أخرى', orPassword: 'أو سجّل بكلمة المرور', email: 'البريد الإلكتروني', phone: 'الهاتف', enterEmail: 'أدخل بريدك الإلكتروني', enterPhone: 'أدخل رقم الهاتف', enterPassword: 'أدخل كلمة المرور', loggingIn: 'جارٍ تسجيل الدخول...', login: 'تسجيل الدخول', forgotPassword: 'هل نسيت كلمة المرور؟', toastEmailRequired: 'البريد الإلكتروني مطلوب', toastEmailInvalid: 'يرجى إدخال بريد إلكتروني صحيح', toastPhoneInvalid: 'يرجى إدخال رقم هاتف صحيح', toastPasswordRequired: 'كلمة المرور مطلوبة', toastPasswordLength: 'يجب أن تكون كلمة المرور 8 أحرف على الأقل', toastLoginSuccess: 'تم تسجيل الدخول! جارٍ التحويل...' },
+    ru: { title: 'Вход в аккаунт', noAccount: 'Нет аккаунта?', signUp: 'Регистрация', nfcQuickLogin: 'Быстрый вход по NFC', readerReady: 'Считыватель готов — приложите карту для входа', readerConnectedText: 'Считыватель подключен — приложите карту', tapNoPassword: 'Приложите карту — пароль не нужен', nfcActiveTap: 'NFC активен — приложите карту в любое время', tapNow: 'Приложите NFC-карту сейчас', connectReaderLogin: 'Подключить NFC и войти', webhidNotSupported: 'WebHID не поддерживается — используйте Chrome или Edge', connecting: 'Подключение к NFC считывателю...', selectReaderPopup: 'Выберите считыватель во всплывающем окне', waitingTap: 'Приложите NFC-карту к считывателю...', waitingReady: 'Считыватель готов — ожидается карта', waitingKeyboard: 'Режим клавиатуры активен — приложите карту', cancel: 'Отмена', cardDetectedVerifying: 'Карта обнаружена! Проверяем...', loginSuccessful: 'Вход выполнен!', redirecting: 'Переход в дашборд...', cardNotLinked: 'Карта еще не привязана', cardNotLinkedHelp: 'Введите данные аккаунта, чтобы привязать карту для быстрого входа.', emailAddress: 'Email', password: 'Пароль', linking: 'Привязка...', linkCardLogin: 'Привязать карту и войти', cancelTryAnother: 'Отмена / другая карта', tryAgain: 'Повторить', orPassword: 'Или войти по паролю', email: 'Email', phone: 'Телефон', enterEmail: 'Введите email', enterPhone: 'Введите номер телефона', enterPassword: 'Введите пароль', loggingIn: 'Вход...', login: 'Войти', forgotPassword: 'Забыли пароль?', toastEmailRequired: 'Email обязателен', toastEmailInvalid: 'Введите корректный email', toastPhoneInvalid: 'Введите корректный номер телефона', toastPasswordRequired: 'Пароль обязателен', toastPasswordLength: 'Пароль должен быть не менее 8 символов', toastLoginSuccess: 'Вход выполнен! Переходим...' },
+    th: { title: 'เข้าสู่ระบบบัญชีของคุณ', noAccount: 'ยังไม่มีบัญชี?', signUp: 'สมัครสมาชิก', nfcQuickLogin: 'เข้าสู่ระบบด่วนด้วย NFC', readerReady: 'เครื่องอ่านพร้อมแล้ว — แตะการ์ดเพื่อเข้าสู่ระบบทันที', readerConnectedText: 'เชื่อมต่อเครื่องอ่านแล้ว — แตะการ์ดเพื่อเข้าสู่ระบบ', tapNoPassword: 'แตะการ์ด — ไม่ต้องใช้รหัสผ่าน', nfcActiveTap: 'NFC พร้อมใช้งาน — แตะการ์ดได้ทุกเวลา', tapNow: 'แตะการ์ด NFC ตอนนี้', connectReaderLogin: 'เชื่อมต่อเครื่องอ่าน NFC และเข้าสู่ระบบ', webhidNotSupported: 'เบราว์เซอร์ไม่รองรับ WebHID — ใช้ Chrome หรือ Edge', connecting: 'กำลังเชื่อมต่อเครื่องอ่าน NFC...', selectReaderPopup: 'เลือกเครื่องอ่านจากหน้าต่างป๊อปอัป', waitingTap: 'แตะการ์ด NFC ที่เครื่องอ่าน...', waitingReady: 'เครื่องอ่านพร้อม — รอการ์ด', waitingKeyboard: 'โหมดคีย์บอร์ดทำงานอยู่ — แตะการ์ดได้เลย', cancel: 'ยกเลิก', cardDetectedVerifying: 'ตรวจพบการ์ด กำลังตรวจสอบ...', loginSuccessful: 'เข้าสู่ระบบสำเร็จ!', redirecting: 'กำลังไปหน้าแดชบอร์ด...', cardNotLinked: 'การ์ดยังไม่ถูกผูกบัญชี', cardNotLinkedHelp: 'กรอกข้อมูลบัญชีเพื่อผูกการ์ดและเข้าสู่ระบบทันที', emailAddress: 'อีเมล', password: 'รหัสผ่าน', linking: 'กำลังผูก...', linkCardLogin: 'ผูกการ์ดและเข้าสู่ระบบ', cancelTryAnother: 'ยกเลิก / ลองการ์ดใบอื่น', tryAgain: 'ลองอีกครั้ง', orPassword: 'หรือเข้าสู่ระบบด้วยรหัสผ่าน', email: 'อีเมล', phone: 'โทรศัพท์', enterEmail: 'กรอกอีเมลของคุณ', enterPhone: 'กรอกหมายเลขโทรศัพท์', enterPassword: 'กรอกรหัสผ่าน', loggingIn: 'กำลังเข้าสู่ระบบ...', login: 'เข้าสู่ระบบ', forgotPassword: 'ลืมรหัสผ่าน?', toastEmailRequired: 'ต้องกรอกอีเมล', toastEmailInvalid: 'กรุณากรอกอีเมลที่ถูกต้อง', toastPhoneInvalid: 'กรุณากรอกหมายเลขโทรศัพท์ที่ถูกต้อง', toastPasswordRequired: 'ต้องกรอกรหัสผ่าน', toastPasswordLength: 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร', toastLoginSuccess: 'เข้าสู่ระบบสำเร็จ กำลังเปลี่ยนหน้า...' },
+    es: { title: 'Inicia sesión en tu cuenta', noAccount: '¿No tienes una cuenta?', signUp: 'Regístrate', nfcQuickLogin: 'Inicio rápido con NFC', readerReady: 'Lector listo — toca tu tarjeta para iniciar sesión', readerConnectedText: 'Lector conectado — toca tu tarjeta para iniciar sesión', tapNoPassword: 'Toca tu tarjeta — sin contraseña', nfcActiveTap: 'Lector NFC activo — toca tu tarjeta cuando quieras', tapNow: 'Toca tu tarjeta NFC ahora', connectReaderLogin: 'Conectar lector NFC e iniciar sesión', webhidNotSupported: 'WebHID no compatible — usa Chrome o Edge', connecting: 'Conectando al lector NFC...', selectReaderPopup: 'Selecciona tu lector en la ventana del navegador', waitingTap: 'Toca tu tarjeta NFC en el lector...', waitingReady: 'Lector listo — esperando tarjeta', waitingKeyboard: 'Captura por teclado activa — toca tu tarjeta', cancel: 'Cancelar', cardDetectedVerifying: '¡Tarjeta detectada! Verificando...', loginSuccessful: '¡Inicio de sesión exitoso!', redirecting: 'Redirigiendo al dashboard...', cardNotLinked: 'Tarjeta aún no vinculada', cardNotLinkedHelp: 'Ingresa tus credenciales para vincular esta tarjeta e iniciar sesión al instante.', emailAddress: 'Correo electrónico', password: 'Contraseña', linking: 'Vinculando...', linkCardLogin: 'Vincular tarjeta e iniciar sesión', cancelTryAnother: 'Cancelar / Probar otra tarjeta', tryAgain: 'Intentar de nuevo', orPassword: 'O inicia sesión con contraseña', email: 'Correo', phone: 'Teléfono', enterEmail: 'Ingresa tu correo electrónico', enterPhone: 'Ingresa tu número de teléfono', enterPassword: 'Ingresa tu contraseña', loggingIn: 'Iniciando sesión...', login: 'Iniciar sesión', forgotPassword: '¿Olvidaste tu contraseña?', toastEmailRequired: 'El correo es obligatorio', toastEmailInvalid: 'Ingresa un correo válido', toastPhoneInvalid: 'Ingresa un número de teléfono válido', toastPasswordRequired: 'La contraseña es obligatoria', toastPasswordLength: 'La contraseña debe tener al menos 8 caracteres', toastLoginSuccess: '¡Inicio de sesión exitoso! Redirigiendo...' },
+    fr: { title: 'Connectez-vous à votre compte', noAccount: 'Vous n’avez pas de compte ?', signUp: 'Inscription', nfcQuickLogin: 'Connexion NFC rapide', readerReady: 'Lecteur prêt — approchez votre carte pour vous connecter', readerConnectedText: 'Lecteur connecté — approchez votre carte', tapNoPassword: 'Approchez votre carte — sans mot de passe', nfcActiveTap: 'Lecteur NFC actif — approchez la carte à tout moment', tapNow: 'Approchez votre carte NFC maintenant', connectReaderLogin: 'Connecter le lecteur NFC et se connecter', webhidNotSupported: 'WebHID non pris en charge — utilisez Chrome ou Edge', connecting: 'Connexion au lecteur NFC...', selectReaderPopup: 'Sélectionnez votre lecteur dans la fenêtre du navigateur', waitingTap: 'Approchez votre carte NFC du lecteur...', waitingReady: 'Lecteur prêt — en attente de carte', waitingKeyboard: 'Capture clavier active — approchez la carte', cancel: 'Annuler', cardDetectedVerifying: 'Carte détectée ! Vérification...', loginSuccessful: 'Connexion réussie !', redirecting: 'Redirection vers le dashboard...', cardNotLinked: 'Carte non liée', cardNotLinkedHelp: 'Entrez vos identifiants pour lier cette carte et vous connecter instantanément.', emailAddress: 'Adresse e-mail', password: 'Mot de passe', linking: 'Association...', linkCardLogin: 'Lier la carte et se connecter', cancelTryAnother: 'Annuler / Essayer une autre carte', tryAgain: 'Réessayer', orPassword: 'Ou connectez-vous avec mot de passe', email: 'E-mail', phone: 'Téléphone', enterEmail: 'Entrez votre e-mail', enterPhone: 'Entrez votre numéro de téléphone', enterPassword: 'Entrez votre mot de passe', loggingIn: 'Connexion...', login: 'Connexion', forgotPassword: 'Mot de passe oublié ?', toastEmailRequired: 'E-mail requis', toastEmailInvalid: 'Veuillez entrer un e-mail valide', toastPhoneInvalid: 'Veuillez entrer un numéro valide', toastPasswordRequired: 'Mot de passe requis', toastPasswordLength: 'Le mot de passe doit contenir au moins 8 caractères', toastLoginSuccess: 'Connexion réussie ! Redirection...' }
+  } as const;
+
+  const text = copyByLocale[locale as keyof typeof copyByLocale] ?? copyByLocale.en;
   const nfcStepRef = useRef(nfcStep);
   nfcStepRef.current = nfcStep;
 
@@ -99,11 +171,11 @@ export default function LoginPage() {
 
       if (result.success && result.token) {
         setNfcStep("success");
-        toast.success("NFC login successful! Redirecting...");
-        setTimeout(() => router.push("/dashboard"), 800);
+        toast.success(text.toastLoginSuccess);
+        setTimeout(() => router.push(locale === 'en' ? "/dashboard" : `/${locale}/dashboard`), 800);
       } else if (result.unregistered) {
         setNfcStep("unregistered");
-        setNfcError("This card is not linked to any account yet.");
+        setNfcError(text.cardNotLinkedHelp);
       } else {
         setNfcStep("error");
         setNfcError(result.message || "Authentication failed");
@@ -137,7 +209,7 @@ export default function LoginPage() {
         // Check if card is unregistered
         if (err?.data?.unregistered || err?.message?.includes("not registered")) {
           setNfcStep("unregistered");
-          setNfcError("This card is not linked to any account yet.");
+          setNfcError(text.cardNotLinkedHelp);
         } else {
           setNfcStep("error");
           setNfcError(err?.message || "Authentication failed");
@@ -152,9 +224,9 @@ export default function LoginPage() {
     // If already logged in, redirect to dashboard
     const token = localStorage.getItem("auth_token") || localStorage.getItem("nfc_token");
     if (token) {
-      router.push("/dashboard");
+      router.push(locale === 'en' ? "/dashboard" : `/${locale}/dashboard`);
     }
-  }, [router]);
+  }, [router, locale]);
 
   // --- NFC TAP LOGIN: Connect reader and wait for card ---
   const handleNfcTapLogin = useCallback(async () => {
@@ -194,7 +266,7 @@ export default function LoginPage() {
   const handleLinkCard = async () => {
     if (!detectedUid) return;
     if (!linkEmail || !linkPassword) {
-      toast.error("Enter your email and password to link this card");
+      toast.error(text.cardNotLinkedHelp);
       return;
     }
     setIsLinking(true);
@@ -207,7 +279,7 @@ export default function LoginPage() {
       if (res.success) {
         setNfcStep("success");
         toast.success("Card linked & logged in!");
-        setTimeout(() => router.push("/dashboard"), 800);
+        setTimeout(() => router.push(locale === 'en' ? "/dashboard" : `/${locale}/dashboard`), 800);
       } else {
         throw new Error(res.message || "Failed to link card");
       }
@@ -222,26 +294,26 @@ export default function LoginPage() {
   const validateForm = () => {
     if (loginMethod === "email") {
       if (!formData.email) {
-        toast.error("Email is required");
+        toast.error(text.toastEmailRequired);
         return false;
       }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-        toast.error("Please enter a valid email address");
+        toast.error(text.toastEmailInvalid);
         return false;
       }
     } else if (loginMethod === "phone") {
       if (!phone || phone.length < 8) {
-        toast.error("Please enter a valid phone number");
+        toast.error(text.toastPhoneInvalid);
         return false;
       }
     }
 
     if (!formData.password) {
-      toast.error("Password is required");
+      toast.error(text.toastPasswordRequired);
       return false;
     }
     if (formData.password.length < 8) {
-      toast.error("Password must be at least 8 characters long");
+      toast.error(text.toastPasswordLength);
       return false;
     }
 
@@ -276,10 +348,10 @@ export default function LoginPage() {
         } catch (e) {}
       }
 
-      toast.success(data.message || "Login successful! Redirecting...");
+      toast.success(data.message || text.toastLoginSuccess);
       // Redirect to the local dashboard route
       setTimeout(() => {
-        router.push("/dashboard");
+        router.push(locale === 'en' ? "/dashboard" : `/${locale}/dashboard`);
       }, 800);
     } catch (err: any) {
       console.error("Login api error:", err);
@@ -294,7 +366,7 @@ export default function LoginPage() {
   };
 
   const handleForgotPassword = () => {
-    router.push("/forgot-password");
+    router.push(locale === 'en' ? "/forgot-password" : `/${locale}/forgot-password`);
   };
 
   return (
@@ -452,18 +524,18 @@ export default function LoginPage() {
               className="text-3xl font-bold text-white mb-2 mobile-title"
               style={{ marginLeft: "20px" }}
             >
-              Login to your account
+              {text.title}
             </h1>
             <p
               className="text-gray-400 text-sm mb-8 mobile-subtitle"
               style={{ marginLeft: "20px" }}
             >
-              Don&apos;t have an account?{" "}
+              {text.noAccount}{" "}
               <a
-                href="/signup"
+                href={locale === 'en' ? '/signup' : `/${locale}/signup`}
                 className="font-medium text-blue-400 hover:underline"
               >
-                Sign up
+                {text.signUp}
               </a>
             </p>
 
@@ -481,13 +553,13 @@ export default function LoginPage() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-white font-semibold text-base">NFC Quick Login</h3>
+                    <h3 className="text-white font-semibold text-base">{text.nfcQuickLogin}</h3>
                     <p className="text-gray-400 text-xs">
                       {keyboardListening
-                        ? "Reader ready — tap your card to login instantly"
+                        ? text.readerReady
                         : readerConnected
-                        ? "Reader connected — tap your card to login instantly"
-                        : "Tap your card — no password needed"}
+                        ? text.readerConnectedText
+                        : text.tapNoPassword}
                     </p>
                   </div>
                   {/* Reader status dot */}
@@ -503,7 +575,7 @@ export default function LoginPage() {
                   <div className="space-y-3">
                     {keyboardListening && (
                       <p className="text-emerald-400/80 text-xs text-center animate-pulse">
-                        NFC reader active — tap your card anytime to login
+                        {text.nfcActiveTap}
                       </p>
                     )}
                     <button
@@ -516,11 +588,11 @@ export default function LoginPage() {
                         <path d="M3 6h18" />
                         <path d="M16 10a4 4 0 01-8 0" />
                       </svg>
-                      {keyboardListening ? "Tap Your NFC Card Now" : readerConnected ? "Tap Your NFC Card Now" : "Connect NFC Reader & Login"}
+                      {keyboardListening ? text.tapNow : readerConnected ? text.tapNow : text.connectReaderLogin}
                     </button>
                     {!hasWebHid && !keyboardListening && (
                       <p className="text-amber-400/80 text-xs text-center">
-                        WebHID not supported — use Chrome or Edge browser
+                        {text.webhidNotSupported}
                       </p>
                     )}
                   </div>
@@ -529,8 +601,8 @@ export default function LoginPage() {
                 {nfcStep === "connecting" && (
                   <div className="text-center py-4">
                     <div className="w-10 h-10 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin mx-auto" />
-                    <p className="text-emerald-400 font-medium mt-3">Connecting to NFC reader...</p>
-                    <p className="text-gray-500 text-xs mt-1">Select your reader in the browser popup</p>
+                    <p className="text-emerald-400 font-medium mt-3">{text.connecting}</p>
+                    <p className="text-gray-500 text-xs mt-1">{text.selectReaderPopup}</p>
                   </div>
                 )}
 
@@ -545,16 +617,16 @@ export default function LoginPage() {
                         <div className="w-14 h-14 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
                       </div>
                     </div>
-                    <p className="text-emerald-400 font-medium mt-3">Tap your NFC card on the reader...</p>
+                    <p className="text-emerald-400 font-medium mt-3">{text.waitingTap}</p>
                     <p className="text-gray-500 text-xs mt-1">
-                      {keyboardListening ? "Keyboard capture active — just tap your card" : "Reader is ready — waiting for card"}
+                      {keyboardListening ? text.waitingKeyboard : text.waitingReady}
                     </p>
                     <button
                       type="button"
                       onClick={resetNfcLogin}
                       className="mt-3 px-4 py-1.5 bg-slate-700/50 hover:bg-slate-600 text-gray-400 rounded-lg text-xs transition-colors"
                     >
-                      Cancel
+                      {text.cancel}
                     </button>
                   </div>
                 )}
@@ -562,7 +634,7 @@ export default function LoginPage() {
                 {nfcStep === "verifying" && (
                   <div className="text-center py-4">
                     <div className="w-10 h-10 border-2 border-blue-400 border-t-transparent rounded-full animate-spin mx-auto" />
-                    <p className="text-blue-400 font-medium mt-3">Card detected! Verifying...</p>
+                    <p className="text-blue-400 font-medium mt-3">{text.cardDetectedVerifying}</p>
                     {detectedUid && (
                       <p className="text-gray-500 text-xs mt-1 font-mono">UID: {detectedUid}</p>
                     )}
@@ -575,8 +647,8 @@ export default function LoginPage() {
                       <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
                       <polyline points="22 4 12 14.01 9 11.01" />
                     </svg>
-                    <p className="text-emerald-400 font-semibold mt-3">Login Successful!</p>
-                    <p className="text-gray-500 text-xs mt-1">Redirecting to dashboard...</p>
+                    <p className="text-emerald-400 font-semibold mt-3">{text.loginSuccessful}</p>
+                    <p className="text-gray-500 text-xs mt-1">{text.redirecting}</p>
                   </div>
                 )}
 
@@ -587,23 +659,23 @@ export default function LoginPage() {
                       <line x1="12" y1="8" x2="12" y2="12" />
                       <line x1="12" y1="16" x2="12.01" y2="16" />
                     </svg>
-                    <p className="text-amber-400 font-medium mt-2">Card Not Linked Yet</p>
+                    <p className="text-amber-400 font-medium mt-2">{text.cardNotLinked}</p>
                     <p className="text-gray-400 text-xs mt-1 mb-4">
-                      Enter your account credentials to link this card for instant login.
+                      {text.cardNotLinkedHelp}
                     </p>
 
                     {/* Inline link-card form */}
                     <div className="space-y-3 text-left max-w-xs mx-auto">
                       <Input
                         type="email"
-                        placeholder="Email address"
+                        placeholder={text.emailAddress}
                         value={linkEmail}
                         onChange={(e) => setLinkEmail(e.target.value)}
                         autoComplete="email"
                       />
                       <Input
                         type="password"
-                        placeholder="Password"
+                        placeholder={text.password}
                         value={linkPassword}
                         onChange={(e) => setLinkPassword(e.target.value)}
                         autoComplete="current-password"
@@ -615,7 +687,7 @@ export default function LoginPage() {
                         disabled={isLinking}
                         className="w-full py-2.5 bg-amber-600 hover:bg-amber-500 disabled:bg-amber-800 text-white font-medium rounded-lg text-sm transition-colors"
                       >
-                        {isLinking ? "Linking..." : "Link Card & Login"}
+                        {isLinking ? text.linking : text.linkCardLogin}
                       </button>
                     </div>
 
@@ -627,7 +699,7 @@ export default function LoginPage() {
                       onClick={resetNfcLogin}
                       className="mt-3 px-4 py-1.5 text-gray-400 hover:text-gray-200 text-xs transition-colors"
                     >
-                      Cancel / Try Another Card
+                      {text.cancelTryAnother}
                     </button>
                   </div>
                 )}
@@ -645,7 +717,7 @@ export default function LoginPage() {
                       onClick={resetNfcLogin}
                       className="mt-3 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm transition-colors"
                     >
-                      Try Again
+                      {text.tryAgain}
                     </button>
                   </div>
                 )}
@@ -658,7 +730,7 @@ export default function LoginPage() {
               style={{ marginLeft: "15px", marginRight: "15px" }}
             >
               <div className="flex-1 h-px bg-slate-700" />
-              <span className="text-gray-500 text-xs uppercase tracking-wide">Or login with password</span>
+              <span className="text-gray-500 text-xs uppercase tracking-wide">{text.orPassword}</span>
               <div className="flex-1 h-px bg-slate-700" />
             </div>
 
@@ -677,7 +749,7 @@ export default function LoginPage() {
                     : "bg-slate-800 text-gray-400 hover:bg-slate-700 hover:text-gray-300 border border-slate-700",
                 )}
               >
-                Email
+                {text.email}
               </button>
               <button
                 type="button"
@@ -689,7 +761,7 @@ export default function LoginPage() {
                     : "bg-slate-800 text-gray-400 hover:bg-slate-700 hover:text-gray-300 border border-slate-700",
                 )}
               >
-                Phone
+                {text.phone}
               </button>
             </div>
 
@@ -706,7 +778,7 @@ export default function LoginPage() {
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    placeholder="Enter your email address"
+                    placeholder={text.enterEmail}
                     style={{ paddingLeft: "15px", width: "100%" }}
                     disabled={isLoading}
                     autoComplete="username"
@@ -721,7 +793,7 @@ export default function LoginPage() {
                     defaultCountry="sg"
                     value={phone}
                     onChange={(phone) => setPhone(phone)}
-                    placeholder="Enter phone number"
+                    placeholder={text.enterPhone}
                     disabled={isLoading}
                   />
                 </div>
@@ -737,7 +809,7 @@ export default function LoginPage() {
                   name="password"
                   value={formData.password}
                   onChange={handleInputChange}
-                  placeholder="Enter your password"
+                  placeholder={text.enterPassword}
                   className="pr-12"
                   style={{ paddingLeft: "15px", width: "100%" }}
                   disabled={isLoading}
@@ -763,7 +835,7 @@ export default function LoginPage() {
                 className="w-full bg-blue-600 text-white font-semibold h-12 rounded-lg text-base hover:bg-blue-700 disabled:bg-slate-600 disabled:cursor-not-allowed transition-colors shadow-lg shadow-blue-600/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-blue-500 mobile-button"
                 style={{ marginTop: "20px", marginLeft: "10px" }}
               >
-                {isLoading ? "Logging in..." : "Login"}
+                {isLoading ? text.loggingIn : text.login}
               </button>
 
               {/* Forgot Password Link */}
@@ -776,7 +848,7 @@ export default function LoginPage() {
                   onClick={handleForgotPassword}
                   className="text-sm text-blue-400 hover:text-blue-300 hover:underline font-medium bg-transparent border-none cursor-pointer transition-colors"
                 >
-                  Forgot your password?
+                  {text.forgotPassword}
                 </button>
               </div>
             </form>

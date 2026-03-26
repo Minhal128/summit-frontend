@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useLocale } from 'next-intl';
 
 // Interface for a single testimonial
 interface Testimonial {
@@ -68,36 +69,91 @@ const TestimonialCard = ({ name, role, text, avatar }: Testimonial) => (
  * @returns {JSX.Element} The rendered testimonials section.
  */
 const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({ testimonials }) => {
+  const locale = useLocale();
+
+  const copyByLocale = {
+    en: {
+      badge: 'Client Testimonials',
+      title: 'Trusted By Investors Who Value Security',
+      subtitle: 'Discover why thousands of professionals and everyday investors trust Summit to safeguard their digital assets with uncompromising security.',
+      roles: ['Crypto Investor', 'Professional Trader', 'Early Adopter', 'DeFi Enthusiast', 'NFT Collector'],
+      texts: [
+        'Finally, peace of mind. I know my assets are safe no matter what happens online.',
+        'The security is unmatched. Summit gives me the confidence to hold for the long term without worrying about online threats.',
+        'As someone who has been in crypto since the beginning, I can say this is the most secure and user-friendly cold wallet I have used.',
+        'I moved all my major holdings to Summit. The peace of mind is invaluable. It is a must-have for any serious investor.',
+        'Protecting my high-value NFTs was my top priority. The offline storage solution is perfect for my needs.'
+      ]
+    },
+    zh: {
+      badge: '客户评价', title: '被重视安全的投资者信赖', subtitle: '了解为什么成千上万的专业与普通投资者选择 Summit 守护其数字资产。',
+      roles: ['加密投资者', '专业交易员', '早期用户', 'DeFi 爱好者', 'NFT 收藏者'],
+      texts: ['终于可以安心了。无论线上发生什么，我的资产都很安全。', '安全性无可比拟。Summit 让我能放心长期持有。', '作为早期进入加密领域的人，我认为这是最安全且易用的冷钱包。', '我已将主要资产转到 Summit，带来的安心感无可替代。', '保护高价值 NFT 是我的首要任务，离线方案正好满足需求。']
+    },
+    ar: {
+      badge: 'آراء العملاء', title: 'موثوق به من المستثمرين الذين يقدّرون الأمان', subtitle: 'اكتشف لماذا يثق آلاف المستثمرين في Summit لحماية أصولهم الرقمية بأمان صارم.',
+      roles: ['مستثمر عملات رقمية', 'متداول محترف', 'مستخدم مبكر', 'مهتم بـ DeFi', 'جامع NFT'],
+      texts: ['أخيرًا راحة بال حقيقية. أعلم أن أصولي آمنة مهما حدث على الإنترنت.', 'الأمان لا يُضاهى. Summit يمنحني الثقة للاحتفاظ طويلًا دون قلق.', 'كمستخدم قديم في الكريبتو، هذه أكثر محفظة باردة أمانًا وسهولة استخدمتها.', 'نقلت معظم أصولي إلى Summit، والطمأنينة لا تقدّر بثمن.', 'حماية مقتنياتي عالية القيمة من NFT كانت أولوية، والحل دون اتصال مثالي.']
+    },
+    ru: {
+      badge: 'ОТЗЫВЫ КЛИЕНТОВ', title: 'Нам доверяют инвесторы, ценящие безопасность', subtitle: 'Узнайте, почему тысячи инвесторов выбирают Summit для защиты цифровых активов.',
+      roles: ['Крипто-инвестор', 'Профессиональный трейдер', 'Ранний пользователь', 'Энтузиаст DeFi', 'Коллекционер NFT'],
+      texts: ['Наконец-то спокойствие: мои активы в безопасности независимо от онлайн-рисков.', 'Безопасность на высоте. Summit дает уверенность в долгосрочном хранении.', 'Как участник крипторынка с самого начала, это лучший cold wallet, которым я пользовался.', 'Я перевела основные активы в Summit — это бесценное ощущение надежности.', 'Защита дорогих NFT была приоритетом, и офлайн-хранение идеально подошло.']
+    },
+    th: {
+      badge: 'เสียงจากลูกค้า', title: 'นักลงทุนที่ให้ความสำคัญกับความปลอดภัยไว้วางใจเรา', subtitle: 'ดูว่าทำไมทั้งมืออาชีพและนักลงทุนทั่วไปจึงเลือก Summit เพื่อปกป้องสินทรัพย์ดิจิทัล',
+      roles: ['นักลงทุนคริปโต', 'เทรดเดอร์มืออาชีพ', 'ผู้ใช้งานยุคแรก', 'สาย DeFi', 'นักสะสม NFT'],
+      texts: ['ในที่สุดก็สบายใจ รู้ว่าสินทรัพย์ของฉันปลอดภัยไม่ว่าออนไลน์จะเกิดอะไรขึ้น', 'ความปลอดภัยยอดเยี่ยม Summit ทำให้ถือระยะยาวได้อย่างมั่นใจ', 'ฉันอยู่ในวงการคริปโตมานาน และนี่คือ cold wallet ที่ปลอดภัยและใช้ง่ายที่สุด', 'ฉันย้ายสินทรัพย์หลักมาที่ Summit แล้ว ความสบายใจมีค่ามาก', 'การปกป้อง NFT มูลค่าสูงคือสิ่งสำคัญที่สุด และโซลูชันออฟไลน์ตอบโจทย์มาก']
+    },
+    es: {
+      badge: 'TESTIMONIOS', title: 'Con la confianza de inversores que valoran la seguridad', subtitle: 'Descubre por qué miles de profesionales e inversores confían en Summit.',
+      roles: ['Inversor cripto', 'Trader profesional', 'Usuario temprano', 'Entusiasta DeFi', 'Coleccionista NFT'],
+      texts: ['Por fin tranquilidad: sé que mis activos están seguros pase lo que pase online.', 'La seguridad es inigualable. Summit me da confianza para mantener a largo plazo.', 'Llevo años en cripto y este es el cold wallet más seguro y fácil de usar que he probado.', 'Moví mis principales holdings a Summit; la tranquilidad no tiene precio.', 'Proteger mis NFT de alto valor era prioridad, y el almacenamiento offline es perfecto.']
+    },
+    fr: {
+      badge: 'TÉMOIGNAGES CLIENTS', title: 'La confiance des investisseurs qui valorisent la sécurité', subtitle: 'Découvrez pourquoi des milliers d’investisseurs font confiance à Summit.',
+      roles: ['Investisseur crypto', 'Trader professionnel', 'Early adopter', 'Passionné DeFi', 'Collectionneur NFT'],
+      texts: ['Enfin la sérénité: mes actifs restent en sécurité quoi qu’il arrive en ligne.', 'La sécurité est incomparable. Summit me permet d’investir long terme en confiance.', 'Présent dans la crypto depuis le début, c’est le cold wallet le plus sûr que j’ai utilisé.', 'J’ai déplacé mes principaux actifs vers Summit, la tranquillité d’esprit est énorme.', 'Protéger mes NFT de valeur était prioritaire, et la solution hors ligne est parfaite.']
+    },
+    de: {
+      badge: 'KUNDENSTIMMEN', title: 'Vertrauen von Investoren, die Sicherheit schätzen', subtitle: 'Erfahre, warum Tausende Investoren Summit zum Schutz ihrer Assets nutzen.',
+      roles: ['Krypto-Investor', 'Profi-Trader', 'Early Adopter', 'DeFi-Enthusiast', 'NFT-Sammler'],
+      texts: ['Endlich echte Ruhe: Meine Assets sind sicher, egal was online passiert.', 'Die Sicherheit ist herausragend. Summit gibt mir Vertrauen für langfristiges Halten.', 'Ich bin seit den Anfängen in Krypto und das ist die sicherste Cold Wallet, die ich genutzt habe.', 'Ich habe meine wichtigsten Bestände zu Summit verschoben — die Sicherheit ist unbezahlbar.', 'Der Schutz meiner hochwertigen NFTs war entscheidend, und die Offline-Lösung passt perfekt.']
+    }
+  } as const;
+
+  const t = copyByLocale[locale as keyof typeof copyByLocale] ?? copyByLocale.en;
+
   // Default testimonials data if none are provided via props
   const defaultTestimonials: Testimonial[] = [
     {
       name: 'David K.',
-      role: 'Crypto Investor',
-      text: 'Finally, peace of mind. I know my assets are safe no matter what happens online.',
+      role: t.roles[0],
+      text: t.texts[0],
       avatar: 'https://img.freepik.com/free-photo/portrait-successful-man-having-stubble-posing-with-broad-smile-keeping-arms-folded_171337-1875.jpg',
     },
     {
       name: 'Sarah J.',
-      role: 'Professional Trader',
-      text: 'The security is unmatched. Summit gives me the confidence to hold for the long term without worrying about online threats.',
+      role: t.roles[1],
+      text: t.texts[1],
       avatar: 'https://img.freepik.com/free-photo/young-beautiful-woman-pink-warm-sweater-natural-look-smiling-portrait-isolated-long-hair_285396-896.jpg',
     },
     {
       name: 'Michael B.',
-      role: 'Early Adopter',
-      text: 'As someone who has been in crypto since the beginning, I can say this is the most secure and user-friendly cold wallet I have used.',
+      role: t.roles[2],
+      text: t.texts[2],
       avatar: 'https://img.freepik.com/free-photo/handsome-bearded-guy-posing-against-white-wall_273609-20597.jpg',
     },
     {
       name: 'Emily R.',
-      role: 'DeFi Enthusiast',
-      text: 'I moved all my major holdings to Summit. The peace of mind is invaluable. It is a must-have for any serious investor.',
+      role: t.roles[3],
+      text: t.texts[3],
       avatar: 'https://img.freepik.com/free-photo/lifestyle-beauty-fashion-people-emotions-concept-young-gorgeous-sassy-korean-girl-showing-peace-signs-winking-cheeky-smiling-standing-blue-background_1258-76504.jpg',
     },
     {
       name: 'Chris L.',
-      role: 'NFT Collector',
-      text: 'Protecting my high-value NFTs was my top priority. The offline storage solution is perfect for my needs.',
+      role: t.roles[4],
+      text: t.texts[4],
       avatar: 'https://img.freepik.com/free-photo/pleased-young-businessman-wearing-glasses-holding-notebooks-showing-thumb-up-isolated-white-background_141793-65239.jpg',
     }
   ];
@@ -246,18 +302,17 @@ const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({ testimonials 
           <div className="text-center mb-20 max-w-6xl mx-auto px-8">
             {/* Section Badge */}
             <div className="inline-flex items-center px-4 py-2 rounded-full section-badge mb-6" style={{ marginTop: '50px' }}>
-              <span className="text-sm font-semibold tracking-wide uppercase text-blue-300">Client Testimonials</span>
+              <span className="text-sm font-semibold tracking-wide uppercase text-blue-300">{t.badge}</span>
             </div>
             
             {/* Main Title */}
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-8 leading-tight">
-              Trusted By Investors Who Value Security
+              {t.title}
             </h1>
             
             {/* Subtitle */}
             <p className="text-lg md:text-xl text-slate-300 max-w-3xl mx-auto leading-relaxed text-center font-light" style={{ marginBottom: '70px' }}>
-              Discover why thousands of professionals and everyday investors trust Summit 
-              to safeguard their digital assets with uncompromising security.
+              {t.subtitle}
             </p>
             
           </div>
