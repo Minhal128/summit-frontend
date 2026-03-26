@@ -2,18 +2,18 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Header from '../../components/Header';
-import HeroSection from '../../components/HeroSection';
-import DashboardMockup from '../../components/DashboardMockup';
-import StatsTicker from '../../components/StatsTicker';
-import FeaturesSection from '../../components/FeaturesSection';
-import HowItWorksSection from '../../components/HowItWorksSection';
-import SecuritySection from '../../components/SecuritySection';
-import TestimonialsSection from '../../components/TestimonialsSection';
-import FAQSection from '../../components/FAQSection';
-import ComparisonSection from '../../components/ComparisonSection';
-import CTASection from '../../components/CTASection';
-import Footer from '../../components/Footer';
+import Header from '@/components/Header';
+import HeroSection from '@/components/HeroSection';
+import DashboardMockup from '@/components/DashboardMockup';
+import StatsTicker from '@/components/StatsTicker';
+import FeaturesSection from '@/components/FeaturesSection';
+import HowItWorksSection from '@/components/HowItWorksSection';
+import SecuritySection from '@/components/SecuritySection';
+import TestimonialsSection from '@/components/TestimonialsSection';
+import FAQSection from '@/components/FAQSection';
+import ComparisonSection from '@/components/ComparisonSection';
+import CTASection from '@/components/CTASection';
+import Footer from '@/components/Footer';
 
 export default function LandingPage() {
   const router = useRouter();

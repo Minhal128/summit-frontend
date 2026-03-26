@@ -262,7 +262,7 @@ export default function LoginPage() {
 
     setIsLoading(true);
     try {
-      const { apiFetch } = await import("../../lib/api");
+      const { apiFetch } = await import('@/lib/api');
       const identifier = loginMethod === "email" ? formData.email : phone;
       const data: any = await apiFetch("/api/auth/login", {
         method: "POST",

@@ -146,7 +146,7 @@ const OtpVerificationCard = () => {
         if (otp.length === 6) {
       (async () => {
         try {
-          const { apiFetch } = await import('../../lib/api');
+          const { apiFetch } = await import('@/lib/api');
           if (verificationType === 'forgot-password') {
             const data: any = await apiFetch('/api/auth/forgot-password/verify-identity', {
               method: 'POST',
@@ -201,7 +201,7 @@ const OtpVerificationCard = () => {
         }
         setIsResending(true);
         try {
-          const { apiFetch } = await import('../../lib/api');
+          const { apiFetch } = await import('@/lib/api');
           await apiFetch('/api/auth/forgot-password/initiate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

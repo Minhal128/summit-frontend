@@ -50,7 +50,7 @@ const RecoveryPhraseCard = () => {
                     setCheckingWallet(false);
                     return;
                 }
-                const { apiFetch } = await import('../../lib/api');
+                const { apiFetch } = await import('@/lib/api');
                 const resp: any = await apiFetch('/api/auth/forgot-password/check-wallet', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -113,7 +113,7 @@ const RecoveryPhraseCard = () => {
 
             setIsLoading(true);
         try {
-            const { apiFetch } = await import('../../lib/api');
+            const { apiFetch } = await import('@/lib/api');
             const resetToken = localStorage.getItem('reset_token') || '';
             if (!resetToken) {
                 toast.error('No reset token found. Please complete the identity verification (OTP) step first.');

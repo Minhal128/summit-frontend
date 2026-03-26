@@ -67,7 +67,7 @@ const ForgotPasswordCard = () => {
 
         setIsLoading(true);
         try {
-            const { apiFetch } = await import('../../lib/api');
+            const { apiFetch } = await import('@/lib/api');
             const data: any = await apiFetch('/api/auth/forgot-password/initiate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

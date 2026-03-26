@@ -110,7 +110,7 @@ const CreatePasswordCard = () => {
 
         setIsLoading(true);
         try {
-            const { apiFetch } = await import('../../lib/api');
+            const { apiFetch } = await import('@/lib/api');
             const finalResetToken = localStorage.getItem('final_reset_token') || '';
             const data: any = await apiFetch('/api/auth/final-reset', {
                 method: 'POST',

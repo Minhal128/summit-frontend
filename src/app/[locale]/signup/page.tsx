@@ -207,7 +207,7 @@ export default function SignupPage() {
     setIsLoading(true);
     try {
       try {
-        const { apiFetch } = await import("../../lib/api");
+        const { apiFetch } = await import('@/lib/api');
         const data: any = await apiFetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },

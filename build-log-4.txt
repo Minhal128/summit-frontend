@@ -1,0 +1,55 @@
+  Γû▓ Next.js 14.2.33
+  - Environments: .env.local
+
+   Creating an optimized production build ...
+ Γ£ô Compiled successfully
+   Skipping validation of types
+   Skipping linting
+   Collecting page data ...
+   Generating static pages (0/3) ...
+ Γ£ô Generating static pages (3/3)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+Γöî Γùï /_not-found                          880 B          88.5 kB
+Γö£ ╞Æ /[locale]                            152 B          87.7 kB
+Γö£ ╞Æ /[locale]/24wordrecovery             2.78 kB         103 kB
+Γö£ ╞Æ /[locale]/about                      6.44 kB         116 kB
+Γö£ ╞Æ /[locale]/academy                    4.53 kB         119 kB
+Γö£ ╞Æ /[locale]/activate-card              20.1 kB         139 kB
+Γö£ ╞Æ /[locale]/blog                       2.84 kB         117 kB
+Γö£ ╞Æ /[locale]/blog/[slug]                3.59 kB         118 kB
+Γö£ ╞Æ /[locale]/boardingscreens/boarding1  1.84 kB         102 kB
+Γö£ ╞Æ /[locale]/boardingscreens/boarding2  1.98 kB         102 kB
+Γö£ ╞Æ /[locale]/boardingscreens/boarding3  1.76 kB         102 kB
+Γö£ ╞Æ /[locale]/boardingscreens/boarding4  1.57 kB         102 kB
+Γö£ ╞Æ /[locale]/boardingscreens/boarding5  1.73 kB         102 kB
+Γö£ ╞Æ /[locale]/boardingscreens/boarding6  2.24 kB         103 kB
+Γö£ ╞Æ /[locale]/boardingscreens/boarding7  2.71 kB         103 kB
+Γö£ ╞Æ /[locale]/boardingscreens/boarding8  2.21 kB         103 kB
+Γö£ ╞Æ /[locale]/cart                       4.98 kB         115 kB
+Γö£ ╞Æ /[locale]/checkout                   7.24 kB         117 kB
+Γö£ ╞Æ /[locale]/contact                    2.34 kB         116 kB
+Γö£ ╞Æ /[locale]/createnewpassword          2.76 kB         103 kB
+Γö£ ╞Æ /[locale]/dashboard                  171 kB          310 kB
+Γö£ ╞Æ /[locale]/forgot-password            2.04 kB         102 kB
+Γö£ ╞Æ /[locale]/login                      6.72 kB         119 kB
+Γö£ ╞Æ /[locale]/nfc-access                 7.54 kB         127 kB
+Γö£ ╞Æ /[locale]/nfc-demo                   12.3 kB         161 kB
+Γö£ ╞Æ /[locale]/otp-verification           3.58 kB         104 kB
+Γö£ ╞Æ /[locale]/payment                    7.38 kB         132 kB
+Γö£ ╞Æ /[locale]/shipping                   6.76 kB         126 kB
+Γö£ ╞Æ /[locale]/signup                     4.22 kB         110 kB
+Γöö ╞Æ /[locale]/website                    12.4 kB         126 kB
++ First Load JS shared by all            87.6 kB
+  Γö£ chunks/2117-cc1f693fea0f1799.js      31.9 kB
+  Γö£ chunks/fd9d1056-245a8df1c65c3720.js  53.6 kB
+  Γöö other shared chunks (total)          2.07 kB
+
+
+╞Æ Middleware                             37 kB
+
+Γùï  (Static)   prerendered as static content
+╞Æ  (Dynamic)  server-rendered on demand
+

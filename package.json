@@ -9,7 +9,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start -p 8080",
-    "lint": "eslint"
+    "lint": "eslint",
+    "i18n:deep": "node scripts/deep-i18n-sync.cjs",
+    "i18n:deep:pages": "node scripts/deep-i18n-sync.cjs --pages-only",
+    "i18n:audit": "node scripts/deep-i18n-sync.cjs --extract-only --pages-only",
+    "i18n:fill": "node scripts/deep-i18n-sync.cjs --skip-translate --fallback-to-en",
+    "i18n:fill:pages": "node scripts/deep-i18n-sync.cjs --pages-only --skip-translate --fallback-to-en"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -42,6 +47,7 @@
     "@radix-ui/react-tooltip": "^1.1.6",
     "@stripe/react-stripe-js": "^5.3.0",
     "@stripe/stripe-js": "^8.3.0",
+    "@vitalets/google-translate-api": "^9.2.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.4",
@@ -74,8 +80,13 @@
     "autoprefixer": "^10.4.20",
     "eslint": "^8.57.0",
     "eslint-config-next": "^14.2.16",
+    "glob": "^13.0.6",
+    "i18next-scanner": "^4.6.0",
+    "next-intl": "^4.8.3",
     "postcss": "^8.5",
     "tailwindcss": "^3.4.17",
+    "ts-morph": "^27.0.2",
+    "ts-node": "^10.9.2",
     "typescript": "^5"
   }
 }
