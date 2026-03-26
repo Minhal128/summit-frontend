@@ -1,12 +1,70 @@
 'use client';
 
 import React from 'react';
+import { useLocale } from 'next-intl';
 
 interface FeaturesSectionProps {
   onSecureWallet?: () => void;
 }
 
 const FeaturesSection: React.FC<FeaturesSectionProps> = ({ onSecureWallet }) => {
+  const locale = useLocale();
+
+  const copyByLocale = {
+    en: {
+      label: 'KEY FEATURES',
+      title: 'Why Choose Summit',
+      subtitle: 'Keep your digital assets offline, safe, and always under your control—secure storage with the freedom to invest anytime.',
+      f1: "Offline security that hackers can't touch.",
+      f2: 'Instant access, zero compromise.',
+      f3: 'Store and grow your assets with confidence.',
+      f4: 'Designed for both beginners and pros.',
+      cta: 'And of course more...',
+      ctaButton: 'Secure my wallet',
+      f5: 'Your crypto, always in your control.',
+      f6: 'One wallet for all your digital assets.',
+      f7: 'Simple setup, powerful protection.',
+      f8: 'Future-ready security for your wealth.'
+    },
+    zh: {
+      label: '核心功能', title: '为什么选择 Summit', subtitle: '让您的数字资产离线、安全且始终由您掌控。',
+      f1: '离线安全，黑客无法触及。', f2: '即时访问，零妥协。', f3: '自信地存储并增长您的资产。', f4: '为新手与专业用户而设计。',
+      cta: '当然，还有更多…', ctaButton: '保护我的钱包', f5: '您的加密资产，始终由您掌控。', f6: '一个钱包管理所有数字资产。', f7: '设置简单，防护强大。', f8: '面向未来的财富安全。'
+    },
+    ar: {
+      label: 'الميزات الرئيسية', title: 'لماذا تختار Summit', subtitle: 'حافظ على أصولك الرقمية آمنة وغير متصلة وتحت سيطرتك دائمًا.',
+      f1: 'أمان غير متصل لا يمكن للقراصنة لمسه.', f2: 'وصول فوري دون تنازل.', f3: 'احفظ ونمِّ أصولك بثقة.', f4: 'مصمم للمبتدئين والمحترفين.',
+      cta: 'وبالطبع المزيد...', ctaButton: 'أمّن محفظتي', f5: 'عملاتك المشفرة دائمًا تحت سيطرتك.', f6: 'محفظة واحدة لكل أصولك الرقمية.', f7: 'إعداد بسيط وحماية قوية.', f8: 'أمان جاهز للمستقبل لثروتك.'
+    },
+    ru: {
+      label: 'КЛЮЧЕВЫЕ ФУНКЦИИ', title: 'Почему Summit', subtitle: 'Держите активы офлайн, безопасно и под полным контролем.',
+      f1: 'Офлайн-защита, недоступная хакерам.', f2: 'Мгновенный доступ без компромиссов.', f3: 'Храните и приумножайте активы с уверенностью.', f4: 'Для новичков и профессионалов.',
+      cta: 'И это ещё не всё...', ctaButton: 'Защитить мой кошелек', f5: 'Ваша крипта всегда под вашим контролем.', f6: 'Один кошелек для всех цифровых активов.', f7: 'Простая настройка, мощная защита.', f8: 'Безопасность, готовая к будущему.'
+    },
+    th: {
+      label: 'ฟีเจอร์หลัก', title: 'ทำไมต้องเลือก Summit', subtitle: 'เก็บสินทรัพย์ดิจิทัลของคุณแบบออฟไลน์ ปลอดภัย และควบคุมได้เสมอ',
+      f1: 'ความปลอดภัยออฟไลน์ที่แฮกเกอร์แตะต้องไม่ได้', f2: 'เข้าถึงทันที ไม่ต้องแลกความปลอดภัย', f3: 'เก็บและเติบโตสินทรัพย์อย่างมั่นใจ', f4: 'ออกแบบทั้งมือใหม่และมือโปร',
+      cta: 'และแน่นอน ยังมีอีก...', ctaButton: 'ปกป้องวอลเล็ตของฉัน', f5: 'คริปโตของคุณอยู่ในการควบคุมเสมอ', f6: 'วอลเล็ตเดียวสำหรับสินทรัพย์ทั้งหมด', f7: 'ตั้งค่าง่าย ป้องกันทรงพลัง', f8: 'ความปลอดภัยพร้อมสู่อนาคต'
+    },
+    es: {
+      label: 'FUNCIONES CLAVE', title: 'Por qué elegir Summit', subtitle: 'Mantén tus activos offline, seguros y siempre bajo tu control.',
+      f1: 'Seguridad offline que los hackers no pueden tocar.', f2: 'Acceso instantáneo, cero compromiso.', f3: 'Guarda y haz crecer tus activos con confianza.', f4: 'Diseñado para principiantes y expertos.',
+      cta: 'Y por supuesto, más...', ctaButton: 'Asegurar mi wallet', f5: 'Tu cripto, siempre bajo tu control.', f6: 'Una wallet para todos tus activos.', f7: 'Configuración simple, protección potente.', f8: 'Seguridad lista para el futuro.'
+    },
+    fr: {
+      label: 'FONCTIONNALITÉS CLÉS', title: 'Pourquoi choisir Summit', subtitle: 'Gardez vos actifs hors ligne, en sécurité et toujours sous votre contrôle.',
+      f1: 'Sécurité hors ligne inaccessible aux hackers.', f2: 'Accès instantané, zéro compromis.', f3: 'Stockez et faites croître vos actifs avec confiance.', f4: 'Conçu pour débutants et experts.',
+      cta: 'Et bien sûr, encore plus...', ctaButton: 'Sécuriser mon wallet', f5: 'Votre crypto, toujours sous votre contrôle.', f6: 'Un wallet pour tous vos actifs.', f7: 'Configuration simple, protection puissante.', f8: 'Une sécurité prête pour l’avenir.'
+    },
+    de: {
+      label: 'KERNFUNKTIONEN', title: 'Warum Summit wählen', subtitle: 'Halte deine Assets offline, sicher und jederzeit unter Kontrolle.',
+      f1: 'Offline-Sicherheit, die Hacker nicht angreifen können.', f2: 'Sofortiger Zugriff ohne Kompromisse.', f3: 'Assets sicher speichern und wachsen lassen.', f4: 'Für Einsteiger und Profis entwickelt.',
+      cta: 'Und natürlich mehr...', ctaButton: 'Mein Wallet sichern', f5: 'Deine Krypto bleibt unter deiner Kontrolle.', f6: 'Ein Wallet für alle digitalen Assets.', f7: 'Einfache Einrichtung, starker Schutz.', f8: 'Zukunftssichere Sicherheit für dein Vermögen.'
+    }
+  } as const;
+
+  const t = copyByLocale[locale as keyof typeof copyByLocale] ?? copyByLocale.en;
+
   return (
     <>
       <style jsx>{`
@@ -244,9 +302,9 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ onSecureWallet }) => 
 
       <section id="features-section" className="features-section">
         <div className="container">
-          <div className="section-label">KEY FEATURES</div>
-          <h1 className="main-title">Why Choose Summit</h1>
-          <p className="subtitle">Keep your digital assets offline, safe, and always under your control—secure storage with the freedom to invest anytime.</p>
+          <div className="section-label">{t.label}</div>
+          <h1 className="main-title">{t.title}</h1>
+          <p className="subtitle">{t.subtitle}</p>
           
           <div className="features-grid">
             {/* Top Row */}
@@ -257,7 +315,7 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ onSecureWallet }) => 
                 </svg>
               </div>
               <div className="feature-title">
-                Offline security that hackers can&apos;t touch.
+                {t.f1}
               </div>
             </div>
 
@@ -268,7 +326,7 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ onSecureWallet }) => 
                 </svg>
               </div>
               <div className="feature-title">
-                Instant access, zero compromise.
+                {t.f2}
               </div>
             </div>
 
@@ -279,7 +337,7 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ onSecureWallet }) => 
                 </svg>
               </div>
               <div className="feature-title">
-                Store and grow your assets with confidence.
+                {t.f3}
               </div>
             </div>
 
@@ -291,20 +349,20 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ onSecureWallet }) => 
                 </svg>
               </div>
               <div className="feature-title">
-                Designed for both beginners and pros.
+                {t.f4}
               </div>
             </div>
 
             {/* Center Blue Section */}
             <div className="cta-card">
               <div className="cta-text">
-                And of course more...
+                {t.cta}
               </div>
               <button className="cta-button" onClick={onSecureWallet}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/>
                 </svg>
-                Secure my wallet
+                {t.ctaButton}
               </button>
             </div>
 
@@ -315,7 +373,7 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ onSecureWallet }) => 
                 </svg>
               </div>
               <div className="feature-title">
-                Your crypto, always in your control.
+                {t.f5}
               </div>
             </div>
 
@@ -327,7 +385,7 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ onSecureWallet }) => 
                 </svg>
               </div>
               <div className="feature-title">
-                One wallet for all your digital assets.
+                {t.f6}
               </div>
             </div>
 
@@ -338,7 +396,7 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ onSecureWallet }) => 
                 </svg>
               </div>
               <div className="feature-title">
-                Simple setup, powerful protection.
+                {t.f7}
               </div>
             </div>
 
@@ -349,7 +407,7 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ onSecureWallet }) => 
                 </svg>
               </div>
               <div className="feature-title">
-                Future-ready security for your wealth.
+                {t.f8}
               </div>
             </div>
           </div>

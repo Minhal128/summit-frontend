@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale } from "next-intl";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { PhoneInput } from "react-international-phone";
@@ -123,6 +124,7 @@ const EyeSlashIcon = (props: React.SVGProps<SVGSVGElement>) => (
 // --- MAIN SIGNUP PAGE COMPONENT ---
 
 export default function SignupPage() {
+  const locale = useLocale();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -135,6 +137,42 @@ export default function SignupPage() {
     agreeToMarketing: false,
   });
   const router = useRouter();
+
+  const copyByLocale = {
+    en: {
+      title: 'Create an account',
+      alreadyAccount: 'Already have an account?',
+      login: 'Log in',
+      emailPlaceholder: 'Please enter your email address',
+      phonePlaceholder: 'Enter phone number',
+      passwordPlaceholder: 'Enter your password',
+      confirmPasswordPlaceholder: 'Confirm your password',
+      creating: 'Creating Account...',
+      create: 'Create new account',
+      policyText: "By submitting your email, you confirm you've read this",
+      policyNotice: 'Policy Notice',
+      marketing: 'I agree to receive marketing updates and offers',
+      toastEmailRequired: 'Email is required',
+      toastEmailInvalid: 'Please enter a valid email address',
+      toastPhoneInvalid: 'Please enter a valid phone number',
+      toastPasswordRequired: 'Password is required',
+      toastPasswordLength: 'Password must be at least 8 characters long',
+      toastConfirmRequired: 'Please confirm your password',
+      toastPasswordMismatch: 'Passwords do not match',
+      toastPolicyRequired: 'Please agree to the Policy Notice',
+      toastSignupSuccess: 'Account created successfully! Please verify your email.',
+      toastSignupFailed: 'Signup failed. Please try again.'
+    },
+    de: { title: 'Konto erstellen', alreadyAccount: 'Hast du bereits ein Konto?', login: 'Einloggen', emailPlaceholder: 'Bitte gib deine E-Mail-Adresse ein', phonePlaceholder: 'Telefonnummer eingeben', passwordPlaceholder: 'Passwort eingeben', confirmPasswordPlaceholder: 'Passwort bestätigen', creating: 'Konto wird erstellt...', create: 'Neues Konto erstellen', policyText: 'Mit dem Absenden bestätigst du, dass du gelesen hast:', policyNotice: 'Datenschutzhinweis', marketing: 'Ich stimme Marketing-Updates und Angeboten zu', toastEmailRequired: 'E-Mail ist erforderlich', toastEmailInvalid: 'Bitte gib eine gültige E-Mail ein', toastPhoneInvalid: 'Bitte gib eine gültige Telefonnummer ein', toastPasswordRequired: 'Passwort ist erforderlich', toastPasswordLength: 'Passwort muss mindestens 8 Zeichen lang sein', toastConfirmRequired: 'Bitte bestätige dein Passwort', toastPasswordMismatch: 'Passwörter stimmen nicht überein', toastPolicyRequired: 'Bitte stimme dem Datenschutzhinweis zu', toastSignupSuccess: 'Konto erfolgreich erstellt! Bitte E-Mail bestätigen.', toastSignupFailed: 'Registrierung fehlgeschlagen. Bitte erneut versuchen.' },
+    zh: { title: '创建账户', alreadyAccount: '已有账户？', login: '登录', emailPlaceholder: '请输入邮箱地址', phonePlaceholder: '请输入手机号', passwordPlaceholder: '请输入密码', confirmPasswordPlaceholder: '请确认密码', creating: '正在创建账户...', create: '创建新账户', policyText: '提交邮箱即表示您已阅读', policyNotice: '隐私政策', marketing: '我同意接收营销更新和优惠', toastEmailRequired: '邮箱为必填项', toastEmailInvalid: '请输入有效邮箱地址', toastPhoneInvalid: '请输入有效手机号', toastPasswordRequired: '密码为必填项', toastPasswordLength: '密码至少需要 8 位', toastConfirmRequired: '请确认密码', toastPasswordMismatch: '两次密码不一致', toastPolicyRequired: '请同意隐私政策', toastSignupSuccess: '账户创建成功，请验证邮箱。', toastSignupFailed: '注册失败，请重试。' },
+    ar: { title: 'إنشاء حساب', alreadyAccount: 'لديك حساب بالفعل؟', login: 'تسجيل الدخول', emailPlaceholder: 'يرجى إدخال بريدك الإلكتروني', phonePlaceholder: 'أدخل رقم الهاتف', passwordPlaceholder: 'أدخل كلمة المرور', confirmPasswordPlaceholder: 'تأكيد كلمة المرور', creating: 'جارٍ إنشاء الحساب...', create: 'إنشاء حساب جديد', policyText: 'بإرسال بريدك الإلكتروني فأنت تؤكد أنك قرأت', policyNotice: 'إشعار السياسة', marketing: 'أوافق على تلقي تحديثات وعروض تسويقية', toastEmailRequired: 'البريد الإلكتروني مطلوب', toastEmailInvalid: 'يرجى إدخال بريد إلكتروني صحيح', toastPhoneInvalid: 'يرجى إدخال رقم هاتف صحيح', toastPasswordRequired: 'كلمة المرور مطلوبة', toastPasswordLength: 'يجب أن تكون كلمة المرور 8 أحرف على الأقل', toastConfirmRequired: 'يرجى تأكيد كلمة المرور', toastPasswordMismatch: 'كلمتا المرور غير متطابقتين', toastPolicyRequired: 'يرجى الموافقة على إشعار السياسة', toastSignupSuccess: 'تم إنشاء الحساب بنجاح! يرجى التحقق من البريد الإلكتروني.', toastSignupFailed: 'فشل إنشاء الحساب. حاول مرة أخرى.' },
+    ru: { title: 'Создать аккаунт', alreadyAccount: 'Уже есть аккаунт?', login: 'Войти', emailPlaceholder: 'Введите email', phonePlaceholder: 'Введите номер телефона', passwordPlaceholder: 'Введите пароль', confirmPasswordPlaceholder: 'Подтвердите пароль', creating: 'Создаем аккаунт...', create: 'Создать аккаунт', policyText: 'Отправляя email, вы подтверждаете, что прочитали', policyNotice: 'Политику', marketing: 'Я согласен получать маркетинговые обновления и предложения', toastEmailRequired: 'Email обязателен', toastEmailInvalid: 'Введите корректный email', toastPhoneInvalid: 'Введите корректный номер телефона', toastPasswordRequired: 'Пароль обязателен', toastPasswordLength: 'Пароль должен быть не менее 8 символов', toastConfirmRequired: 'Подтвердите пароль', toastPasswordMismatch: 'Пароли не совпадают', toastPolicyRequired: 'Пожалуйста, согласитесь с Политикой', toastSignupSuccess: 'Аккаунт создан! Подтвердите email.', toastSignupFailed: 'Регистрация не удалась. Попробуйте снова.' },
+    th: { title: 'สร้างบัญชี', alreadyAccount: 'มีบัญชีอยู่แล้ว?', login: 'เข้าสู่ระบบ', emailPlaceholder: 'กรอกอีเมลของคุณ', phonePlaceholder: 'กรอกหมายเลขโทรศัพท์', passwordPlaceholder: 'กรอกรหัสผ่าน', confirmPasswordPlaceholder: 'ยืนยันรหัสผ่าน', creating: 'กำลังสร้างบัญชี...', create: 'สร้างบัญชีใหม่', policyText: 'เมื่อส่งอีเมล แสดงว่าคุณได้อ่าน', policyNotice: 'ประกาศนโยบาย', marketing: 'ฉันยินยอมรับข่าวสารและข้อเสนอทางการตลาด', toastEmailRequired: 'ต้องกรอกอีเมล', toastEmailInvalid: 'กรุณากรอกอีเมลที่ถูกต้อง', toastPhoneInvalid: 'กรุณากรอกหมายเลขโทรศัพท์ที่ถูกต้อง', toastPasswordRequired: 'ต้องกรอกรหัสผ่าน', toastPasswordLength: 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร', toastConfirmRequired: 'กรุณายืนยันรหัสผ่าน', toastPasswordMismatch: 'รหัสผ่านไม่ตรงกัน', toastPolicyRequired: 'กรุณายอมรับประกาศนโยบาย', toastSignupSuccess: 'สร้างบัญชีสำเร็จ! กรุณายืนยันอีเมล', toastSignupFailed: 'สมัครสมาชิกไม่สำเร็จ กรุณาลองใหม่' },
+    es: { title: 'Crear una cuenta', alreadyAccount: '¿Ya tienes una cuenta?', login: 'Iniciar sesión', emailPlaceholder: 'Ingresa tu correo electrónico', phonePlaceholder: 'Ingresa número de teléfono', passwordPlaceholder: 'Ingresa tu contraseña', confirmPasswordPlaceholder: 'Confirma tu contraseña', creating: 'Creando cuenta...', create: 'Crear nueva cuenta', policyText: 'Al enviar tu correo, confirmas que has leído este', policyNotice: 'Aviso de Política', marketing: 'Acepto recibir actualizaciones y ofertas de marketing', toastEmailRequired: 'El correo es obligatorio', toastEmailInvalid: 'Ingresa un correo válido', toastPhoneInvalid: 'Ingresa un número de teléfono válido', toastPasswordRequired: 'La contraseña es obligatoria', toastPasswordLength: 'La contraseña debe tener al menos 8 caracteres', toastConfirmRequired: 'Confirma tu contraseña', toastPasswordMismatch: 'Las contraseñas no coinciden', toastPolicyRequired: 'Acepta el Aviso de Política', toastSignupSuccess: '¡Cuenta creada! Verifica tu correo.', toastSignupFailed: 'Error al registrarte. Intenta nuevamente.' },
+    fr: { title: 'Créer un compte', alreadyAccount: 'Vous avez déjà un compte ?', login: 'Connexion', emailPlaceholder: 'Entrez votre e-mail', phonePlaceholder: 'Entrez le numéro de téléphone', passwordPlaceholder: 'Entrez votre mot de passe', confirmPasswordPlaceholder: 'Confirmez votre mot de passe', creating: 'Création du compte...', create: 'Créer un nouveau compte', policyText: 'En soumettant votre e-mail, vous confirmez avoir lu cet', policyNotice: 'Avis de Politique', marketing: 'J’accepte de recevoir des mises à jour et offres marketing', toastEmailRequired: 'E-mail requis', toastEmailInvalid: 'Veuillez entrer un e-mail valide', toastPhoneInvalid: 'Veuillez entrer un numéro valide', toastPasswordRequired: 'Mot de passe requis', toastPasswordLength: 'Le mot de passe doit contenir au moins 8 caractères', toastConfirmRequired: 'Veuillez confirmer votre mot de passe', toastPasswordMismatch: 'Les mots de passe ne correspondent pas', toastPolicyRequired: 'Veuillez accepter l’Avis de Politique', toastSignupSuccess: 'Compte créé avec succès ! Vérifiez votre e-mail.', toastSignupFailed: 'Échec de l’inscription. Veuillez réessayer.' }
+  } as const;
+
+  const text = copyByLocale[locale as keyof typeof copyByLocale] ?? copyByLocale.en;
 
   // Clear form when component mounts (handles back navigation)
   useEffect(() => {
@@ -151,35 +189,35 @@ export default function SignupPage() {
   // Form validation
   const validateForm = () => {
     if (!formData.email) {
-      toast.error("Email is required");
+      toast.error(text.toastEmailRequired);
       return false;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      toast.error("Please enter a valid email address");
+      toast.error(text.toastEmailInvalid);
       return false;
     }
     if (!phone || phone.length < 8) {
-      toast.error("Please enter a valid phone number");
+      toast.error(text.toastPhoneInvalid);
       return false;
     }
     if (!formData.password) {
-      toast.error("Password is required");
+      toast.error(text.toastPasswordRequired);
       return false;
     }
     if (formData.password.length < 8) {
-      toast.error("Password must be at least 8 characters long");
+      toast.error(text.toastPasswordLength);
       return false;
     }
     if (!formData.confirmPassword) {
-      toast.error("Please confirm your password");
+      toast.error(text.toastConfirmRequired);
       return false;
     }
     if (formData.password !== formData.confirmPassword) {
-      toast.error("Passwords do not match");
+      toast.error(text.toastPasswordMismatch);
       return false;
     }
     if (!formData.agreeToPolicy) {
-      toast.error("Please agree to the Policy Notice");
+      toast.error(text.toastPolicyRequired);
       return false;
     }
     return true;
@@ -221,20 +259,19 @@ export default function SignupPage() {
 
         toast.success(
           data.message ||
-            "Account created successfully! Please verify your email.",
+            text.toastSignupSuccess,
         );
-        router.push(
-          `/otp-verification?email=${encodeURIComponent(formData.email)}`,
-        );
+        const path = locale === 'en' ? '/otp-verification' : `/${locale}/otp-verification`;
+        router.push(`${path}?email=${encodeURIComponent(formData.email)}`);
       } catch (err: any) {
         console.error("Signup api error:", err);
         toast.error(
-          err?.message || err?.text || "Signup failed. Please try again.",
+          err?.message || err?.text || text.toastSignupFailed,
         );
       }
     } catch (error: any) {
       console.error("Signup error:", error);
-      toast.error("Signup failed. Please try again.");
+      toast.error(text.toastSignupFailed);
     } finally {
       setIsLoading(false);
     }
@@ -469,18 +506,18 @@ export default function SignupPage() {
               className="text-3xl font-bold text-white mb-2 mobile-title"
               style={{ marginLeft: "20px" }}
             >
-              Create an account
+              {text.title}
             </h1>
             <p
               className="text-gray-400 text-sm mb-8 mobile-subtitle"
               style={{ marginLeft: "20px" }}
             >
-              Already have an account?{" "}
+              {text.alreadyAccount}{" "}
               <a
-                href="/login"
+                href={locale === 'en' ? '/login' : `/${locale}/login`}
                 className="font-medium text-blue-400 hover:underline"
               >
-                Log in
+                {text.login}
               </a>
             </p>
 
@@ -494,7 +531,7 @@ export default function SignupPage() {
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  placeholder="Please enter your email address"
+                  placeholder={text.emailPlaceholder}
                   style={{ paddingLeft: "15px", width: "100%" }}
                   disabled={isLoading}
                 />
@@ -508,7 +545,7 @@ export default function SignupPage() {
                   defaultCountry="sg"
                   value={phone}
                   onChange={(phone) => setPhone(phone)}
-                  placeholder="Enter phone number"
+                  placeholder={text.phonePlaceholder}
                   disabled={isLoading}
                 />
               </div>
@@ -522,7 +559,7 @@ export default function SignupPage() {
                   name="password"
                   value={formData.password}
                   onChange={handleInputChange}
-                  placeholder="Enter your password"
+                  placeholder={text.passwordPlaceholder}
                   className="pr-12"
                   style={{ paddingLeft: "15px", width: "100%" }}
                   disabled={isLoading}
@@ -549,7 +586,7 @@ export default function SignupPage() {
                   name="confirmPassword"
                   value={formData.confirmPassword}
                   onChange={handleInputChange}
-                  placeholder="Confirm your password"
+                  placeholder={text.confirmPasswordPlaceholder}
                   className="pr-12"
                   style={{ paddingLeft: "15px", width: "100%" }}
                   disabled={isLoading}
@@ -573,7 +610,7 @@ export default function SignupPage() {
                 className="w-full bg-blue-600 text-white font-semibold h-12 rounded-lg text-base hover:bg-blue-700 disabled:bg-slate-600 disabled:cursor-not-allowed transition-colors shadow-lg shadow-blue-600/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-blue-500 mobile-button"
                 style={{ marginTop: "20px", marginLeft: "10px" }}
               >
-                {isLoading ? "Creating Account..." : "Create new account"}
+                {isLoading ? text.creating : text.create}
               </button>
 
               <div className="space-y-4 pt-4">
@@ -589,9 +626,9 @@ export default function SignupPage() {
                     disabled={isLoading}
                   />
                   <label htmlFor="policy" className="text-sm text-gray-400">
-                    By submitting your email, you confirm you&apos;ve read this{" "}
+                    {text.policyText}{" "}
                     <a href="#" className="text-blue-400 hover:underline">
-                      Policy Notice
+                      {text.policyNotice}
                     </a>
                   </label>
                 </div>
@@ -607,7 +644,7 @@ export default function SignupPage() {
                     disabled={isLoading}
                   />
                   <label htmlFor="marketing" className="text-sm text-gray-400">
-                    I agree to receive marketing updates and offers
+                    {text.marketing}
                   </label>
                 </div>
               </div>

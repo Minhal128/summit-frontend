@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useLocale } from 'next-intl';
 import Header from "@/components/Header";
 import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
@@ -93,6 +94,157 @@ const PhoneIcon = (props: React.SVGProps<SVGSVGElement>) => (
 // --- MAIN CONTACT PAGE COMPONENT ---
 
 export default function ContactPage() {
+  const locale = useLocale();
+
+  const copyByLocale = {
+    en: {
+      badge: 'CONTACT',
+      title: 'Get in Touch with Us',
+      subtitle: 'Have questions or need AI solutions? Let us know by filling out the form, and we\'ll be in touch!',
+      emailLabel: 'Email address',
+      phoneLabel: 'Phone Number',
+      firstName: 'First Name',
+      lastName: 'Last Name',
+      email: 'Email',
+      phoneNumber: 'Phone Number',
+      message: 'Message',
+      firstNamePlaceholder: 'Enter your name',
+      lastNamePlaceholder: 'Enter your name',
+      emailPlaceholder: 'Enter your email',
+      phonePlaceholder: 'Enter your mobile number',
+      messagePlaceholder: "Hi, I'm Max ...",
+      sendMessage: 'Send message'
+    },
+    zh: {
+      badge: '联系',
+      title: '联系我们',
+      subtitle: '如有问题或需要 AI 解决方案，请填写表单，我们会尽快联系您！',
+      emailLabel: '邮箱地址',
+      phoneLabel: '电话号码',
+      firstName: '名字',
+      lastName: '姓氏',
+      email: '邮箱',
+      phoneNumber: '电话号码',
+      message: '留言',
+      firstNamePlaceholder: '请输入您的姓名',
+      lastNamePlaceholder: '请输入您的姓名',
+      emailPlaceholder: '请输入您的邮箱',
+      phonePlaceholder: '请输入您的手机号',
+      messagePlaceholder: '你好，我是 Max ...',
+      sendMessage: '发送消息'
+    },
+    ar: {
+      badge: 'اتصل بنا',
+      title: 'تواصل معنا',
+      subtitle: 'هل لديك أسئلة أو تحتاج حلول ذكاء اصطناعي؟ املأ النموذج وسنتواصل معك!',
+      emailLabel: 'البريد الإلكتروني',
+      phoneLabel: 'رقم الهاتف',
+      firstName: 'الاسم الأول',
+      lastName: 'اسم العائلة',
+      email: 'البريد الإلكتروني',
+      phoneNumber: 'رقم الهاتف',
+      message: 'الرسالة',
+      firstNamePlaceholder: 'أدخل اسمك',
+      lastNamePlaceholder: 'أدخل اسمك',
+      emailPlaceholder: 'أدخل بريدك الإلكتروني',
+      phonePlaceholder: 'أدخل رقم هاتفك',
+      messagePlaceholder: 'مرحبًا، أنا Max ...',
+      sendMessage: 'إرسال الرسالة'
+    },
+    ru: {
+      badge: 'КОНТАКТЫ',
+      title: 'Свяжитесь с нами',
+      subtitle: 'Есть вопросы или нужны AI-решения? Заполните форму, и мы свяжемся с вами!',
+      emailLabel: 'Email адрес',
+      phoneLabel: 'Номер телефона',
+      firstName: 'Имя',
+      lastName: 'Фамилия',
+      email: 'Email',
+      phoneNumber: 'Номер телефона',
+      message: 'Сообщение',
+      firstNamePlaceholder: 'Введите ваше имя',
+      lastNamePlaceholder: 'Введите ваше имя',
+      emailPlaceholder: 'Введите ваш email',
+      phonePlaceholder: 'Введите ваш номер телефона',
+      messagePlaceholder: 'Привет, я Max ...',
+      sendMessage: 'Отправить сообщение'
+    },
+    th: {
+      badge: 'ติดต่อ',
+      title: 'ติดต่อเรา',
+      subtitle: 'มีคำถามหรือต้องการโซลูชัน AI? กรอกแบบฟอร์มแล้วเราจะติดต่อกลับ!',
+      emailLabel: 'อีเมล',
+      phoneLabel: 'หมายเลขโทรศัพท์',
+      firstName: 'ชื่อ',
+      lastName: 'นามสกุล',
+      email: 'อีเมล',
+      phoneNumber: 'หมายเลขโทรศัพท์',
+      message: 'ข้อความ',
+      firstNamePlaceholder: 'กรอกชื่อของคุณ',
+      lastNamePlaceholder: 'กรอกชื่อของคุณ',
+      emailPlaceholder: 'กรอกอีเมลของคุณ',
+      phonePlaceholder: 'กรอกหมายเลขมือถือของคุณ',
+      messagePlaceholder: 'สวัสดี ฉันคือ Max ...',
+      sendMessage: 'ส่งข้อความ'
+    },
+    es: {
+      badge: 'CONTACTO',
+      title: 'Ponte en contacto con nosotros',
+      subtitle: '¿Tienes preguntas o necesitas soluciones de IA? Completa el formulario y te contactaremos.',
+      emailLabel: 'Correo electrónico',
+      phoneLabel: 'Número de teléfono',
+      firstName: 'Nombre',
+      lastName: 'Apellido',
+      email: 'Correo electrónico',
+      phoneNumber: 'Número de teléfono',
+      message: 'Mensaje',
+      firstNamePlaceholder: 'Ingresa tu nombre',
+      lastNamePlaceholder: 'Ingresa tu nombre',
+      emailPlaceholder: 'Ingresa tu correo',
+      phonePlaceholder: 'Ingresa tu número móvil',
+      messagePlaceholder: 'Hola, soy Max ...',
+      sendMessage: 'Enviar mensaje'
+    },
+    fr: {
+      badge: 'CONTACT',
+      title: 'Contactez-nous',
+      subtitle: 'Vous avez des questions ou besoin de solutions IA ? Remplissez le formulaire et nous vous répondrons.',
+      emailLabel: 'Adresse e-mail',
+      phoneLabel: 'Numéro de téléphone',
+      firstName: 'Prénom',
+      lastName: 'Nom',
+      email: 'E-mail',
+      phoneNumber: 'Numéro de téléphone',
+      message: 'Message',
+      firstNamePlaceholder: 'Entrez votre nom',
+      lastNamePlaceholder: 'Entrez votre nom',
+      emailPlaceholder: 'Entrez votre e-mail',
+      phonePlaceholder: 'Entrez votre numéro mobile',
+      messagePlaceholder: 'Salut, je suis Max ...',
+      sendMessage: 'Envoyer le message'
+    },
+    de: {
+      badge: 'KONTAKT',
+      title: 'Kontaktieren Sie uns',
+      subtitle: 'Haben Sie Fragen oder benötigen Sie KI-Lösungen? Füllen Sie das Formular aus und wir melden uns bei Ihnen.',
+      emailLabel: 'E-Mail-Adresse',
+      phoneLabel: 'Telefonnummer',
+      firstName: 'Vorname',
+      lastName: 'Nachname',
+      email: 'E-Mail',
+      phoneNumber: 'Telefonnummer',
+      message: 'Nachricht',
+      firstNamePlaceholder: 'Geben Sie Ihren Namen ein',
+      lastNamePlaceholder: 'Geben Sie Ihren Namen ein',
+      emailPlaceholder: 'Geben Sie Ihre E-Mail ein',
+      phonePlaceholder: 'Geben Sie Ihre Mobilnummer ein',
+      messagePlaceholder: 'Hallo, ich bin Max ...',
+      sendMessage: 'Nachricht senden'
+    }
+  } as const;
+
+  const t = copyByLocale[locale as keyof typeof copyByLocale] ?? copyByLocale.en;
+
   return (
     <div className="bg-[#0F172A] min-h-screen">
       <style jsx global>{`
@@ -135,10 +287,10 @@ export default function ContactPage() {
         <div className="w-full max-w-2xl mx-auto">
             
           <header className="text-center mb-12">
-            <span className="text-sm font-semibold tracking-[0.2em] text-gray-400 block">CONTACT</span>
-            <h1 className="text-4xl sm:text-5xl font-bold text-white mt-3">Get in Touch with Us</h1>
+            <span className="text-sm font-semibold tracking-[0.2em] text-gray-400 block">{t.badge}</span>
+            <h1 className="text-4xl sm:text-5xl font-bold text-white mt-3">{t.title}</h1>
             <p className="text-gray-400 mt-4 max-w-2xl mx-auto">
-              Have questions or need AI solutions? Let us know by filling out the form, and we&apos;ll be in touch!
+              {t.subtitle}
             </p>
           </header>
 
@@ -146,14 +298,14 @@ export default function ContactPage() {
             <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 flex items-center gap-4" style={{ margin: '20px', height: '80px' }}>
                 <div className="bg-slate-700 p-2 rounded-lg" style={{ marginLeft: '10px' }}><MailIcon /></div>
                 <div>
-                    <h3 className="font-semibold text-white text-sm">Email address</h3>
+                    <h3 className="font-semibold text-white text-sm">{t.emailLabel}</h3>
                     <p className="text-gray-400 text-xs">admin@summit.exchange.com</p>
                 </div>
             </div>
             <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 flex items-center gap-4" style={{ margin: '20px', height: '80px' }}>
                 <div className="bg-slate-700 p-2 rounded-lg" style={{ marginLeft: '10px' }}><PhoneIcon /></div>
                 <div>
-                    <h3 className="font-semibold text-white text-sm">Phone Number</h3>
+                    <h3 className="font-semibold text-white text-sm">{t.phoneLabel}</h3>
                     <p className="text-gray-400 text-xs">+1 (979) 265-6373</p>
                 </div>
             </div>
@@ -163,28 +315,28 @@ export default function ContactPage() {
             <form action="#" method="POST" className="space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-9 gap-y-7">
                 <div>
-                  <Label htmlFor="first-name" style={{ display: 'block', marginTop: '29px', marginLeft: '10px'  }}>First Name</Label>
-                  <Input id="first-name" type="text" name="first-name" placeholder="Enter your name" style={{ marginTop: '20px', marginLeft: '10px', paddingLeft: '10px' }} />
+                  <Label htmlFor="first-name" style={{ display: 'block', marginTop: '29px', marginLeft: '10px'  }}>{t.firstName}</Label>
+                  <Input id="first-name" type="text" name="first-name" placeholder={t.firstNamePlaceholder} style={{ marginTop: '20px', marginLeft: '10px', paddingLeft: '10px' }} />
                 </div> 
                 <div>
-                  <Label htmlFor="last-name" style={{ display: 'block', marginTop: '20px', marginLeft: '-10px' }}>Last Name</Label>
-                  <Input id="last-name" type="text" name="last-name" placeholder="Enter your name" style={{ marginTop: '20px', marginLeft: '-10px', paddingLeft: '10px' }}/>
+                  <Label htmlFor="last-name" style={{ display: 'block', marginTop: '20px', marginLeft: '-10px' }}>{t.lastName}</Label>
+                  <Input id="last-name" type="text" name="last-name" placeholder={t.lastNamePlaceholder} style={{ marginTop: '20px', marginLeft: '-10px', paddingLeft: '10px' }}/>
                 </div>
                 <div>
-                  <Label htmlFor="email" style={{ display: 'block', marginTop: '20px', marginLeft: '10px' }}>Email</Label>
-                  <Input id="email" type="email" name="email" placeholder="Enter your email" style={{ marginTop: '20px', marginLeft: '10px', paddingLeft: '10px' }}/>
+                  <Label htmlFor="email" style={{ display: 'block', marginTop: '20px', marginLeft: '10px' }}>{t.email}</Label>
+                  <Input id="email" type="email" name="email" placeholder={t.emailPlaceholder} style={{ marginTop: '20px', marginLeft: '10px', paddingLeft: '10px' }}/>
                 </div>
                 <div>
-                  <Label htmlFor="phone-number" style={{ display: 'block', marginTop: '20px', marginLeft: '-10px' }}>Phone Number</Label>
-                  <Input id="phone-number" type="tel" name="phone-number" placeholder="Enter your mobile number" style={{ marginTop: '20px', marginLeft: '-10px', paddingLeft: '10px' }} />
+                  <Label htmlFor="phone-number" style={{ display: 'block', marginTop: '20px', marginLeft: '-10px' }}>{t.phoneNumber}</Label>
+                  <Input id="phone-number" type="tel" name="phone-number" placeholder={t.phonePlaceholder} style={{ marginTop: '20px', marginLeft: '-10px', paddingLeft: '10px' }} />
                 </div>
               </div>
               <div>
-                <Label htmlFor="message" style={{ display: 'block', marginTop: '20px', marginLeft: '10px', paddingLeft: '10px' }}>Message</Label>
-                <Textarea id="message" name="message" rows={5} placeholder="Hi, I'm Max ..." style={{ marginTop: '20px', paddingLeft: '10px', width: 'calc(100% - 20px)', marginLeft: '10px' }} />
+                <Label htmlFor="message" style={{ display: 'block', marginTop: '20px', marginLeft: '10px', paddingLeft: '10px' }}>{t.message}</Label>
+                <Textarea id="message" name="message" rows={5} placeholder={t.messagePlaceholder} style={{ marginTop: '20px', paddingLeft: '10px', width: 'calc(100% - 20px)', marginLeft: '10px' }} />
               </div>
               <div style={{ marginTop: '30px' }}>
-                <Button type="submit" style={{ margin: '20px', marginLeft: '0px', paddingLeft: '10px', paddingRight: '10px', paddingTop: '16px', paddingBottom: '16px', fontSize: '16px', fontWeight: 'bold', minHeight: '56px' }}>Send message</Button>
+                <Button type="submit" style={{ margin: '20px', marginLeft: '0px', paddingLeft: '10px', paddingRight: '10px', paddingTop: '16px', paddingBottom: '16px', fontSize: '16px', fontWeight: 'bold', minHeight: '56px' }}>{t.sendMessage}</Button>
               </div>
             </form>
           </Card>

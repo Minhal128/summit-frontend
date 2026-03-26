@@ -1,16 +1,34 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useLocale } from 'next-intl';
 
 const DashboardMockup: React.FC = () => {
+  const locale = useLocale();
   const [activeSidebarItem, setActiveSidebarItem] = useState('dashboard');
 
+  const copyByLocale = {
+    en: {
+      dashboard: 'Dashboard', activity: 'Activity', settings: 'Settings', liveMarket: 'Live Market', searchTokens: 'Search Tokens',
+      sendReceive: 'Send & Receive', buySell: 'Buy & Sell', stake: 'Stake', portfolio: 'Portfolio', bitcoinUsd: 'Bitcoin USD'
+    },
+    de: { dashboard: 'Dashboard', activity: 'Aktivität', settings: 'Einstellungen', liveMarket: 'Live-Markt', searchTokens: 'Token suchen', sendReceive: 'Senden & Empfangen', buySell: 'Kaufen & Verkaufen', stake: 'Staken', portfolio: 'Portfolio', bitcoinUsd: 'Bitcoin USD' },
+    zh: { dashboard: '控制台', activity: '活动', settings: '设置', liveMarket: '实时市场', searchTokens: '搜索代币', sendReceive: '发送与接收', buySell: '买入与卖出', stake: '质押', portfolio: '资产组合', bitcoinUsd: '比特币 USD' },
+    ar: { dashboard: 'لوحة التحكم', activity: 'النشاط', settings: 'الإعدادات', liveMarket: 'السوق المباشر', searchTokens: 'بحث العملات', sendReceive: 'إرسال واستلام', buySell: 'شراء وبيع', stake: 'التحصيص', portfolio: 'المحفظة', bitcoinUsd: 'بيتكوين دولار' },
+    ru: { dashboard: 'Дашборд', activity: 'Активность', settings: 'Настройки', liveMarket: 'Рынок онлайн', searchTokens: 'Поиск токенов', sendReceive: 'Отправить и получить', buySell: 'Купить и продать', stake: 'Стейкинг', portfolio: 'Портфель', bitcoinUsd: 'Bitcoin USD' },
+    th: { dashboard: 'แดชบอร์ด', activity: 'กิจกรรม', settings: 'ตั้งค่า', liveMarket: 'ตลาดสด', searchTokens: 'ค้นหาโทเคน', sendReceive: 'ส่งและรับ', buySell: 'ซื้อและขาย', stake: 'สเตก', portfolio: 'พอร์ต', bitcoinUsd: 'บิตคอยน์ USD' },
+    es: { dashboard: 'Panel', activity: 'Actividad', settings: 'Configuración', liveMarket: 'Mercado en vivo', searchTokens: 'Buscar tokens', sendReceive: 'Enviar y recibir', buySell: 'Comprar y vender', stake: 'Staking', portfolio: 'Portafolio', bitcoinUsd: 'Bitcoin USD' },
+    fr: { dashboard: 'Tableau de bord', activity: 'Activité', settings: 'Paramètres', liveMarket: 'Marché en direct', searchTokens: 'Rechercher des tokens', sendReceive: 'Envoyer & recevoir', buySell: 'Acheter & vendre', stake: 'Staking', portfolio: 'Portefeuille', bitcoinUsd: 'Bitcoin USD' }
+  } as const;
+
+  const copy = copyByLocale[locale as keyof typeof copyByLocale] ?? copyByLocale.en;
+
   const sidebarItems = [
-    { id: 'dashboard', icon: '📊', label: 'Dashboard', active: true },
-    { id: 'activity', icon: '📈', label: 'Activity' },
-    { id: 'settings', icon: '⚙️', label: 'Settings' },
-    { id: 'market', icon: '📈', label: 'Live Market' },
-    { id: 'search', icon: '🔍', label: 'Search Tokens' },
+    { id: 'dashboard', icon: '📊', label: copy.dashboard, active: true },
+    { id: 'activity', icon: '📈', label: copy.activity },
+    { id: 'settings', icon: '⚙️', label: copy.settings },
+    { id: 'market', icon: '📈', label: copy.liveMarket },
+    { id: 'search', icon: '🔍', label: copy.searchTokens },
   ];
 
   return (
@@ -316,9 +334,9 @@ const DashboardMockup: React.FC = () => {
               SUMMIT Flex 3
             </div>
             <div className="dashboard-actions">
-              <button className="action-btn">📤 Send & Receive</button>
-              <button className="action-btn">🛒 Buy & Sell</button>
-              <button className="action-btn">📊 Stake</button>
+              <button className="action-btn">📤 {copy.sendReceive}</button>
+              <button className="action-btn">🛒 {copy.buySell}</button>
+              <button className="action-btn">📊 {copy.stake}</button>
             </div>
           </div>
           
@@ -337,8 +355,8 @@ const DashboardMockup: React.FC = () => {
             
             <div className="main-dashboard">
               <div className="portfolio-header">
-                <div className="portfolio-title">Portfolio</div>
-                <div className="bitcoin-label">Bitcoin USD 💰</div>
+                <div className="portfolio-title">{copy.portfolio}</div>
+                <div className="bitcoin-label">{copy.bitcoinUsd} 💰</div>
               </div>
               
               <div className="portfolio-value">

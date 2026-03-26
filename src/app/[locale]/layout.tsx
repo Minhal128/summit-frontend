@@ -47,7 +47,7 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <I18nProvider>
+          <I18nProvider initialLanguage={locale}>
             <NfcReaderProvider>
               <CartProvider>
                 <WalletProvider>{children}</WalletProvider>

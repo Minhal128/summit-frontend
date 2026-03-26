@@ -1,6 +1,6 @@
 "use client"
 
-import React, { createContext, useContext, useState, useCallback, ReactNode } from "react"
+import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react"
 
 // Supported languages
 export const SUPPORTED_LANGUAGES = [
@@ -754,14 +754,27 @@ const I18nContext = createContext<I18nContextType>({
   dir: "ltr",
 })
 
-export function I18nProvider({ children }: { children: ReactNode }) {
+export function I18nProvider({ children, initialLanguage }: { children: ReactNode; initialLanguage?: string }) {
   const [language, setLanguageState] = useState<LanguageCode>(() => {
+    if (initialLanguage && initialLanguage in translations) {
+      return initialLanguage as LanguageCode
+    }
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("summit_language") as LanguageCode
       if (saved && translations[saved]) return saved
     }
     return "en"
   })
+
+  useEffect(() => {
+    if (initialLanguage && initialLanguage in translations) {
+      const nextLanguage = initialLanguage as LanguageCode
+      setLanguageState(nextLanguage)
+      if (typeof window !== "undefined") {
+        localStorage.setItem("summit_language", nextLanguage)
+      }
+    }
+  }, [initialLanguage])
 
   const setLanguage = useCallback((lang: LanguageCode) => {
     setLanguageState(lang)

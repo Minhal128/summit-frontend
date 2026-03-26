@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useLocale } from 'next-intl';
 
 interface ComparisonSectionProps {
   hotWalletFeatures?: string[];
@@ -11,26 +12,30 @@ const ComparisonSection: React.FC<ComparisonSectionProps> = ({
   hotWalletFeatures, 
   summitWalletFeatures 
 }) => {
-  const defaultHotWalletFeatures = [
-    'Instant access anytime, anywhere.',
-    'Best for daily transactions.',
-    'Always connected to the internet.',
-    'Easier setup and use.',
-    'Convenient for small balances.',
-    'Quick transfers on the go.'
-  ];
+  const locale = useLocale();
 
-  const defaultSummitWalletFeatures = [
-    'Maximum protection from hacks.',
-    'Ideal for long-term storage.',
-    'Fully offline security.',
-    'You control your private keys.',
-    'Safer for large investments.',
-    'Trusted by professionals.'
-  ];
+  const copyByLocale = {
+    en: {
+      label: 'COMPARISON',
+      title: 'What Sets Summit Apart',
+      subtitle: 'Understand the key differences between hot and cold wallets to make the smartest choice for protecting your digital assets',
+      hotTitle: 'Other Hot wallet',
+      summitTitle: 'Summit Wallet',
+      hotFeatures: ['Instant access anytime, anywhere.', 'Best for daily transactions.', 'Always connected to the internet.', 'Easier setup and use.', 'Convenient for small balances.', 'Quick transfers on the go.'],
+      summitFeatures: ['Maximum protection from hacks.', 'Ideal for long-term storage.', 'Fully offline security.', 'You control your private keys.', 'Safer for large investments.', 'Trusted by professionals.']
+    },
+    de: { label: 'VERGLEICH', title: 'Was Summit besonders macht', subtitle: 'Verstehe die wichtigsten Unterschiede zwischen Hot- und Cold-Wallets für die sicherste Entscheidung.', hotTitle: 'Andere Hot Wallets', summitTitle: 'Summit Wallet', hotFeatures: ['Sofortiger Zugriff jederzeit.', 'Ideal für tägliche Transaktionen.', 'Ständig mit dem Internet verbunden.', 'Einfach einzurichten.', 'Praktisch für kleine Beträge.', 'Schnelle Überweisungen unterwegs.'], summitFeatures: ['Maximaler Schutz vor Hacks.', 'Ideal für langfristige Aufbewahrung.', 'Komplett offline geschützt.', 'Du kontrollierst deine Private Keys.', 'Sicherer für große Investments.', 'Von Profis genutzt.'] },
+    zh: { label: '对比', title: 'Summit 的不同之处', subtitle: '了解热钱包与冷钱包的关键差异，为你的数字资产做出更明智的保护选择。', hotTitle: '其他热钱包', summitTitle: 'Summit 钱包', hotFeatures: ['随时随地快速访问。', '适合日常交易。', '始终连接互联网。', '设置更简单。', '适合小额资金。', '转账速度快。'], summitFeatures: ['更强的防黑客保护。', '适合长期存储。', '完全离线安全。', '私钥由你掌控。', '更适合大额资产。', '专业用户信赖。'] },
+    ar: { label: 'مقارنة', title: 'ما الذي يميز Summit', subtitle: 'تعرّف على الفروق بين المحافظ الساخنة والباردة لاختيار الأذكى لحماية أصولك الرقمية.', hotTitle: 'محافظ ساخنة أخرى', summitTitle: 'محفظة Summit', hotFeatures: ['وصول فوري في أي وقت.', 'مناسبة للمعاملات اليومية.', 'متصلة دائمًا بالإنترنت.', 'إعداد واستخدام أسهل.', 'مريحة للأرصدة الصغيرة.', 'تحويلات سريعة أثناء التنقل.'], summitFeatures: ['حماية قصوى من الاختراقات.', 'مثالية للتخزين طويل الأمد.', 'أمان كامل دون اتصال.', 'أنت تتحكم بمفاتيحك الخاصة.', 'أكثر أمانًا للاستثمارات الكبيرة.', 'موثوقة لدى المحترفين.'] },
+    ru: { label: 'СРАВНЕНИЕ', title: 'Что отличает Summit', subtitle: 'Поймите разницу между hot и cold wallet, чтобы лучше защитить цифровые активы.', hotTitle: 'Другие hot wallet', summitTitle: 'Summit Wallet', hotFeatures: ['Мгновенный доступ в любое время.', 'Подходит для ежедневных операций.', 'Постоянно в интернете.', 'Проще настроить и использовать.', 'Удобно для небольших сумм.', 'Быстрые переводы.'], summitFeatures: ['Максимальная защита от взломов.', 'Идеально для долгого хранения.', 'Полная офлайн-безопасность.', 'Вы контролируете приватные ключи.', 'Безопаснее для крупных инвестиций.', 'Выбор профессионалов.'] },
+    th: { label: 'เปรียบเทียบ', title: 'สิ่งที่ทำให้ Summit แตกต่าง', subtitle: 'เข้าใจความต่างระหว่าง Hot Wallet และ Cold Wallet เพื่อปกป้องสินทรัพย์ของคุณอย่างชาญฉลาด', hotTitle: 'Hot Wallet อื่นๆ', summitTitle: 'Summit Wallet', hotFeatures: ['เข้าถึงได้ทันทีทุกที่ทุกเวลา', 'เหมาะกับธุรกรรมรายวัน', 'เชื่อมต่ออินเทอร์เน็ตตลอดเวลา', 'ตั้งค่าและใช้งานง่าย', 'สะดวกสำหรับยอดเงินขนาดเล็ก', 'โอนเงินได้รวดเร็ว'], summitFeatures: ['ป้องกันการแฮกสูงสุด', 'เหมาะสำหรับการถือระยะยาว', 'ความปลอดภัยแบบออฟไลน์เต็มรูปแบบ', 'คุณควบคุม private key เอง', 'ปลอดภัยกว่าสำหรับเงินลงทุนสูง', 'มืออาชีพไว้วางใจ'] },
+    es: { label: 'COMPARACIÓN', title: 'Qué hace diferente a Summit', subtitle: 'Conoce las diferencias clave entre hot y cold wallets para proteger mejor tus activos digitales.', hotTitle: 'Otras hot wallets', summitTitle: 'Summit Wallet', hotFeatures: ['Acceso instantáneo en cualquier momento.', 'Ideal para transacciones diarias.', 'Siempre conectadas a internet.', 'Configuración sencilla.', 'Convenientes para saldos pequeños.', 'Transferencias rápidas.'], summitFeatures: ['Máxima protección contra hackeos.', 'Ideal para almacenamiento a largo plazo.', 'Seguridad totalmente offline.', 'Tú controlas tus claves privadas.', 'Más segura para grandes inversiones.', 'Confiada por profesionales.'] },
+    fr: { label: 'COMPARAISON', title: 'Ce qui distingue Summit', subtitle: 'Comprenez les différences entre hot et cold wallets pour protéger vos actifs numériques intelligemment.', hotTitle: 'Autres hot wallets', summitTitle: 'Summit Wallet', hotFeatures: ['Accès instantané à tout moment.', 'Idéal pour les transactions quotidiennes.', 'Toujours connectées à internet.', 'Configuration plus simple.', 'Pratique pour petits montants.', 'Transferts rapides.'], summitFeatures: ['Protection maximale contre les hacks.', 'Idéal pour le stockage long terme.', 'Sécurité 100% hors ligne.', 'Vous contrôlez vos clés privées.', 'Plus sûr pour les gros investissements.', 'Adopté par les professionnels.'] }
+  } as const;
 
-  const displayHotWalletFeatures = hotWalletFeatures || defaultHotWalletFeatures;
-  const displaySummitWalletFeatures = summitWalletFeatures || defaultSummitWalletFeatures;
+  const copy = copyByLocale[locale as keyof typeof copyByLocale] ?? copyByLocale.en;
+  const displayHotWalletFeatures = hotWalletFeatures || copy.hotFeatures;
+  const displaySummitWalletFeatures = summitWalletFeatures || copy.summitFeatures;
 
   return (
     <>
@@ -221,13 +226,13 @@ const ComparisonSection: React.FC<ComparisonSectionProps> = ({
 
       <section className="comparison-section">
         <div className="container">
-          <div className="section-label">COMPARISON</div>
-          <h2 className="main-title">What Sets Summit Apart</h2>
-          <p className="subtitle">Understand the key differences between hot and cold wallets to make the smartest choice for protecting your digital assets</p>
+          <div className="section-label">{copy.label}</div>
+          <h2 className="main-title">{copy.title}</h2>
+          <p className="subtitle">{copy.subtitle}</p>
           
           <div className="comparison-grid">
             <div className="comparison-item">
-              <h3 className="comparison-title">Other Hot wallet</h3>
+              <h3 className="comparison-title">{copy.hotTitle}</h3>
               <ul className="comparison-features">
                 {displayHotWalletFeatures.map((feature, index) => (
                   <li key={index}>{feature}</li>
@@ -238,7 +243,7 @@ const ComparisonSection: React.FC<ComparisonSectionProps> = ({
             <div className="vs-text">V/S</div>
             
             <div className="comparison-item highlight">
-              <h3 className="comparison-title">Summit Wallet</h3>
+              <h3 className="comparison-title">{copy.summitTitle}</h3>
               <ul className="comparison-features">
                 {displaySummitWalletFeatures.map((feature, index) => (
                   <li key={index}>{feature}</li>

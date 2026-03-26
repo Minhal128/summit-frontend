@@ -1,11 +1,12 @@
 import createMiddleware from 'next-intl/middleware';
+import { defaultLocale, locales } from './i18n';
 
 export default createMiddleware({
   // A list of all locales that are supported
-  locales: ['en', 'zh', 'ar', 'ru', 'th', 'es', 'fr', 'de'],
+  locales: [...locales],
 
   // Used when no locale matches
-  defaultLocale: 'en',
+  defaultLocale,
   
   // Set to 'as-needed' so the default 'en' language does NOT show up in the URL (e.g. localhost:3000/ instead of /en)
   localePrefix: 'as-needed'
