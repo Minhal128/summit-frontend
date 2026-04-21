@@ -189,25 +189,33 @@ export default function LoginPage() {
   // (used when bridge auto-login is disabled or unavailable)
   useEffect(() => {
     const unsub = onCardDetected(async (card) => {
-      // Process if we're actively waiting OR if keyboard mode is always listening
-      if (nfcStepRef.current !== "waiting" && nfcStepRef.current !== "idle") return;
+      // Process if we're in idle, waiting, or any state - auto-login immediately!
+      console.log('[NFC] Card detected for login:', card.uid, 'current step:', nfcStepRef.current);
+      
+      // Skip if already success
+      if (nfcStepRef.current === "success") return;
 
       setDetectedUid(card.uid);
       setNfcStep("verifying");
       setNfcError("");
 
       try {
+        console.log('[NFC] Calling loginByUid for:', card.uid);
         const response = await loginByUid(card.uid);
+        console.log('[NFC] loginByUid response:', response);
+        
         if (response.success) {
           setNfcStep("success");
           toast.success("NFC login successful! Redirecting...");
           setTimeout(() => router.push("/dashboard"), 800);
         } else {
+          console.log('[NFC] Login failed, response:', response);
           throw new Error(response.message || "Login failed");
         }
       } catch (err: any) {
+        console.log('[NFC] Login error:', err);
         // Check if card is unregistered
-        if (err?.data?.unregistered || err?.message?.includes("not registered")) {
+        if (err?.data?.unregistered || err?.message?.includes("not registered") || err?.message?.includes("not linked")) {
           setNfcStep("unregistered");
           setNfcError(text.cardNotLinkedHelp);
         } else {
