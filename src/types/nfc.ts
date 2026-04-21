@@ -42,6 +42,7 @@ export interface ActionPayload {
 // Authentication Response
 export interface NfcAuthResponse {
   success: boolean;
+  message?: string;
   token: string;
   expiresIn: number;
   user: {

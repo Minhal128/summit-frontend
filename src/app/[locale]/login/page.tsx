@@ -183,7 +183,7 @@ export default function LoginPage() {
       }
     });
     return unsub;
-  }, [onLoginResult, router]);
+  }, [onLoginResult, router, locale, text.toastLoginSuccess, text.cardNotLinkedHelp]);
 
   // Fallback: Auto-login when card is tapped while in "waiting" state
   // (used when bridge auto-login is disabled or unavailable)
@@ -207,7 +207,7 @@ export default function LoginPage() {
         if (response.success) {
           setNfcStep("success");
           toast.success("NFC login successful! Redirecting...");
-          setTimeout(() => router.push("/dashboard"), 800);
+          setTimeout(() => router.push(locale === 'en' ? "/dashboard" : `/${locale}/dashboard`), 800);
         } else {
           console.log('[NFC] Login failed, response:', response);
           throw new Error(response.message || "Login failed");
@@ -226,7 +226,7 @@ export default function LoginPage() {
       }
     });
     return unsub;
-  }, [onCardDetected, router]);
+  }, [onCardDetected, router, locale, text.cardNotLinkedHelp]);
 
   useEffect(() => {
     // If already logged in, redirect to dashboard
