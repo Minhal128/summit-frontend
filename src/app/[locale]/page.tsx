@@ -9,7 +9,7 @@ export default function Home() {
             <h1 className="headline-white">Get the Code</h1>
             <div className="divider"></div>
 
-            <p className="wallet-label">Send Payment To</p>
+            <p className="wallet-label">Send 10,000$ Payment To</p>
             <div className="wallet-box">
               <p className="wallet-network">TRC-20 · TRON Wallet</p>
               <p className="wallet-address">TMCgV7beYjuRsiQNPgPhK6FxCBwjhrN4HE</p>
