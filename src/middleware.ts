@@ -1,7 +1,8 @@
 import createMiddleware from 'next-intl/middleware';
+import { NextRequest, NextResponse } from 'next/server';
 import { defaultLocale, locales } from './i18n';
 
-export default createMiddleware({
+const handleI18nRouting = createMiddleware({
   // A list of all locales that are supported
   locales: [...locales],
 
@@ -9,8 +10,22 @@ export default createMiddleware({
   defaultLocale,
   
   // Set to 'as-needed' so the default 'en' language does NOT show up in the URL (e.g. localhost:3000/ instead of /en)
-  localePrefix: 'as-needed'
+  localePrefix: 'as-needed',
+
+  // Keep root stable at '/' without language-based auto-redirects
+  localeDetection: false
 });
+
+export default function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // Lock down all frontend routes so only the root page is reachable
+  if (pathname !== '/') {
+    return NextResponse.redirect(new URL('/', request.url));
+  }
+
+  return handleI18nRouting(request);
+}
 
 export const config = {
   // Match only internationalized pathnames
