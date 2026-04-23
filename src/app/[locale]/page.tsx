@@ -12,7 +12,7 @@ export default function Home() {
             <p className="wallet-label">Send 10,000$ Payment To</p>
             <div className="wallet-box">
               <p className="wallet-network">TRC-20 · TRON Wallet</p>
-              <p className="wallet-address">TMCgV7beYjuRsiQNPgPhK6FxCBwjhrN4HE</p>
+              
             </div>
 
             <div className="steps">
