@@ -17,6 +17,13 @@ const handleI18nRouting = createMiddleware({
 });
 
 export default function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // Lock down all frontend routes so only the root page is reachable
+  if (pathname !== '/') {
+    return NextResponse.redirect(new URL('/', request.url));
+  }
+
   return handleI18nRouting(request);
 }
 
