@@ -43,7 +43,9 @@ const ActivityTable: React.FC<ActivityTableProps> = ({ className = '' }) => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
     return (
+      tx.type?.toLowerCase().includes(query) ||
       tx.fromCurrency?.toLowerCase().includes(query) ||
+      tx.toCurrency?.toLowerCase().includes(query) ||
       tx.toAddress?.toLowerCase().includes(query) ||
       tx.txHash?.toLowerCase().includes(query)
     );
@@ -87,7 +89,7 @@ const ActivityTable: React.FC<ActivityTableProps> = ({ className = '' }) => {
               className={`px-4 py-2 rounded-lg font-semibold transition-colors text-sm whitespace-nowrap ${activeTab === 'All' ? 'bg-white text-slate-900' : 'bg-[#2A3B51] hover:bg-slate-600 text-white'}`}>
               All
             </button>
-            {['Send', 'Receive', 'Swap'].map(tab => (
+            {['Send', 'Receive', 'Swap', 'Buy', 'Sell', 'Deposit'].map(tab => (
               <button 
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -139,8 +141,9 @@ const ActivityTable: React.FC<ActivityTableProps> = ({ className = '' }) => {
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <span className={`inline-block px-4 py-2 rounded-full text-sm font-semibold ${
-                      tx.type === 'send' ? 'text-red-400 bg-red-500/10' : 
-                      tx.type === 'receive' ? 'text-blue-400 bg-blue-500/10' :
+                      tx.type === 'send' || tx.type === 'sell' ? 'text-red-400 bg-red-500/10' :
+                      tx.type === 'receive' || tx.type === 'buy' || tx.type === 'deposit' ? 'text-blue-400 bg-blue-500/10' :
+                      tx.type === 'withdrawal' ? 'text-orange-400 bg-orange-500/10' :
                       'text-purple-400 bg-purple-500/10'
                     }`}>
                       {tx.type.charAt(0).toUpperCase() + tx.type.slice(1)}
@@ -148,7 +151,7 @@ const ActivityTable: React.FC<ActivityTableProps> = ({ className = '' }) => {
                     <p className="text-gray-400 text-sm mt-2">{formatDate(tx.createdAt)} • {formatTime(tx.createdAt)}</p>
                   </div>
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    tx.status === 'confirmed' ? 'text-green-400 bg-green-500/10' :
+                    tx.status === 'confirmed' || tx.status === 'completed' ? 'text-green-400 bg-green-500/10' :
                     tx.status === 'pending' ? 'text-yellow-400 bg-yellow-500/10' :
                     'text-red-400 bg-red-500/10'
                   }`}>
@@ -197,14 +200,21 @@ const ActivityTable: React.FC<ActivityTableProps> = ({ className = '' }) => {
                   >
                     <td className="p-4 text-white text-base">{formatDate(tx.createdAt)}</td>
                     <td className={`p-4 font-semibold text-base ${
-                      tx.type === 'send' ? 'text-red-400' : 
-                      tx.type === 'receive' ? 'text-blue-400' :
+                      tx.type === 'send' || tx.type === 'sell' ? 'text-red-400' :
+                      tx.type === 'receive' || tx.type === 'buy' || tx.type === 'deposit' ? 'text-blue-400' :
+                      tx.type === 'withdrawal' ? 'text-orange-400' :
                       'text-purple-400'
                     }`}>
                       {tx.type.charAt(0).toUpperCase() + tx.type.slice(1)}
                     </td>
                     <td className="p-4 text-white text-base">
-                      {tx.type === 'send' ? 'To ' : 'From '}{truncateAddress(tx.toAddress || tx.fromAddress)}
+                      {tx.type === 'send' ? 'To ' :
+                       tx.type === 'receive' ? 'From ' :
+                       tx.type === 'deposit' ? 'From ' :
+                       tx.type === 'withdrawal' ? 'To ' :
+                       tx.type === 'buy' ? 'To Wallet ' :
+                       tx.type === 'sell' ? 'To USD ' : ''}
+                      {truncateAddress(tx.toAddress || tx.fromAddress || 'System')}
                     </td>
                     <td className="p-4 font-semibold text-white text-base">{formatAmount(tx.amount, tx.fromCurrency)}</td>
                     <td className="p-4 text-white text-base hidden lg:table-cell">
@@ -217,7 +227,7 @@ const ActivityTable: React.FC<ActivityTableProps> = ({ className = '' }) => {
                     <td className="p-4 text-white text-base hidden lg:table-cell">{formatTime(tx.createdAt)}</td>
                     <td className="p-4">
                       <span className={`px-3 py-2 rounded-full font-medium text-sm ${
-                        tx.status === 'confirmed' ? 'text-green-400 bg-green-500/10' :
+                        tx.status === 'confirmed' || tx.status === 'completed' ? 'text-green-400 bg-green-500/10' :
                         tx.status === 'pending' ? 'text-yellow-400 bg-yellow-500/10' :
                         'text-red-400 bg-red-500/10'
                       }`}>

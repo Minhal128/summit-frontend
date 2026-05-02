@@ -298,7 +298,7 @@ export async function createP2POrder(params: {
   pricePerUnit: number;
   minOrderAmount: number;
   maxOrderAmount: number;
-  paymentMethods: string[];
+  paymentMethods: Array<{ type: string; details?: string; accountInfo?: string }>;
 }): Promise<{ order: P2POrder }> {
   return apiFetch('/api/p2p/orders', {
     method: 'POST',

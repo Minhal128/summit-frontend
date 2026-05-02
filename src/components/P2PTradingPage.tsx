@@ -118,7 +118,7 @@ export default function P2PTradingPage({ className }: { className?: string }) {
         pricePerUnit: parseFloat(orderPrice),
         minOrderAmount: parseFloat(orderMinLimit) || 10,
         maxOrderAmount: parseFloat(orderMaxLimit) || parseFloat(orderAmount) * parseFloat(orderPrice),
-        paymentMethods: selectedPaymentMethods,
+        paymentMethods: selectedPaymentMethods.map((id) => ({ type: id, details: "", accountInfo: "" })),
       })
       
       setShowCreateModal(false)

@@ -7,8 +7,8 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://king-prawn-app
 
 export interface Transaction {
   id: string
-  type: 'send' | 'receive' | 'swap' | 'buy' | 'sell'
-  status: 'pending' | 'confirmed' | 'failed' | 'cancelled'
+  type: 'send' | 'receive' | 'swap' | 'buy' | 'sell' | 'deposit' | 'withdrawal'
+  status: 'pending' | 'confirmed' | 'failed' | 'cancelled' | 'completed'
   fromCurrency: string
   toCurrency?: string
   fromAddress: string
@@ -99,6 +99,13 @@ export async function getTransactionHistory(
     console.error('Transaction history error:', error)
     return { success: false, transactions: [], total: 0, page: 1, limit: 10 }
   }
+}
+
+export function formatAmount(amount: number | undefined, currency?: string): string {
+  if (amount === undefined || amount === null) return '0.00'
+  if (currency === 'USD') return `$${amount.toFixed(2)}`
+  if (['USDT', 'USDC'].includes(currency?.toUpperCase() || '')) return `$${amount.toFixed(2)}`
+  return `${amount.toFixed(8)} ${currency || ''}`
 }
 
 export function formatTransactionDate(dateString: string): string {
