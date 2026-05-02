@@ -39,7 +39,7 @@ export default function RecentTransactionsModal({ isOpen, onClose }: RecentTrans
   )
 
   const getTypeDisplay = (type: string): 'receive' | 'send' => {
-    return type === 'receive' || type === 'buy' ? 'receive' : 'send'
+    return type === 'receive' || type === 'buy' || type === 'deposit' ? 'receive' : 'send'
   }
 
   return (

@@ -7,12 +7,12 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://king-prawn-app
 
 export interface Transaction {
   id: string
-  type: 'send' | 'receive' | 'swap' | 'buy' | 'sell' | 'deposit' | 'withdrawal'
+  type: 'send' | 'receive' | 'swap' | 'buy' | 'sell' | 'deposit' | 'withdrawal' | 'lending'
   status: 'pending' | 'confirmed' | 'failed' | 'cancelled' | 'completed'
   fromCurrency: string
   toCurrency?: string
-  fromAddress: string
-  toAddress: string
+  fromAddress?: string
+  toAddress?: string
   amount: number
   amountUSD?: number
   receivedAmount?: number
@@ -60,6 +60,7 @@ export async function getTransactionHistory(
   const token = localStorage.getItem('auth_token') || localStorage.getItem('nfc_token')
   
   if (!token) {
+    console.warn('[Activity] No auth token found in localStorage')
     return { success: false, transactions: [], total: 0, page: 1, limit: 10 }
   }
 
@@ -70,33 +71,45 @@ export async function getTransactionHistory(
   if (options.status) params.append('status', options.status)
   if (options.currency) params.append('currency', options.currency)
 
+  const url = `${API_BASE}/api/transactions/history?${params}`
+  console.log('[Activity] Fetching transactions from:', url)
+
   try {
-    const response = await fetch(`${API_BASE}/api/transactions/history?${params}`, {
+    const response = await fetch(url, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       }
     })
 
+    console.log('[Activity] Response status:', response.status, response.statusText)
+
     if (!response.ok) {
-      throw new Error('Failed to fetch transactions')
+      const errorText = await response.text()
+      console.error('[Activity] HTTP error:', response.status, errorText)
+      throw new Error(`Failed to fetch transactions: ${response.status} ${errorText}`)
     }
 
     const data = await response.json()
+    console.log('[Activity] API response:', data)
     
     if (data.success) {
+      const transactions = data.transactions || data.data?.transactions || []
+      const total = data.pagination?.total ?? data.total ?? data.data?.total ?? 0
+      console.log(`[Activity] Loaded ${transactions.length} transactions (total: ${total})`)
       return {
         success: true,
-        transactions: data.transactions || data.data?.transactions || [],
-        total: data.total || data.data?.total || 0,
-        page: data.page || 1,
-        limit: data.limit || 10
+        transactions,
+        total,
+        page: data.pagination?.page ?? data.page ?? 1,
+        limit: data.pagination?.limit ?? data.limit ?? 10
       }
     }
     
+    console.warn('[Activity] API returned success: false', data)
     return { success: false, transactions: [], total: 0, page: 1, limit: 10 }
   } catch (error) {
-    console.error('Transaction history error:', error)
+    console.error('[Activity] Transaction history error:', error)
     return { success: false, transactions: [], total: 0, page: 1, limit: 10 }
   }
 }
@@ -121,9 +134,3 @@ export function formatTransactionDate(dateString: string): string {
   return date.toLocaleString('en-US', options).replace(',', ' |')
 }
 
-export function formatAmount(amount: number, symbol: string): string {
-  if (amount === 0) return `0 ${symbol}`
-  if (amount < 0.000001) return `<0.000001 ${symbol}`
-  if (amount < 1) return `${amount.toFixed(6)}${symbol}`
-  return `${amount.toLocaleString('en-US', { maximumFractionDigits: 4 })}${symbol}`
-}

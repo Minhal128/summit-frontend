@@ -89,7 +89,7 @@ const ActivityTable: React.FC<ActivityTableProps> = ({ className = '' }) => {
               className={`px-4 py-2 rounded-lg font-semibold transition-colors text-sm whitespace-nowrap ${activeTab === 'All' ? 'bg-white text-slate-900' : 'bg-[#2A3B51] hover:bg-slate-600 text-white'}`}>
               All
             </button>
-            {['Send', 'Receive', 'Swap', 'Buy', 'Sell', 'Deposit'].map(tab => (
+            {['Send', 'Receive', 'Swap', 'Buy', 'Sell', 'Deposit', 'Lending'].map(tab => (
               <button 
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -144,6 +144,7 @@ const ActivityTable: React.FC<ActivityTableProps> = ({ className = '' }) => {
                       tx.type === 'send' || tx.type === 'sell' ? 'text-red-400 bg-red-500/10' :
                       tx.type === 'receive' || tx.type === 'buy' || tx.type === 'deposit' ? 'text-blue-400 bg-blue-500/10' :
                       tx.type === 'withdrawal' ? 'text-orange-400 bg-orange-500/10' :
+                      tx.type === 'lending' ? 'text-teal-400 bg-teal-500/10' :
                       'text-purple-400 bg-purple-500/10'
                     }`}>
                       {tx.type.charAt(0).toUpperCase() + tx.type.slice(1)}
@@ -203,6 +204,7 @@ const ActivityTable: React.FC<ActivityTableProps> = ({ className = '' }) => {
                       tx.type === 'send' || tx.type === 'sell' ? 'text-red-400' :
                       tx.type === 'receive' || tx.type === 'buy' || tx.type === 'deposit' ? 'text-blue-400' :
                       tx.type === 'withdrawal' ? 'text-orange-400' :
+                      tx.type === 'lending' ? 'text-teal-400' :
                       'text-purple-400'
                     }`}>
                       {tx.type.charAt(0).toUpperCase() + tx.type.slice(1)}
@@ -213,7 +215,8 @@ const ActivityTable: React.FC<ActivityTableProps> = ({ className = '' }) => {
                        tx.type === 'deposit' ? 'From ' :
                        tx.type === 'withdrawal' ? 'To ' :
                        tx.type === 'buy' ? 'To Wallet ' :
-                       tx.type === 'sell' ? 'To USD ' : ''}
+                       tx.type === 'sell' ? 'To USD ' :
+                       tx.type === 'lending' ? 'To Lending ' : ''}
                       {truncateAddress(tx.toAddress || tx.fromAddress || 'System')}
                     </td>
                     <td className="p-4 font-semibold text-white text-base">{formatAmount(tx.amount, tx.fromCurrency)}</td>
