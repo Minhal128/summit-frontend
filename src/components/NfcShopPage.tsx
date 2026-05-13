@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import {
   CreditCard,
   ShoppingCart,
@@ -16,6 +17,8 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { getMarketRates } from "@/lib/exchangeApi"
+import { toast } from "react-toastify"
+import { fetchProducts } from "@/lib/cartApi"
 
 const NFC_PRODUCTS = [
   {
@@ -74,11 +77,46 @@ const NFC_PRODUCTS = [
   },
 ]
 
+// Map database products to display format
+const mapProductForDisplay = (dbProduct: any) => {
+  const tierMap: Record<string, string> = {
+    'standard': 'Basic',
+    'premium': 'Premium',
+    'enterprise': 'Elite'
+  };
+
+  const colorMap: Record<string, string> = {
+    'standard': 'from-gray-500 to-gray-600',
+    'premium': 'from-blue-500 to-blue-600',
+    'enterprise': 'from-purple-500 to-purple-600'
+  };
+
+  return {
+    id: dbProduct._id,
+    name: dbProduct.name,
+    price: dbProduct.price,
+    originalPrice: dbProduct.price * 1.33, // Add 33% as "original price"
+    tier: tierMap[dbProduct.cardType] || 'Basic',
+    color: colorMap[dbProduct.cardType] || 'from-gray-500 to-gray-600',
+    features: dbProduct.features || [],
+    stock: dbProduct.stock || 0,
+    popular: dbProduct.cardType === 'premium',
+    cardType: dbProduct.cardType,
+    description: dbProduct.description,
+    image: dbProduct.image
+  };
+}
+
 export default function NfcShopPage({ className }: { className?: string }) {
-  const [selectedProduct, setSelectedProduct] = useState<typeof NFC_PRODUCTS[0] | null>(null)
+  const router = useRouter()
+  const [selectedProduct, setSelectedProduct] = useState<any | null>(null)
   const [quantity, setQuantity] = useState(1)
   const [cryptoRates, setCryptoRates] = useState<Record<string, number>>({})
   const [ratesLoading, setRatesLoading] = useState(true)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [products, setProducts] = useState<any[]>([])
+  const [productsLoading, setProductsLoading] = useState(true)
+  const [productLoadError, setProductLoadError] = useState(false)
   const [shippingInfo, setShippingInfo] = useState({
     name: "",
     email: "",
@@ -90,9 +128,30 @@ export default function NfcShopPage({ className }: { className?: string }) {
 
   useEffect(() => {
     loadCryptoRates()
+    loadProducts()
     const interval = setInterval(loadCryptoRates, 60000) // refresh every minute
     return () => clearInterval(interval)
   }, [])
+
+  const loadProducts = async () => {
+    try {
+      setProductsLoading(true)
+      setProductLoadError(false)
+      const fetchedProducts = await fetchProducts()
+      const displayProducts = fetchedProducts.map(mapProductForDisplay)
+      setProducts(displayProducts)
+      console.log('✅ Loaded products from API:', displayProducts)
+    } catch (error) {
+      console.error('Failed to load products:', error)
+      // Do NOT silently use mock/default products.
+      // Show an error state and require real product data from the backend.
+      toast.error('Failed to load products from API. Please check backend connection.')
+      setProducts([])
+      setProductLoadError(true)
+    } finally {
+      setProductsLoading(false)
+    }
+  }
 
   const loadCryptoRates = async () => {
     try {
@@ -120,6 +179,98 @@ export default function NfcShopPage({ className }: { className?: string }) {
   const calculateTotal = () => {
     if (!selectedProduct) return 0
     return selectedProduct.price * quantity
+  }
+
+  const handleProceedToPayment = async () => {
+    if (productLoadError || productsLoading) {
+      toast.error('Products not loaded. Cannot proceed to payment.')
+      return
+    }
+    // Validate form
+    if (!selectedProduct) {
+      toast.error("Please select a product")
+      return
+    }
+
+    if (!shippingInfo.name.trim()) {
+      toast.error("Please enter your full name")
+      return
+    }
+
+    if (!shippingInfo.email.trim()) {
+      toast.error("Please enter your email")
+      return
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(shippingInfo.email)) {
+      toast.error("Please enter a valid email")
+      return
+    }
+
+    if (!shippingInfo.address.trim()) {
+      toast.error("Please enter your address")
+      return
+    }
+
+    if (!shippingInfo.city.trim()) {
+      toast.error("Please enter your city")
+      return
+    }
+
+    if (!shippingInfo.country.trim()) {
+      toast.error("Please enter your country")
+      return
+    }
+
+    if (!shippingInfo.zip.trim()) {
+      toast.error("Please enter your ZIP code")
+      return
+    }
+
+    setIsProcessing(true)
+
+    try {
+      const subtotal = selectedProduct.price * quantity
+      const shippingCost = 0 // FREE shipping
+      const tax = subtotal * 0.1 // 10% tax
+      const total = subtotal + shippingCost + tax
+
+      // Store checkout data in sessionStorage
+      sessionStorage.setItem('checkoutData', JSON.stringify({
+        items: [{
+          productId: selectedProduct.id,
+          product: selectedProduct,
+          quantity: quantity
+        }],
+        subtotal: subtotal,
+        shippingCost: shippingCost,
+        tax: tax,
+        total: total
+      }))
+
+      // Store shipping info in sessionStorage
+      sessionStorage.setItem('shippingInfo', JSON.stringify({
+        fullName: shippingInfo.name,
+        email: shippingInfo.email,
+        phone: "",
+        address: shippingInfo.address,
+        city: shippingInfo.city,
+        state: "",
+        zipCode: shippingInfo.zip,
+        country: shippingInfo.country
+      }))
+
+      toast.success("Processing payment...")
+      
+      // Redirect to payment page
+      setTimeout(() => {
+        router.push('/payment')
+      }, 500)
+    } catch (error) {
+      console.error("Error processing payment:", error)
+      toast.error("Failed to process payment. Please try again.")
+      setIsProcessing(false)
+    }
   }
 
   return (
@@ -170,16 +321,22 @@ export default function NfcShopPage({ className }: { className?: string }) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Product Cards */}
         <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
-          {NFC_PRODUCTS.map((product) => (
-            <div
-              key={product.id}
-              className={`bg-[#1E293B] rounded-2xl p-6 border transition-all cursor-pointer relative ${
-                selectedProduct?.id === product.id
-                  ? "border-blue-500 ring-2 ring-blue-500/20"
-                  : "border-slate-700/50 hover:border-slate-600"
-              }`}
-              onClick={() => setSelectedProduct(product)}
-            >
+          {productsLoading ? (
+            <div className="col-span-full text-center py-12">
+              <div className="inline-block w-8 h-8 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
+              <p className="text-gray-400 mt-4">Loading products...</p>
+            </div>
+          ) : products.length > 0 ? (
+            products.map((product) => (
+              <div
+                key={product.id}
+                className={`bg-[#1E293B] rounded-2xl p-6 border transition-all cursor-pointer relative ${
+                  selectedProduct?.id === product.id
+                    ? "border-blue-500 ring-2 ring-blue-500/20"
+                    : "border-slate-700/50 hover:border-slate-600"
+                }`}
+                onClick={() => setSelectedProduct(product)}
+              >
               {product.popular && (
                 <div className="absolute -top-3 right-4 bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
                   <Star className="w-3 h-3" /> POPULAR
@@ -227,7 +384,7 @@ export default function NfcShopPage({ className }: { className?: string }) {
               )}
 
               <div className="space-y-2 mb-4">
-                {product.features.map((feature, i) => (
+                {product.features && product.features.map((feature: string, i: number) => (
                   <div key={i} className="flex items-center gap-2 text-sm">
                     <Check className="w-4 h-4 text-green-400 flex-shrink-0" />
                     <span className="text-gray-300">{feature}</span>
@@ -245,7 +402,13 @@ export default function NfcShopPage({ className }: { className?: string }) {
                 )}
               </div>
             </div>
-          ))}
+            ))
+          ) : (
+            <div className="col-span-full text-center py-12">
+              <CreditCard className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+              <p className="text-gray-400">No products available</p>
+            </div>
+          )}
         </div>
 
         {/* Checkout Form */}
@@ -255,6 +418,12 @@ export default function NfcShopPage({ className }: { className?: string }) {
               <ShoppingCart className="w-5 h-5" />
               Order Summary
             </h3>
+
+            {productLoadError && (
+              <div className="mb-4 p-3 bg-red-700/10 border border-red-700/20 text-red-200 rounded">
+                Failed to load product data from the backend. Checkout is disabled until the API is available.
+              </div>
+            )}
 
             {selectedProduct ? (
               <>
@@ -339,9 +508,22 @@ export default function NfcShopPage({ className }: { className?: string }) {
                   </div>
                 </div>
 
-                <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-6 text-lg font-bold">
-                  <ShoppingCart className="w-5 h-5 mr-2" />
-                  Proceed to Payment
+                <Button 
+                  onClick={handleProceedToPayment}
+                  disabled={isProcessing || productLoadError || productsLoading}
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-6 text-lg font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isProcessing ? (
+                    <>
+                      <div className="inline-block w-5 h-5 mr-2 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingCart className="w-5 h-5 mr-2" />
+                      Proceed to Payment
+                    </>
+                  )}
                 </Button>
 
                 <div className="mt-4 flex items-center gap-2 text-gray-400 text-xs">
