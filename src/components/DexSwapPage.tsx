@@ -60,9 +60,11 @@ const DEFAULT_TOKENS: DexToken[] = [
 ]
 
 const TOKEN_COLORS: Record<string, string> = {
+  BTC: "bg-orange-500",
   ETH: "bg-purple-500",
   USDC: "bg-blue-500",
   USDT: "bg-green-500",
+  TRX: "bg-red-500",
   WBTC: "bg-orange-500",
   DAI: "bg-yellow-500",
   UNI: "bg-pink-500",
@@ -91,9 +93,10 @@ const TOKEN_COLORS: Record<string, string> = {
 }
 
 export default function DexSwapPage({ className }: { className?: string }) {
+  const supportedSwapSymbols = ["BTC", "ETH", "TRX", "USDT"]
   const [tokens, setTokens] = useState<DexToken[]>(DEFAULT_TOKENS)
   const [fromToken, setFromToken] = useState<DexToken>(DEFAULT_TOKENS[0])
-  const [toToken, setToToken] = useState<DexToken>(DEFAULT_TOKENS[1])
+  const [toToken, setToToken] = useState<DexToken>(DEFAULT_TOKENS[2])
   const [fromAmount, setFromAmount] = useState("")
   const [toAmount, setToAmount] = useState("")
   const [quote, setQuote] = useState<DexQuoteResponse | null>(null)
@@ -112,6 +115,23 @@ export default function DexSwapPage({ className }: { className?: string }) {
     loadTokens()
     loadWallets()
   }, [])
+
+  useEffect(() => {
+    const supportedTokens = tokens.filter((token) => supportedSwapSymbols.includes(token.symbol) && walletIdsBySymbol[token.symbol])
+
+    if (supportedTokens.length >= 2) {
+      const currentFromSupported = supportedTokens.some((token) => token.symbol === fromToken.symbol)
+      const currentToSupported = supportedTokens.some((token) => token.symbol === toToken.symbol)
+
+      if (!currentFromSupported) {
+        setFromToken(supportedTokens[0])
+      }
+
+      if (!currentToSupported || supportedTokens[0].symbol === toToken.symbol) {
+        setToToken(supportedTokens[1] || supportedTokens[0])
+      }
+    }
+  }, [tokens, walletIdsBySymbol])
 
   useEffect(() => {
     const debounce = setTimeout(() => {
@@ -192,11 +212,13 @@ export default function DexSwapPage({ className }: { className?: string }) {
       const cardId = getStoredCardId()
       
       if (!token) {
+        toast.error("Please login with your NFC card to execute swaps")
         setError("Please login with your NFC card to execute swaps")
         return
       }
 
       if (!cardId) {
+        toast.error("Please link your NFC card before swapping")
         setError("Please link your NFC card before swapping")
         return
       }
@@ -205,7 +227,9 @@ export default function DexSwapPage({ className }: { className?: string }) {
       const toWalletId = walletIdsBySymbol[toToken.symbol.toUpperCase()]
 
       if (!fromWalletId || !toWalletId) {
-        setError('Swap wallets are not available for the selected currencies')
+        const message = 'Swap wallets are not available for the selected currencies'
+        toast.error(message)
+        setError(message)
         return
       }
 
@@ -229,8 +253,10 @@ export default function DexSwapPage({ className }: { className?: string }) {
     } catch (err: any) {
       console.error("Swap failed:", err)
       if (err.message?.includes("authorization") || err.message?.includes("token")) {
+        toast.error("Please login with your NFC card to execute swaps")
         setError("Please login with your NFC card to execute swaps")
       } else {
+        toast.error(err.message || "Swap failed")
         setError(err.message || "Swap failed")
       }
     } finally {
@@ -264,6 +290,7 @@ export default function DexSwapPage({ className }: { className?: string }) {
       }
     } catch (err: any) {
       console.error('Swap execution failed:', err)
+      toast.error(err.message || 'Swap execution failed')
       setError(err.message || 'Swap execution failed')
     } finally {
       setSwapping(false)
@@ -295,7 +322,7 @@ export default function DexSwapPage({ className }: { className?: string }) {
   }) => (
     show ? (
       <div className="absolute top-full left-0 right-0 mt-2 bg-slate-800 rounded-xl border border-slate-700 shadow-2xl z-50 max-h-64 overflow-y-auto">
-        {tokens.filter(t => t.symbol !== selected.symbol).map((token) => (
+            {tokens.filter(t => supportedSwapSymbols.includes(t.symbol) && walletIdsBySymbol[t.symbol] && t.symbol !== selected.symbol).map((token) => (
           <button
             key={token.symbol}
             onClick={() => {

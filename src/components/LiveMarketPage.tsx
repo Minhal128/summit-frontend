@@ -1,8 +1,10 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { Search } from 'lucide-react';
 import React from 'react';
 import { LineChart, Line, ResponsiveContainer } from 'recharts';
+import { getTwelveDataQuote } from '@/lib/twelveData';
 
 // --- TYPE DEFINITIONS ---
 interface Coin {
@@ -17,11 +19,11 @@ interface Coin {
   chartColor: string;
 }
 
-// --- MOCK DATA ---
-// Helper to generate random chart data
-const generateChartData = () => Array.from({ length: 20 }, () => ({ value: Math.random() * 100 }));
+function generateChartData() {
+  return Array.from({ length: 20 }, () => ({ value: Math.random() * 100 }));
+}
 
-const coinData: Coin[] = [
+const baseCoinData: Coin[] = [
   { id: 'btc', name: 'Bitcoin', symbol: 'BTC/USDT', icon: <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center font-bold text-white text-sm">₿</div>, price: 110738, marketCap: '2.1T', change7d: 1.56, chartData: generateChartData(), chartColor: '#34D399' },
   { id: 'eth', name: 'Ethereum', symbol: 'ETH/USDT', icon: <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center font-bold text-white text-sm">Ξ</div>, price: 3245, marketCap: '390B', change7d: 2.34, chartData: generateChartData(), chartColor: '#FBBF24' },
   { id: 'bnb', name: 'BNB', symbol: 'BNB/USDT', icon: <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center font-bold text-white text-sm">B</div>, price: 645, marketCap: '94B', change7d: 0.89, chartData: generateChartData(), chartColor: '#34D399' },
@@ -44,12 +46,49 @@ const coinData: Coin[] = [
   { id: 'vet', name: 'VeChain', symbol: 'VET/USDT', icon: <div className="w-8 h-8 bg-blue-800 rounded-full flex items-center justify-center font-bold text-white text-sm">V</div>, price: 0.045, marketCap: '3.3B', change7d: 0.78, chartData: generateChartData(), chartColor: '#60A5FA' },
 ];
 
+const symbolFromPair = (pair: string) => pair.split('/')[0];
+
 // --- MAIN COMPONENT ---
 interface LiveMarketPageProps {
   className?: string;
 }
 
 const LiveMarketPage: React.FC<LiveMarketPageProps> = ({ className = '' }) => {
+  const [coins, setCoins] = useState<Coin[]>(baseCoinData);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadMarketData = async () => {
+      try {
+        const updatedCoins = await Promise.all(
+          baseCoinData.map(async (coin) => {
+            const symbol = symbolFromPair(coin.symbol);
+            try {
+              const quote = await getTwelveDataQuote(symbol);
+              const price = Number(quote.price) || coin.price;
+              const change7d = Number(quote.percent_change) || coin.change7d;
+              return {
+                ...coin,
+                price,
+                change7d,
+                chartData: generateChartData(),
+              };
+            } catch (err) {
+              console.error(`Failed to load ${symbol} market data:`, err);
+              return coin;
+            }
+          })
+        );
+
+        setCoins(updatedCoins);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadMarketData();
+  }, []);
+
   return (
     <div className={`bg-[#1E293B] p-4 sm:p-6 rounded-2xl shadow-xl border border-slate-700/50 w-full ${className}`}>
       {/* Header: Search Bar */}
@@ -66,7 +105,9 @@ const LiveMarketPage: React.FC<LiveMarketPageProps> = ({ className = '' }) => {
 
       {/* Mobile Card View */}
       <div className="block sm:hidden space-y-4">
-        {coinData.map((coin) => (
+        {loading ? (
+          <div className="text-center text-gray-400 py-10">Loading live market data...</div>
+        ) : coins.map((coin) => (
           <div key={coin.id} className="bg-[#0F172A] border border-slate-700 rounded-xl p-4 hover:bg-slate-700/20 transition-colors">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
@@ -110,7 +151,11 @@ const LiveMarketPage: React.FC<LiveMarketPageProps> = ({ className = '' }) => {
             </tr>
           </thead>
           <tbody>
-            {coinData.map((coin) => (
+            {loading ? (
+              <tr>
+                <td colSpan={5} className="p-10 text-center text-gray-400">Loading live market data...</td>
+              </tr>
+            ) : coins.map((coin) => (
               <tr key={coin.id} className="border-b border-slate-800 hover:bg-slate-700/30 transition-colors">
                 {/* Coin Info */}
                 <td className="p-4">

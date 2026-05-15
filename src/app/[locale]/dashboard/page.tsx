@@ -59,6 +59,7 @@ import type { Token, TooltipProps, Network } from "@/types"
 import { useTranslation } from "@/contexts/I18nContext"
 import { useWallet } from "@/contexts/WalletContext"
 import { getTransactionHistory, formatTransactionDate, formatAmount, getExplorerUrl, Transaction } from "@/lib/transactionHistory"
+import { getTwelveDataQuote, getTwelveDataTimeSeries } from "@/lib/twelveData"
 
 // Custom Tooltip for the chart
 const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
@@ -207,99 +208,62 @@ const DashboardPage: NextPage = () => {
 
       // Fetch market prices and build exchange rates
       try {
-        const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://king-prawn-app-nv72k.ondigitalocean.app'
-        const token = localStorage.getItem('auth_token') || localStorage.getItem('nfc_token')
-        const response = await fetch(`${API_BASE}/api/market/rates`, {
-          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-        })
-        const data = await response.json()
-        if (data.status === 'success' && data.data) {
-          const rates: Record<string, number> = {}
-          data.data.forEach((r: any) => {
-            rates[r.symbol] = r.marketRate || r.msRate || 0
+        const supportedSymbols = ['BTC', 'ETH', 'SOL', 'TRX']
+        const quotes = await Promise.all(
+          supportedSymbols.map(async (symbol) => {
+            try {
+              const quote = await getTwelveDataQuote(symbol)
+              return [symbol, Number(quote.price) || 0] as const
+            } catch (quoteError) {
+              console.error(`Failed to fetch ${symbol} quote:`, quoteError)
+              return [symbol, 0] as const
+            }
           })
-          setExchangeRates(rates)
-          const btc = data.data.find((r: any) => r.symbol === 'BTC')
-          if (btc) setBtcPrice(btc.marketRate || btc.msRate || 0)
+        )
+
+        const rates: Record<string, number> = {}
+        quotes.forEach(([symbol, price]) => {
+          rates[symbol] = price
+        })
+
+        setExchangeRates(rates)
+        if (rates.BTC) {
+          setBtcPrice(rates.BTC)
         }
       } catch (err) {
         console.error('Failed to fetch prices:', err)
       }
 
-      // Fetch price history for chart from CoinGecko (with fallback)
+      // Fetch price history from Twelve Data
       try {
-        const coinIds: Record<string, string> = {
-          BTC: 'bitcoin',
-          ETH: 'ethereum',
-          SOL: 'solana',
-          TRX: 'tron'
-        }
-        const coinId = coinIds[selectedChartCrypto] || 'bitcoin'
-        const response = await fetch(`https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=${chartDays}`)
-        
-        if (response.ok) {
-          const data = await response.json()
-          if (data.prices && data.prices.length > 0) {
-            // Create labels based on period
-            const numPoints = Math.min(7, data.prices.length)
-            const interval = Math.floor(data.prices.length / numPoints)
-            const chartPoints = []
-            
-            for (let i = 0; i < numPoints && i * interval < data.prices.length; i++) {
-              const idx = Math.min(i * interval, data.prices.length - 1)
-              const [timestamp, price] = data.prices[idx]
-              const date = new Date(timestamp)
-              
-              // Format label based on period
-              let label: string
-              if (chartDays <= 1) {
-                label = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-              } else if (chartDays <= 7) {
-                label = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()]
-              } else if (chartDays <= 30) {
-                label = `${date.getMonth() + 1}/${date.getDate()}`
-              } else {
-                label = date.toLocaleDateString([], { month: 'short' })
-              }
-              
-              chartPoints.push({
-                name: label,
-                value: price / 1000 // Convert to K for chart display
-              })
+        const interval = chartDays <= 1 ? '1h' : chartDays <= 7 ? '1h' : '1day'
+        const outputsize = chartDays <= 1 ? 24 : chartDays <= 7 ? 168 : Math.min(chartDays, 90)
+        const series = await getTwelveDataTimeSeries(selectedChartCrypto, interval, outputsize)
+
+        if (series.length > 0) {
+          const sampled = series.slice(0, 7).reverse()
+          const chartPoints = sampled.map((point) => {
+            const date = new Date(point.datetime)
+            let label: string
+            if (chartDays <= 1) {
+              label = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            } else if (chartDays <= 7) {
+              label = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()]
+            } else {
+              label = date.toLocaleDateString([], { month: 'short', day: 'numeric' })
             }
-            if (chartPoints.length > 0) setChartData(chartPoints)
-            return
-          }
+
+            return {
+              name: label,
+              value: Number(point.close) || 0,
+            }
+          })
+
+          setChartData(chartPoints)
+          return
         }
-        
-        // Fallback: generate mock data based on current price
-        const basePrices: Record<string, number> = { BTC: 95, ETH: 3.2, SOL: 0.15, TRX: 0.0002 }
-        const basePrice = basePrices[selectedChartCrypto] || 95
-        const labels = chartDays <= 1 
-          ? ['12am', '4am', '8am', '12pm', '4pm', '8pm', 'Now']
-          : chartDays <= 7 
-            ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-            : ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6', 'Week 7']
-        const mockData = labels.map((label, i) => ({
-          name: label,
-          value: basePrice * (0.95 + Math.random() * 0.1)
-        }))
-        setChartData(mockData)
       } catch (err) {
         console.error('Failed to fetch chart data:', err)
-        // Generate fallback data
-        const basePrices: Record<string, number> = { BTC: 95, ETH: 3.2, SOL: 0.15, TRX: 0.0002 }
-        const basePrice = basePrices[selectedChartCrypto] || 95
-        const labels = chartDays <= 1 
-          ? ['12am', '4am', '8am', '12pm', '4pm', '8pm', 'Now']
-          : chartDays <= 7 
-            ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-            : ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6', 'Week 7']
-        const mockData = labels.map((label, i) => ({
-          name: label,
-          value: basePrice * (0.95 + Math.random() * 0.1)
-        }))
-        setChartData(mockData)
       }
     }
     

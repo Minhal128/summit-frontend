@@ -124,6 +124,7 @@ function DepositForm({ amount, onSuccess, onClose }: {
           setSucceeded(true)
           toast.success(`Funds added successfully. New balance: $${confirmData.data.newBalance.toFixed(2)}`)
           onSuccess?.(amount, confirmData.data.newBalance)
+          onClose()
         }
       }
     } catch (err: any) {
