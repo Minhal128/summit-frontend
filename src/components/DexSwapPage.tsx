@@ -217,11 +217,7 @@ export default function DexSwapPage({ className }: { className?: string }) {
         toCurrency: toToken.symbol,
       } as any)
 
-      const transactionId =
-        createResponse?.data?.transactionId ||
-        createResponse?.data?.transaction?.id ||
-        createResponse?.transactionId ||
-        createResponse?.transaction?.id
+      const transactionId = createResponse.transaction?.id
 
       if (!transactionId) {
         throw new Error('Failed to create swap transaction')
@@ -281,6 +277,10 @@ export default function DexSwapPage({ className }: { className?: string }) {
     setFromAmount(toAmount)
     setToAmount(fromAmount)
   }
+
+  const priceImpactValue = typeof quote?.priceImpact === 'number'
+    ? quote.priceImpact
+    : Number(quote?.priceImpact) || 0
 
   const TokenSelector = ({ 
     selected, 
@@ -474,8 +474,8 @@ export default function DexSwapPage({ className }: { className?: string }) {
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-400">Price Impact</span>
-                <span className={`${(quote.priceImpact || 0) > 3 ? "text-red-400" : "text-green-400"}`}>
-                  {(Number(quote.priceImpact) || 0).toFixed(2)}%
+                <span className={`${priceImpactValue > 3 ? "text-red-400" : "text-green-400"}`}>
+                  {priceImpactValue.toFixed(2)}%
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm">
