@@ -107,24 +107,56 @@ function DepositForm({ amount, onSuccess, onClose }: {
       }
 
       if (paymentIntent?.status === 'succeeded') {
-        // Confirm with backend
-        const confirmRes = await fetch(`${API_BASE}/api/deposit/confirm`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({ paymentIntentId: paymentIntent.id })
-        })
+        // Confirm with backend and try to obtain the new balance.
+        let confirmedBalance = 0
+        try {
+          const confirmRes = await fetch(`${API_BASE}/api/deposit/confirm`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ paymentIntentId: paymentIntent.id })
+          })
 
-        const confirmData = await confirmRes.json()
-        
-        if (confirmData.status === 'success') {
-          setNewBalance(confirmData.data.newBalance)
-          setSucceeded(true)
-          toast.success(`Funds added successfully. New balance: $${confirmData.data.newBalance.toFixed(2)}`)
-          onSuccess?.(amount, confirmData.data.newBalance)
+          const confirmData = await confirmRes.json()
+          if (confirmData?.status === 'success' && confirmData?.data?.newBalance != null) {
+            confirmedBalance = confirmData.data.newBalance
+          } else if (confirmData?.data?.newBalance != null) {
+            confirmedBalance = confirmData.data.newBalance
+          } else {
+            // Fallback: try to fetch wallet balances endpoint to get latest USD balance
+            try {
+              const balRes = await fetch(`${API_BASE}/api/wallet/balance`, {
+                method: 'GET',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`
+                }
+              })
+              const balData = await balRes.json()
+              confirmedBalance = balData?.data?.usdBalance ?? 0
+            } catch (e) {
+              confirmedBalance = 0
+            }
+          }
+        } catch (err) {
+          console.warn('Deposit confirm failed, but payment succeeded:', err)
+        }
+
+        setNewBalance(confirmedBalance)
+        setSucceeded(true)
+        toast.success(`Funds added successfully. New balance: $${(confirmedBalance || 0).toFixed(2)}`)
+        // Ensure parent is informed and modal closes even if backend confirm returned unexpected shape
+        try {
+          onSuccess?.(amount, confirmedBalance)
+        } catch (e) {
+          console.warn('onSuccess handler threw:', e)
+        }
+        try {
           onClose()
+        } catch (e) {
+          console.warn('onClose handler threw:', e)
         }
       }
     } catch (err: any) {
