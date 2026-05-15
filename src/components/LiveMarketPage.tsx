@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Search } from 'lucide-react';
 import React from 'react';
 import { LineChart, Line, ResponsiveContainer } from 'recharts';
-import { getTwelveDataQuote } from '@/lib/twelveData';
+import { getMarketRates } from '@/lib/exchangeApi';
 
 // --- TYPE DEFINITIONS ---
 interface Coin {
@@ -24,7 +24,7 @@ function generateChartData() {
 }
 
 const baseCoinData: Coin[] = [
-  { id: 'btc', name: 'Bitcoin', symbol: 'BTC/USDT', icon: <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center font-bold text-white text-sm">₿</div>, price: 110738, marketCap: '2.1T', change7d: 1.56, chartData: generateChartData(), chartColor: '#34D399' },
+  { id: 'btc', name: 'Bitcoin', symbol: 'BTC/USDT', icon: <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center font-bold text-white text-sm">₿</div>, price: 80000, marketCap: '2.1T', change7d: 1.56, chartData: generateChartData(), chartColor: '#34D399' },
   { id: 'eth', name: 'Ethereum', symbol: 'ETH/USDT', icon: <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center font-bold text-white text-sm">Ξ</div>, price: 3245, marketCap: '390B', change7d: 2.34, chartData: generateChartData(), chartColor: '#FBBF24' },
   { id: 'bnb', name: 'BNB', symbol: 'BNB/USDT', icon: <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center font-bold text-white text-sm">B</div>, price: 645, marketCap: '94B', change7d: 0.89, chartData: generateChartData(), chartColor: '#34D399' },
   { id: 'sol', name: 'Solana', symbol: 'SOL/USDT', icon: <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-green-400 rounded-full flex items-center justify-center font-bold text-white text-sm">◎</div>, price: 178, marketCap: '82B', change7d: 3.45, chartData: generateChartData(), chartColor: '#34D399' },
@@ -60,27 +60,35 @@ const LiveMarketPage: React.FC<LiveMarketPageProps> = ({ className = '' }) => {
   useEffect(() => {
     const loadMarketData = async () => {
       try {
-        const updatedCoins = await Promise.all(
-          baseCoinData.map(async (coin) => {
-            const symbol = symbolFromPair(coin.symbol);
-            try {
-              const quote = await getTwelveDataQuote(symbol);
-              const price = Number(quote.price) || coin.price;
-              const change7d = Number(quote.percent_change) || coin.change7d;
-              return {
-                ...coin,
-                price,
-                change7d,
-                chartData: generateChartData(),
-              };
-            } catch (err) {
-              console.error(`Failed to load ${symbol} market data:`, err);
-              return coin;
+        const response = await getMarketRates();
+        const rateMap = new Map<string, { marketRate?: number; price?: number; marketCap?: number; priceChangePercentage24h?: number; change24h?: number }>();
+
+        if (Array.isArray(response?.data)) {
+          response.data.forEach((rate: any) => {
+            const symbol = String(rate?.symbol || '').toUpperCase();
+            if (symbol) {
+              rateMap.set(symbol, rate);
             }
-          })
-        );
+          });
+        }
+
+        const updatedCoins = baseCoinData.map((coin) => {
+          const symbol = symbolFromPair(coin.symbol);
+          const rate = rateMap.get(symbol);
+          const price = Number(rate?.marketRate ?? rate?.price ?? coin.price) || coin.price;
+          const change7d = Number(rate?.priceChangePercentage24h ?? rate?.change24h ?? coin.change7d) || coin.change7d;
+
+          return {
+            ...coin,
+            price,
+            change7d,
+            chartData: generateChartData(),
+          };
+        });
 
         setCoins(updatedCoins);
+      } catch (err) {
+        console.error('Failed to load live market data:', err);
       } finally {
         setLoading(false);
       }
