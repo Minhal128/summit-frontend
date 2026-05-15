@@ -58,8 +58,9 @@ import PartnersMapPage from "@/components/PartnersMapPage"
 import type { Token, TooltipProps, Network } from "@/types"
 import { useTranslation } from "@/contexts/I18nContext"
 import { useWallet } from "@/contexts/WalletContext"
+import { getMarketRates } from "@/lib/exchangeApi"
 import { getTransactionHistory, formatTransactionDate, formatAmount, getExplorerUrl, Transaction } from "@/lib/transactionHistory"
-import { getTwelveDataQuote, getTwelveDataTimeSeries } from "@/lib/twelveData"
+import { getTwelveDataTimeSeries } from "@/lib/twelveData"
 
 // Custom Tooltip for the chart
 const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
@@ -208,23 +209,19 @@ const DashboardPage: NextPage = () => {
 
       // Fetch market prices and build exchange rates
       try {
-        const supportedSymbols = ['BTC', 'ETH', 'SOL', 'TRX']
-        const quotes = await Promise.all(
-          supportedSymbols.map(async (symbol) => {
-            try {
-              const quote = await getTwelveDataQuote(symbol)
-              return [symbol, Number(quote.price) || 0] as const
-            } catch (quoteError) {
-              console.error(`Failed to fetch ${symbol} quote:`, quoteError)
-              return [symbol, 0] as const
+        const rates: Record<string, number> = {}
+        const marketRates = await getMarketRates()
+
+        if (Array.isArray(marketRates?.data)) {
+          marketRates.data.forEach((rate: any) => {
+            const symbol = String(rate?.symbol || '').toUpperCase()
+            const price = Number(rate?.marketRate ?? rate?.price ?? 0)
+
+            if (symbol && price > 0) {
+              rates[symbol] = price
             }
           })
-        )
-
-        const rates: Record<string, number> = {}
-        quotes.forEach(([symbol, price]) => {
-          rates[symbol] = price
-        })
+        }
 
         setExchangeRates(rates)
         if (rates.BTC) {
