@@ -195,6 +195,22 @@ export interface ExecuteSwapResponse {
   };
 }
 
+export interface UserWalletRecord {
+  id: string;
+  address: string;
+  balance: number;
+  balanceUSD: number;
+  index: number;
+}
+
+export interface UserWalletsResponse {
+  success: boolean;
+  data: {
+    wallets: Record<string, UserWalletRecord[]>;
+    totalWallets: number;
+  };
+}
+
 export interface TransactionHistoryResponse {
   success: boolean;
   transactions: Array<{
@@ -316,6 +332,13 @@ export async function executeSwapTransaction(
     method: 'POST',
     body: JSON.stringify(data)
   });
+}
+
+/**
+ * Get the authenticated user's wallets for transaction routing.
+ */
+export async function getUserWallets(): Promise<UserWalletsResponse> {
+  return apiFetch<UserWalletsResponse>('/api/transactions/wallets');
 }
 
 // ==========================================

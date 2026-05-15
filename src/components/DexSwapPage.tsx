@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { toast } from "react-toastify"
 import {
   ArrowLeftRight,
   RefreshCw,
@@ -15,11 +16,17 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
   getDexQuote,
-  executeDexSwap,
   getDexTokens,
   type DexToken,
   type DexQuoteResponse,
 } from "@/lib/exchangeApi"
+import { getStoredCardId } from "@/lib/nfcApi"
+import { NfcTransactionAuth } from "./NfcTransactionAuth"
+import {
+  createSwapTransaction,
+  executeSwapTransaction,
+  getUserWallets,
+} from "@/lib/transactionApi"
 
 const DEFAULT_TOKENS: DexToken[] = [
   { symbol: "ETH", name: "Ethereum", address: "0x0000000000000000000000000000000000000000", decimals: 18 },
@@ -97,9 +104,13 @@ export default function DexSwapPage({ className }: { className?: string }) {
   const [showToTokens, setShowToTokens] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [walletIdsBySymbol, setWalletIdsBySymbol] = useState<Record<string, string>>({})
+  const [pendingSwapTransactionId, setPendingSwapTransactionId] = useState<string | null>(null)
+  const [showSwapAuth, setShowSwapAuth] = useState(false)
 
   useEffect(() => {
     loadTokens()
+    loadWallets()
   }, [])
 
   useEffect(() => {
@@ -122,6 +133,31 @@ export default function DexSwapPage({ className }: { className?: string }) {
       }
     } catch (error) {
       console.error("Failed to load tokens:", error)
+    }
+  }
+
+  const loadWallets = async () => {
+    try {
+      const response = await getUserWallets()
+      const mappedWalletIds: Record<string, string> = {}
+      const symbolMap: Record<string, string> = {
+        bitcoin: 'BTC',
+        ethereum: 'ETH',
+        tron: 'TRX',
+        usdt: 'USDT',
+      }
+
+      Object.entries(response.data?.wallets || {}).forEach(([crypto, wallets]) => {
+        const firstWallet = wallets?.[0]
+        const symbol = symbolMap[crypto.toLowerCase()]
+        if (symbol && firstWallet?.id) {
+          mappedWalletIds[symbol] = firstWallet.id
+        }
+      })
+
+      setWalletIdsBySymbol(mappedWalletIds)
+    } catch (error) {
+      console.error('Failed to load wallets:', error)
     }
   }
 
@@ -153,27 +189,47 @@ export default function DexSwapPage({ className }: { className?: string }) {
     setError(null)
     try {
       const token = localStorage.getItem('auth_token') || localStorage.getItem('nfc_token')
+      const cardId = getStoredCardId()
       
       if (!token) {
         setError("Please login with your NFC card to execute swaps")
         return
       }
 
-      await executeDexSwap(
-        {
-          fromToken: fromToken.symbol,
-          toToken: toToken.symbol,
-          amount: parseFloat(fromAmount),
-          slippageTolerance: slippage,
-          walletAddress: "", // Will be filled from user session
-          privateKey: "", // Handled securely on backend
-        },
-        token
-      )
-      // Reset form on success
-      setFromAmount("")
-      setToAmount("")
-      setQuote(null)
+      if (!cardId) {
+        setError("Please link your NFC card before swapping")
+        return
+      }
+
+      const fromWalletId = walletIdsBySymbol[fromToken.symbol.toUpperCase()]
+      const toWalletId = walletIdsBySymbol[toToken.symbol.toUpperCase()]
+
+      if (!fromWalletId || !toWalletId) {
+        setError('Swap wallets are not available for the selected currencies')
+        return
+      }
+
+      const createResponse = await createSwapTransaction({
+        fromWalletId,
+        toWalletId,
+        amount: fromAmount,
+        fromCurrency: fromToken.symbol,
+        toCurrency: toToken.symbol,
+      } as any)
+
+      const transactionId =
+        createResponse?.data?.transactionId ||
+        createResponse?.data?.transaction?.id ||
+        createResponse?.transactionId ||
+        createResponse?.transaction?.id
+
+      if (!transactionId) {
+        throw new Error('Failed to create swap transaction')
+      }
+
+      setPendingSwapTransactionId(transactionId)
+      setShowSwapAuth(true)
+      toast.info(createResponse?.message || 'Swap transaction created')
     } catch (err: any) {
       console.error("Swap failed:", err)
       if (err.message?.includes("authorization") || err.message?.includes("token")) {
@@ -181,6 +237,38 @@ export default function DexSwapPage({ className }: { className?: string }) {
       } else {
         setError(err.message || "Swap failed")
       }
+    } finally {
+      setSwapping(false)
+    }
+  }
+
+  const handleSwapAuthorized = async (actionPayload: any) => {
+    if (!pendingSwapTransactionId) {
+      setError('Swap authorization failed')
+      return
+    }
+
+    try {
+      setSwapping(true)
+      const executionResponse = await executeSwapTransaction({
+        transactionId: pendingSwapTransactionId,
+        nfcAuthId: actionPayload?.actionId || '',
+      })
+
+      if (executionResponse?.success) {
+        toast.success('Swap completed successfully')
+        setFromAmount('')
+        setToAmount('')
+        setQuote(null)
+        setPendingSwapTransactionId(null)
+        setShowSwapAuth(false)
+        await loadWallets()
+      } else {
+        throw new Error(executionResponse?.message || 'Swap execution failed')
+      }
+    } catch (err: any) {
+      console.error('Swap execution failed:', err)
+      setError(err.message || 'Swap execution failed')
     } finally {
       setSwapping(false)
     }
@@ -434,6 +522,25 @@ export default function DexSwapPage({ className }: { className?: string }) {
           </div>
         </div>
       </div>
+
+      {showSwapAuth && pendingSwapTransactionId && (
+        <NfcTransactionAuth
+          isOpen={showSwapAuth}
+          onClose={() => {
+            setShowSwapAuth(false)
+            setPendingSwapTransactionId(null)
+          }}
+          cardId={getStoredCardId() || ''}
+          actionType="swap"
+          actionData={{
+            amount: fromAmount,
+            fromToken: fromToken.symbol,
+            toToken: toToken.symbol,
+          }}
+          onAuthorized={handleSwapAuthorized}
+          onError={(message) => setError(message)}
+        />
+      )}
     </div>
   )
 }

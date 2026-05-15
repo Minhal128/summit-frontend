@@ -49,7 +49,6 @@ import HardwareWalletModal from "@/components/modals/HardwareWalletModal"
 import ReceiveModal from "@/components/modals/ReceiveModal"
 import DepositModal from "@/components/modals/DepositModal"
 import NfcManagement from "@/components/NfcManagement"
-import AdminDashboard from "@/components/AdminDashboard"
 import BuySellPage from "@/components/BuySellPage"
 import P2PTradingPage from "@/components/P2PTradingPage"
 import DexSwapPage from "@/components/DexSwapPage"
@@ -521,8 +520,6 @@ const DashboardPage: NextPage = () => {
         return <LiveMarketPage className="w-full" />
       case "NFC":
         return <NfcManagement />
-      case "Admin":
-        return <AdminDashboard className="w-full" />
       case "Buy & Sell":
         return <BuySellPage className="w-full" />
       case "P2P":
@@ -1061,12 +1058,6 @@ const DashboardPage: NextPage = () => {
               >
                 <Settings className="w-5 h-5" /> {t('nav.settings')}
               </button>
-              <button
-                onClick={() => setActivePage("Admin")}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors w-full text-left ${activePage === "Admin" ? "bg-blue-500 text-white" : "hover:bg-slate-700/50 text-gray-300"}`}
-              >
-                <ShieldCheck className="w-5 h-5" /> {t('nav.admin')}
-              </button>
             </nav>
             
             {/* Logout Button */}
@@ -1216,17 +1207,6 @@ const DashboardPage: NextPage = () => {
                       <ShoppingCart className="w-4 h-4" />
                       {t('nav.nfc_shop')}
                     </button>
-                    <button
-                      onClick={() => {
-                        setActivePage("Admin")
-                        setIsMobileMenuOpen(false)
-                      }}
-                      className={`px-4 py-3 rounded-xl transition-all duration-200 w-full text-left font-medium flex items-center gap-2 ${activePage === "Admin" ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25" : "hover:bg-slate-700/50 text-gray-300 hover:text-white"}`}
-                    >
-                      <ShieldCheck className="w-4 h-4" />
-                      {t('nav.admin')}
-                    </button>
-                    
                     {/* Logout Button */}
                     <button
                       onClick={() => {

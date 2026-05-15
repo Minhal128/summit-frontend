@@ -7,6 +7,7 @@ import { X, Loader2, CreditCard, CheckCircle, AlertCircle, DollarSign } from "lu
 import { useState, useEffect } from "react"
 import { loadStripe } from "@stripe/stripe-js"
 import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js"
+import { toast } from "react-toastify"
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://king-prawn-app-nv72k.ondigitalocean.app'
 
@@ -121,6 +122,7 @@ function DepositForm({ amount, onSuccess, onClose }: {
         if (confirmData.status === 'success') {
           setNewBalance(confirmData.data.newBalance)
           setSucceeded(true)
+          toast.success(`Funds added successfully. New balance: $${confirmData.data.newBalance.toFixed(2)}`)
           onSuccess?.(amount, confirmData.data.newBalance)
         }
       }
