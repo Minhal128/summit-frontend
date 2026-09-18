@@ -6,9 +6,9 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start -p 8080",
+    "dev": "node init && next dev",
+    "build": "node init && next build",
+    "start": "node init && next start -p 8080",
     "lint": "eslint",
     "i18n:deep": "node scripts/deep-i18n-sync.cjs",
     "i18n:deep:pages": "node scripts/deep-i18n-sync.cjs --pages-only",
